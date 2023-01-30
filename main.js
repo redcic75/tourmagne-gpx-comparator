@@ -1,5 +1,5 @@
 const fs = require('fs/promises')
-const gpxParser = require('gpxparser');
+const { XMLParser} = require('fast-xml-parser');
 const geolib = require('geolib');
 
 // Path to GPX files to read
@@ -17,12 +17,16 @@ const refPath = prefix + refFile + '.gpx';
 const challPath = prefix + challFile + '.gpx';
 
 // Params
-const tolerance = 500; // in meters
+const tolerance = 100; // in meters
 const maxDetour = 20000; // in meters
 
 // Parsers for reference route and challenger track
-const refGpx = new gpxParser();
-const challGpx = new gpxParser();;
+const options = {
+    ignoreAttributes : false,
+    parseAttributeValue: true,
+    attributeNamePrefix : '',
+};
+const parser = new XMLParser(options);
 
 const generateGpx = async (segments) => {
   // Generate GPX string from segments
@@ -39,27 +43,30 @@ const generateGpx = async (segments) => {
   // Write a GPX file
   const outputFilePath = `./generated_files/missed-${refFile}-${challFile}-${tolerance}-${maxDetour}.gpx`
   await fs.writeFile(outputFilePath, gpxStr);
+}
 
-  // Generates a missedGpx object and returns it
-  const missedGpx = new gpxParser();
-  missedGpx.parse(gpxStr);
-  return missedGpx;
+// Calculate total distance of a track segment (represented by an array of points)
+const calculateTotalDistance = (points) => {
+  let distance = 0;
+  for (let i = 1; i < points.length; i++) {
+    distance += geolib.getDistance(points[i-1], points[i]);
+  }
+  return distance;
 }
 
 const main = async () => {
-  // Load files
+  // Load files -> strings
   const refPromise = fs.readFile(refPath, { encoding: 'utf8' });
   const challPromise = fs.readFile(challPath, { encoding: 'utf8' });
   const [refStr, challStr] = await Promise.all([refPromise, challPromise]);
 
-  // Create parsers
-  refGpx.parse(refStr);
-  challGpx.parse(challStr);
+  // Parse gpx strings -> JS objects
+  const refGpx = parser.parse(refStr);
+  const challGpx = parser.parse(challStr);
 
   // Create points arrays
-  // TODO - Handle GPX with multiple tracks or multiple track segments
-  const refPoints = refGpx.tracks[0].points;
-  const challPoints = challGpx.tracks[0].points;
+  const refPoints = refGpx.gpx.trk.trkseg.trkpt;
+  const challPoints = challGpx.gpx.trk.trkseg.trkpt;
 
   // Initialize the missedSegments array
   // This array will contain segment arrays
@@ -99,7 +106,6 @@ const main = async () => {
     // from the reference track.
     // In this case, add the missed refPoint to the missedSegments array
     refPoint.index = refIndex;
-
     let lastMissedSegment = missedSegments[missedSegments.length - 1];
 
     // Append to lastMissedSegment only if current missing trackpoint from reference
@@ -114,18 +120,20 @@ const main = async () => {
   };
 
   // Generate the file containing the missed segments
-  missedGpx = await generateGpx(missedSegments)
+  generateGpx(missedSegments);
 
   // Calculate and display synthesis
-  const missedDistance = missedGpx.tracks.reduce((acc, track) => acc + track.distance.total, 0);
-  const missedPercent = missedDistance / refGpx.tracks[0].distance.total * 100
-  console.log('Analysis summary:');
+  const refDistance = calculateTotalDistance(refPoints);
+  const missedDistance = missedSegments.reduce((acc, segment) => acc + calculateTotalDistance(segment), 0);
+
+  // Final display
+  console.log('\nAnalysis summary:');
   console.log(`Reference gpx file: ${refFile}`);
   console.log(`Challenger gpx file: ${challFile}`);
   console.log(`Tolerance: ${tolerance} m`);
   console.log(`Max detour: ${maxDetour} m`);
   console.log(`Missed ${Math.round(missedDistance)} meters of the reference path`)
-  console.log(`Missed ${Math.round(missedPercent * 10) / 10} % of the reference path`)
+  console.log(`Missed ${Math.round(missedDistance / refDistance * 1000) / 10} % of the reference path`)
 }
 
 main();
