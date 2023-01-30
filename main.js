@@ -3,11 +3,22 @@ const gpxParser = require('gpxparser');
 const geolib = require('geolib');
 
 // Path to GPX files to read
-const refPath = './gpx/ref.gpx';
-const challPath = './gpx/chall-autre-chemin-2-fois.gpx';
+// const refFile = 'ref';
+// const challFile = 'chall-autre-chemin-2-fois';
+
+const refFile = 'orleans-loop-trace';
+const challFile = 'orleans-loop-real';
+
+// const refFile = 'Bordeaux-Paris_2022_trace';
+// const challFile = 'Bordeaux_Paris_2022_real';
+
+const prefix = './gpx/'
+const refPath = prefix + refFile + '.gpx';
+const challPath = prefix + challFile + '.gpx';
 
 // Params
-const tolerance = 20; // in meters
+const tolerance = 500; // in meters
+const maxDetour = 20000; // in meters
 
 // Parsers for reference route and challenger track
 const refGpx = new gpxParser();
@@ -26,7 +37,8 @@ const generateGpx = async (segments) => {
   gpxStr += '</gpx></xml>';
 
   // Write a GPX file
-  await fs.writeFile('./generated_files/missed.gpx', gpxStr);
+  const outputFilePath = `./generated_files/missed-${refFile}-${challFile}-${tolerance}-${maxDetour}.gpx`
+  await fs.writeFile(outputFilePath, gpxStr);
 
   // Generates a missedGpx object and returns it
   const missedGpx = new gpxParser();
@@ -61,6 +73,10 @@ const main = async () => {
   for (let refIndex = 0; refIndex < refPoints.length; refIndex++) {
     const refPoint = refPoints[refIndex];
 
+    console.log(`${Math.floor(refIndex / refPoints.length * 1000) / 10} %`);
+
+    challDetour = 0;
+    challIndexLoop:
     for (let challLocalIndex = challIndex; challLocalIndex < challPoints.length - 1; challLocalIndex++) {
       const dist = geolib.getDistanceFromLine(
         refPoint,
@@ -70,6 +86,11 @@ const main = async () => {
       if (dist <= tolerance) {
         challIndex = challLocalIndex;
         continue refIndexLoop;
+      }
+      challDetour += geolib.getDistance(challPoints[challLocalIndex], challPoints[challLocalIndex + 1]);
+      // Only look for waypoint in challFile in the next maxDetour meters from the last waypoint
+      if (challDetour > maxDetour) {
+        break challIndexLoop;
       }
     }
 
@@ -98,6 +119,11 @@ const main = async () => {
   // Calculate and display synthesis
   const missedDistance = missedGpx.tracks.reduce((acc, track) => acc + track.distance.total, 0);
   const missedPercent = missedDistance / refGpx.tracks[0].distance.total * 100
+  console.log('Analysis summary:');
+  console.log(`Reference gpx file: ${refFile}`);
+  console.log(`Challenger gpx file: ${challFile}`);
+  console.log(`Tolerance: ${tolerance} m`);
+  console.log(`Max detour: ${maxDetour} m`);
   console.log(`Missed ${Math.round(missedDistance)} meters of the reference path`)
   console.log(`Missed ${Math.round(missedPercent * 10) / 10} % of the reference path`)
 }
