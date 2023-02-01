@@ -4,18 +4,36 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="style.css" />
   <title>GPX comparator</title>
 </head>
 
 <body>
   <main>
+    <h1>GPX comparator</h1>
+    <form action="">
+      <div>
+        <label for="ref">Choisir le fichier GPX de référence</label>
+        <input type="file" class="files" id="ref" accept=".gpx" />
+      </div>
+      <div>
+        <label for="ref">Choisir le fichier GPX du challenger</label>
+        <input type="file" class="files" id="chall" accept=".gpx" />
+      </div>
+      <div>
+        <input type="button" id="calculateBtn" value="Lancer la comparaison" />
+      </div>
+      <p id="progress">Comparaison pas commencée</p>
+    </form>
     <div>
-      <input type="file" class="files" id="ref" accept=".gpx" />
-      <label for="ref">Choisir le fichier GPX de référence</label>
+      <h2>Résultats de la comparaison :</h2>
+      <ul>
+        <li id="missedDistance"></li>
+        <li id="missedPercent"></li>
+      </ul>
     </div>
   </main>
-  <script src="main.js"></script>
+  <script src="bundle.js"></script>
 </body>
 
 </html>

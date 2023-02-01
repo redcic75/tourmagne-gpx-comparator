@@ -1,4 +1,4 @@
-const fs = require('fs/promises')
+// const fs = require('fs').promises;
 const { XMLParser} = require('fast-xml-parser');
 const geolib = require('geolib');
 
@@ -29,6 +29,12 @@ const options = {
 };
 const parser = new XMLParser(options);
 
+// Links with HTML file
+const buttonEl = document.querySelector('#calculateBtn');
+const progressEl = document.querySelector('#progress');
+const missedDistanceEl = document.querySelector('#missedDistance');
+const missedPercentEl = document.querySelector('#missedPercent');
+
 const generateGpx = async (segments) => {
   // Generate GPX string from segments
   let gpxStr = '<xml><gpx>';
@@ -42,8 +48,9 @@ const generateGpx = async (segments) => {
   gpxStr += '</gpx></xml>';
 
   // Write a GPX file
-  const outputFilePath = `./generated_files/missed-${refFile}-${challFile}-${trigger}-${tolerance}-${maxDetour}.gpx`
-  await fs.writeFile(outputFilePath, gpxStr);
+  // const outputFilePath = `./generated_files/missed---${tolerance}-${maxDetour}.gpx`
+  // await fs.writeFile(outputFilePath, gpxStr);
+  return gpxStr;
 }
 
 // Calculate total distance of a track segment (represented by an array of points)
@@ -55,11 +62,30 @@ const calculateTotalDistance = (points) => {
   return distance;
 }
 
+function readFileAsText(file){
+  return new Promise(function(resolve,reject){
+    let fr = new FileReader();
+
+    fr.onload = function(){
+      resolve(fr.result);
+    };
+
+    fr.onerror = function(){
+      reject(fr);
+    };
+
+    fr.readAsText(file);
+  });
+}
+
 const main = async () => {
-  // Load files -> strings
-  const refPromise = fs.readFile(refPath, { encoding: 'utf8' });
-  const challPromise = fs.readFile(challPath, { encoding: 'utf8' });
-  const [refStr, challStr] = await Promise.all([refPromise, challPromise]);
+  progressEl.innerHTML = 'Comparaison en cours';
+  const refFile = document.querySelector('#ref').files[0];
+  const challFile = document.querySelector('#chall').files[0];
+
+  const p1 = readFileAsText(refFile);
+  const p2 = readFileAsText(challFile);
+  const [refStr, challStr] = await Promise.all([p1, p2]);
 
   // Parse gpx strings -> JS objects
   const refGpx = parser.parse(refStr);
@@ -81,7 +107,8 @@ const main = async () => {
   for (let refIndex = 0; refIndex < refPoints.length; refIndex++) {
     const refPoint = refPoints[refIndex];
 
-    console.log(`${Math.floor(refIndex / refPoints.length * 1000) / 10} %`);
+    console.log(Math.floor(refIndex / refPoints.length * 1000) / 10);
+    progressEl.setAttribute('value', `${Math.floor(refIndex / refPoints.length * 1000) / 10}`)
 
     let challDetour = 0;
     let minDist; // minimum distance between current refPoint and chall track;
@@ -146,6 +173,9 @@ const main = async () => {
   console.log(`Max detour: ${maxDetour} m`);
   console.log(`Missed ${Math.round(missedDistance)} meters of the reference path`)
   console.log(`Missed ${Math.round(missedDistance / refDistance * 1000) / 10} % of the reference path`)
+  progressEl.innerHTML = 'Comparaison terminée';
+  missedDistanceEl.innerHTML = `Missed distance of the reference path: ${Math.round(missedDistance)} m`;
+  missedPercentEl.innerHTML = `Missed % of the reference path: ${Math.round(missedDistance / refDistance * 1000) / 10} %`
 }
 
-main();
+buttonEl.addEventListener('click', main);
