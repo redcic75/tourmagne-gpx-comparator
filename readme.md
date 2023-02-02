@@ -1,5 +1,7 @@
 You can create test GPX files and view generated missed-xxx.gpx files with https://gpx.studio/l/fr/.
 
+To work in browser, launch : `browserify main.js -o bundle.js`
+
 TODO :
 - Handle GPX with multiple tracks or multiple track segments
 - Add performance indicator calculation (distance per 24 hours)
