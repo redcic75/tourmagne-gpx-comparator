@@ -1,6 +1,6 @@
 const fs = require('fs/promises');
 const parseGpx = require('./parseGpx');
-const calculate = require('./calculate');
+const compareGpx = require('./compareGpx');
 const generateGpx = require('./generateGpx');
 
 // ------ USER DATA ------//
@@ -40,7 +40,7 @@ const main = async () => {
     missedSegmentsOffTolerance,
     refDistance,
     missedDistance,
-  } = await calculate(refPoints, challPoints, options);
+  } = await compareGpx(refPoints, challPoints, options);
 
   // Generate the file containing the missed segments
   generateGpx(missedSegmentsOffTolerance, options);

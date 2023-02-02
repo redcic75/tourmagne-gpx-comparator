@@ -9,7 +9,7 @@ const calculateTotalDistance = (points) => {
   return distance;
 }
 
-const calculate = async (refPoints, challPoints, options) => {
+const compareGpx = async (refPoints, challPoints, options) => {
   const {
     trigger,
     tolerance,
@@ -88,4 +88,4 @@ const calculate = async (refPoints, challPoints, options) => {
   }
 }
 
-module.exports = calculate;
+module.exports = compareGpx;
