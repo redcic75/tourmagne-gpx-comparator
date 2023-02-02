@@ -1,45 +1,5 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
-const { XMLParser} = require('fast-xml-parser');
 const geolib = require('geolib');
-
-// Params
-const tolerance = 100; // in meters
-const maxDetour = 20000; // in meters
-
-// Parsers for reference route and challenger track
-const options = {
-    ignoreAttributes : false,
-    parseAttributeValue: true,
-    attributeNamePrefix : '',
-};
-const parser = new XMLParser(options);
-
-// Links with HTML file
-const refFileInputEl = document.querySelector('#ref');
-const challFileInputEl = document.querySelector('#chall');
-const buttonEl = document.querySelector('#calculateBtn');
-const progressEl = document.querySelector('#progress');
-const missedDistanceEl = document.querySelector('#missedDistance');
-const missedPercentEl = document.querySelector('#missedPercent');
-
-const generateGpx = async (segments) => {
-  // Generate GPX string from segments
-  let gpxStr = '<xml><gpx>';
-  segments.forEach((seg) => {
-    gpxStr += '<trk><trkseg>'
-    seg.forEach((point) => {
-      gpxStr += `<trkpt lat="${point.lat}" lon="${point.lon}"></trkpt>`
-    });
-    gpxStr += '</trkseg></trk>'
-  });
-  gpxStr += '</gpx></xml>';
-
-  // TODO - Write a GPX file
-  // const outputFilePath = `./generated_files/missed---${tolerance}-${maxDetour}.gpx`
-  // await fs.writeFile(outputFilePath, gpxStr);
-
-  return gpxStr;
-}
 
 // Calculate total distance of a track segment (represented by an array of points)
 const calculateTotalDistance = (points) => {
@@ -50,12 +10,12 @@ const calculateTotalDistance = (points) => {
   return distance;
 }
 
-
-const calculate = async () => {
-  progressEl.innerHTML = 'Comparaison en cours';
-
-  const refPoints = refFileInputEl.points;
-  const challPoints = challFileInputEl.points;
+const calculate = async (refPoints, challPoints, options) => {
+  const {
+    trigger,
+    tolerance,
+    maxDetour,
+  } = options;
 
   // Initialize the missedSegments array
   // This array will contain segment arrays
@@ -70,9 +30,9 @@ const calculate = async () => {
     const refPoint = refPoints[refIndex];
 
     console.log(Math.floor(refIndex / refPoints.length * 1000) / 10);
-    progressEl.setAttribute('value', `${Math.floor(refIndex / refPoints.length * 1000) / 10}`)
 
-    challDetour = 0;
+    let challDetour = 0;
+    let minDist; // minimum distance between current refPoint and chall track;
     challIndexLoop:
     for (let challLocalIndex = challIndex; challLocalIndex < challPoints.length - 1; challLocalIndex++) {
       const dist = geolib.getDistanceFromLine(
@@ -80,7 +40,10 @@ const calculate = async () => {
         challPoints[challLocalIndex],
         challPoints[challLocalIndex + 1]
       );
-      if (dist <= tolerance) {
+      if (!minDist || dist < minDist) {
+        minDist = dist;
+      }
+      if (dist <= trigger) {
         challIndex = challLocalIndex;
         continue refIndexLoop;
       }
@@ -92,10 +55,11 @@ const calculate = async () => {
     }
 
     // Passing here only when challenger track
-    // didn't pass close enough (i.e. d < tolerance)
+    // didn't pass close enough (i.e. d > trigger)
     // from the reference track.
     // In this case, add the missed refPoint to the missedSegments array
     refPoint.index = refIndex;
+    refPoint.dist = minDist; // store min distance from reference to challenger track
     let lastMissedSegment = missedSegments[missedSegments.length - 1];
 
     // Append to lastMissedSegment only if current missing trackpoint from reference
@@ -109,34 +73,25 @@ const calculate = async () => {
     }
   };
 
-  // Generate the file containing the missed segments
-  generateGpx(missedSegments);
+  // Filter out missedSegment where max of minDist is < tolerance
+  const missedSegmentsOffTolerance = missedSegments.filter(segment =>
+    segment.some(point => point.dist > tolerance)
+  );
 
   // Calculate and display synthesis
   const refDistance = calculateTotalDistance(refPoints);
-  const missedDistance = missedSegments.reduce((acc, segment) => acc + calculateTotalDistance(segment), 0);
+  const missedDistance = missedSegmentsOffTolerance.reduce((acc, segment) => acc + calculateTotalDistance(segment), 0);
 
-  // Final display
-  progressEl.innerHTML = 'Comparaison terminée';
-  missedDistanceEl.innerHTML = `Missed distance of the reference path: ${Math.round(missedDistance)} m`;
-  missedPercentEl.innerHTML = `Missed % of the reference path: ${Math.round(missedDistance / refDistance * 1000) / 10} %`
+  return {
+    missedSegmentsOffTolerance,
+    refDistance,
+    missedDistance,
+  }
 }
 
-// load files
-const loadFile = async (evt) => {
-  const currentTarget = evt.currentTarget;
-  const file = evt.currentTarget.files[0];
-  const str = await file.text();
-  const gpx = parser.parse(str);
-  currentTarget.points = gpx.gpx.trk.trkseg.trkpt;
-}
+module.exports = calculate;
 
-// Event listeners
-refFileInputEl.addEventListener('change', loadFile);
-challFileInputEl.addEventListener('change', loadFile);
-buttonEl.addEventListener('click', calculate);
-
-},{"fast-xml-parser":2,"geolib":13}],2:[function(require,module,exports){
+},{"geolib":13}],2:[function(require,module,exports){
 'use strict';
 
 const validator = require('./validator');
@@ -2084,4 +2039,61 @@ function trimZeros(numStr){
 }
 module.exports = toNumber
 
-},{}]},{},[1]);
+},{}],15:[function(require,module,exports){
+const { XMLParser} = require('fast-xml-parser');
+const calculate = require('./calculate');
+
+const parser = new XMLParser({
+  ignoreAttributes : false,
+  parseAttributeValue: true,
+  attributeNamePrefix : '',
+});
+
+// Links with HTML file
+const refFileInputEl = document.querySelector('#ref');
+const challFileInputEl = document.querySelector('#chall');
+const buttonEl = document.querySelector('#calculateBtn');
+const progressEl = document.querySelector('#progress');
+const missedDistanceEl = document.querySelector('#missedDistance');
+const missedPercentEl = document.querySelector('#missedPercent');
+
+// Params
+const options = {
+  trigger: 20, // in meters - trigger must be less than tolerance
+  tolerance: 100, // in meters
+  maxDetour: 20000, // in meters
+};
+
+
+const launchComparison = async () => {
+  progressEl.innerHTML = 'Comparaison en cours';
+  const {
+    missedSegmentsOffTolerance,
+    refDistance,
+    missedDistance,
+  } = await calculate(
+    refFileInputEl.points,
+    challFileInputEl.points,
+    options,
+  );
+
+  progressEl.innerHTML = 'Comparaison terminée';
+  missedDistanceEl.innerHTML = `Missed distance of the reference path: ${Math.round(missedDistance)} m`;
+  missedPercentEl.innerHTML = `Missed % of the reference path: ${Math.round(missedDistance / refDistance * 1000) / 10} %`
+};
+
+// load files
+const loadFile = async (evt) => {
+  const currentTarget = evt.currentTarget;
+  const file = evt.currentTarget.files[0];
+  const str = await file.text();
+  const gpx = parser.parse(str);
+  currentTarget.points = gpx.gpx.trk.trkseg.trkpt;
+}
+
+// Event listeners
+refFileInputEl.addEventListener('change', loadFile);
+challFileInputEl.addEventListener('change', loadFile);
+buttonEl.addEventListener('click', launchComparison);
+
+},{"./calculate":1,"fast-xml-parser":2}]},{},[15]);
