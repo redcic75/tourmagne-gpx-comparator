@@ -1,4 +1,776 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+
+},{}],2:[function(require,module,exports){
+exports.endianness = function () { return 'LE' };
+
+exports.hostname = function () {
+    if (typeof location !== 'undefined') {
+        return location.hostname
+    }
+    else return '';
+};
+
+exports.loadavg = function () { return [] };
+
+exports.uptime = function () { return 0 };
+
+exports.freemem = function () {
+    return Number.MAX_VALUE;
+};
+
+exports.totalmem = function () {
+    return Number.MAX_VALUE;
+};
+
+exports.cpus = function () { return [] };
+
+exports.type = function () { return 'Browser' };
+
+exports.release = function () {
+    if (typeof navigator !== 'undefined') {
+        return navigator.appVersion;
+    }
+    return '';
+};
+
+exports.networkInterfaces
+= exports.getNetworkInterfaces
+= function () { return {} };
+
+exports.arch = function () { return 'javascript' };
+
+exports.platform = function () { return 'browser' };
+
+exports.tmpdir = exports.tmpDir = function () {
+    return '/tmp';
+};
+
+exports.EOL = '\n';
+
+exports.homedir = function () {
+	return '/'
+};
+
+},{}],3:[function(require,module,exports){
+(function (process){(function (){
+// 'path' module extracted from Node.js v8.11.1 (only the posix part)
+// transplited with Babel
+
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+'use strict';
+
+function assertPath(path) {
+  if (typeof path !== 'string') {
+    throw new TypeError('Path must be a string. Received ' + JSON.stringify(path));
+  }
+}
+
+// Resolves . and .. elements in a path with directory names
+function normalizeStringPosix(path, allowAboveRoot) {
+  var res = '';
+  var lastSegmentLength = 0;
+  var lastSlash = -1;
+  var dots = 0;
+  var code;
+  for (var i = 0; i <= path.length; ++i) {
+    if (i < path.length)
+      code = path.charCodeAt(i);
+    else if (code === 47 /*/*/)
+      break;
+    else
+      code = 47 /*/*/;
+    if (code === 47 /*/*/) {
+      if (lastSlash === i - 1 || dots === 1) {
+        // NOOP
+      } else if (lastSlash !== i - 1 && dots === 2) {
+        if (res.length < 2 || lastSegmentLength !== 2 || res.charCodeAt(res.length - 1) !== 46 /*.*/ || res.charCodeAt(res.length - 2) !== 46 /*.*/) {
+          if (res.length > 2) {
+            var lastSlashIndex = res.lastIndexOf('/');
+            if (lastSlashIndex !== res.length - 1) {
+              if (lastSlashIndex === -1) {
+                res = '';
+                lastSegmentLength = 0;
+              } else {
+                res = res.slice(0, lastSlashIndex);
+                lastSegmentLength = res.length - 1 - res.lastIndexOf('/');
+              }
+              lastSlash = i;
+              dots = 0;
+              continue;
+            }
+          } else if (res.length === 2 || res.length === 1) {
+            res = '';
+            lastSegmentLength = 0;
+            lastSlash = i;
+            dots = 0;
+            continue;
+          }
+        }
+        if (allowAboveRoot) {
+          if (res.length > 0)
+            res += '/..';
+          else
+            res = '..';
+          lastSegmentLength = 2;
+        }
+      } else {
+        if (res.length > 0)
+          res += '/' + path.slice(lastSlash + 1, i);
+        else
+          res = path.slice(lastSlash + 1, i);
+        lastSegmentLength = i - lastSlash - 1;
+      }
+      lastSlash = i;
+      dots = 0;
+    } else if (code === 46 /*.*/ && dots !== -1) {
+      ++dots;
+    } else {
+      dots = -1;
+    }
+  }
+  return res;
+}
+
+function _format(sep, pathObject) {
+  var dir = pathObject.dir || pathObject.root;
+  var base = pathObject.base || (pathObject.name || '') + (pathObject.ext || '');
+  if (!dir) {
+    return base;
+  }
+  if (dir === pathObject.root) {
+    return dir + base;
+  }
+  return dir + sep + base;
+}
+
+var posix = {
+  // path.resolve([from ...], to)
+  resolve: function resolve() {
+    var resolvedPath = '';
+    var resolvedAbsolute = false;
+    var cwd;
+
+    for (var i = arguments.length - 1; i >= -1 && !resolvedAbsolute; i--) {
+      var path;
+      if (i >= 0)
+        path = arguments[i];
+      else {
+        if (cwd === undefined)
+          cwd = process.cwd();
+        path = cwd;
+      }
+
+      assertPath(path);
+
+      // Skip empty entries
+      if (path.length === 0) {
+        continue;
+      }
+
+      resolvedPath = path + '/' + resolvedPath;
+      resolvedAbsolute = path.charCodeAt(0) === 47 /*/*/;
+    }
+
+    // At this point the path should be resolved to a full absolute path, but
+    // handle relative paths to be safe (might happen when process.cwd() fails)
+
+    // Normalize the path
+    resolvedPath = normalizeStringPosix(resolvedPath, !resolvedAbsolute);
+
+    if (resolvedAbsolute) {
+      if (resolvedPath.length > 0)
+        return '/' + resolvedPath;
+      else
+        return '/';
+    } else if (resolvedPath.length > 0) {
+      return resolvedPath;
+    } else {
+      return '.';
+    }
+  },
+
+  normalize: function normalize(path) {
+    assertPath(path);
+
+    if (path.length === 0) return '.';
+
+    var isAbsolute = path.charCodeAt(0) === 47 /*/*/;
+    var trailingSeparator = path.charCodeAt(path.length - 1) === 47 /*/*/;
+
+    // Normalize the path
+    path = normalizeStringPosix(path, !isAbsolute);
+
+    if (path.length === 0 && !isAbsolute) path = '.';
+    if (path.length > 0 && trailingSeparator) path += '/';
+
+    if (isAbsolute) return '/' + path;
+    return path;
+  },
+
+  isAbsolute: function isAbsolute(path) {
+    assertPath(path);
+    return path.length > 0 && path.charCodeAt(0) === 47 /*/*/;
+  },
+
+  join: function join() {
+    if (arguments.length === 0)
+      return '.';
+    var joined;
+    for (var i = 0; i < arguments.length; ++i) {
+      var arg = arguments[i];
+      assertPath(arg);
+      if (arg.length > 0) {
+        if (joined === undefined)
+          joined = arg;
+        else
+          joined += '/' + arg;
+      }
+    }
+    if (joined === undefined)
+      return '.';
+    return posix.normalize(joined);
+  },
+
+  relative: function relative(from, to) {
+    assertPath(from);
+    assertPath(to);
+
+    if (from === to) return '';
+
+    from = posix.resolve(from);
+    to = posix.resolve(to);
+
+    if (from === to) return '';
+
+    // Trim any leading backslashes
+    var fromStart = 1;
+    for (; fromStart < from.length; ++fromStart) {
+      if (from.charCodeAt(fromStart) !== 47 /*/*/)
+        break;
+    }
+    var fromEnd = from.length;
+    var fromLen = fromEnd - fromStart;
+
+    // Trim any leading backslashes
+    var toStart = 1;
+    for (; toStart < to.length; ++toStart) {
+      if (to.charCodeAt(toStart) !== 47 /*/*/)
+        break;
+    }
+    var toEnd = to.length;
+    var toLen = toEnd - toStart;
+
+    // Compare paths to find the longest common path from root
+    var length = fromLen < toLen ? fromLen : toLen;
+    var lastCommonSep = -1;
+    var i = 0;
+    for (; i <= length; ++i) {
+      if (i === length) {
+        if (toLen > length) {
+          if (to.charCodeAt(toStart + i) === 47 /*/*/) {
+            // We get here if `from` is the exact base path for `to`.
+            // For example: from='/foo/bar'; to='/foo/bar/baz'
+            return to.slice(toStart + i + 1);
+          } else if (i === 0) {
+            // We get here if `from` is the root
+            // For example: from='/'; to='/foo'
+            return to.slice(toStart + i);
+          }
+        } else if (fromLen > length) {
+          if (from.charCodeAt(fromStart + i) === 47 /*/*/) {
+            // We get here if `to` is the exact base path for `from`.
+            // For example: from='/foo/bar/baz'; to='/foo/bar'
+            lastCommonSep = i;
+          } else if (i === 0) {
+            // We get here if `to` is the root.
+            // For example: from='/foo'; to='/'
+            lastCommonSep = 0;
+          }
+        }
+        break;
+      }
+      var fromCode = from.charCodeAt(fromStart + i);
+      var toCode = to.charCodeAt(toStart + i);
+      if (fromCode !== toCode)
+        break;
+      else if (fromCode === 47 /*/*/)
+        lastCommonSep = i;
+    }
+
+    var out = '';
+    // Generate the relative path based on the path difference between `to`
+    // and `from`
+    for (i = fromStart + lastCommonSep + 1; i <= fromEnd; ++i) {
+      if (i === fromEnd || from.charCodeAt(i) === 47 /*/*/) {
+        if (out.length === 0)
+          out += '..';
+        else
+          out += '/..';
+      }
+    }
+
+    // Lastly, append the rest of the destination (`to`) path that comes after
+    // the common path parts
+    if (out.length > 0)
+      return out + to.slice(toStart + lastCommonSep);
+    else {
+      toStart += lastCommonSep;
+      if (to.charCodeAt(toStart) === 47 /*/*/)
+        ++toStart;
+      return to.slice(toStart);
+    }
+  },
+
+  _makeLong: function _makeLong(path) {
+    return path;
+  },
+
+  dirname: function dirname(path) {
+    assertPath(path);
+    if (path.length === 0) return '.';
+    var code = path.charCodeAt(0);
+    var hasRoot = code === 47 /*/*/;
+    var end = -1;
+    var matchedSlash = true;
+    for (var i = path.length - 1; i >= 1; --i) {
+      code = path.charCodeAt(i);
+      if (code === 47 /*/*/) {
+          if (!matchedSlash) {
+            end = i;
+            break;
+          }
+        } else {
+        // We saw the first non-path separator
+        matchedSlash = false;
+      }
+    }
+
+    if (end === -1) return hasRoot ? '/' : '.';
+    if (hasRoot && end === 1) return '//';
+    return path.slice(0, end);
+  },
+
+  basename: function basename(path, ext) {
+    if (ext !== undefined && typeof ext !== 'string') throw new TypeError('"ext" argument must be a string');
+    assertPath(path);
+
+    var start = 0;
+    var end = -1;
+    var matchedSlash = true;
+    var i;
+
+    if (ext !== undefined && ext.length > 0 && ext.length <= path.length) {
+      if (ext.length === path.length && ext === path) return '';
+      var extIdx = ext.length - 1;
+      var firstNonSlashEnd = -1;
+      for (i = path.length - 1; i >= 0; --i) {
+        var code = path.charCodeAt(i);
+        if (code === 47 /*/*/) {
+            // If we reached a path separator that was not part of a set of path
+            // separators at the end of the string, stop now
+            if (!matchedSlash) {
+              start = i + 1;
+              break;
+            }
+          } else {
+          if (firstNonSlashEnd === -1) {
+            // We saw the first non-path separator, remember this index in case
+            // we need it if the extension ends up not matching
+            matchedSlash = false;
+            firstNonSlashEnd = i + 1;
+          }
+          if (extIdx >= 0) {
+            // Try to match the explicit extension
+            if (code === ext.charCodeAt(extIdx)) {
+              if (--extIdx === -1) {
+                // We matched the extension, so mark this as the end of our path
+                // component
+                end = i;
+              }
+            } else {
+              // Extension does not match, so our result is the entire path
+              // component
+              extIdx = -1;
+              end = firstNonSlashEnd;
+            }
+          }
+        }
+      }
+
+      if (start === end) end = firstNonSlashEnd;else if (end === -1) end = path.length;
+      return path.slice(start, end);
+    } else {
+      for (i = path.length - 1; i >= 0; --i) {
+        if (path.charCodeAt(i) === 47 /*/*/) {
+            // If we reached a path separator that was not part of a set of path
+            // separators at the end of the string, stop now
+            if (!matchedSlash) {
+              start = i + 1;
+              break;
+            }
+          } else if (end === -1) {
+          // We saw the first non-path separator, mark this as the end of our
+          // path component
+          matchedSlash = false;
+          end = i + 1;
+        }
+      }
+
+      if (end === -1) return '';
+      return path.slice(start, end);
+    }
+  },
+
+  extname: function extname(path) {
+    assertPath(path);
+    var startDot = -1;
+    var startPart = 0;
+    var end = -1;
+    var matchedSlash = true;
+    // Track the state of characters (if any) we see before our first dot and
+    // after any path separator we find
+    var preDotState = 0;
+    for (var i = path.length - 1; i >= 0; --i) {
+      var code = path.charCodeAt(i);
+      if (code === 47 /*/*/) {
+          // If we reached a path separator that was not part of a set of path
+          // separators at the end of the string, stop now
+          if (!matchedSlash) {
+            startPart = i + 1;
+            break;
+          }
+          continue;
+        }
+      if (end === -1) {
+        // We saw the first non-path separator, mark this as the end of our
+        // extension
+        matchedSlash = false;
+        end = i + 1;
+      }
+      if (code === 46 /*.*/) {
+          // If this is our first dot, mark it as the start of our extension
+          if (startDot === -1)
+            startDot = i;
+          else if (preDotState !== 1)
+            preDotState = 1;
+      } else if (startDot !== -1) {
+        // We saw a non-dot and non-path separator before our dot, so we should
+        // have a good chance at having a non-empty extension
+        preDotState = -1;
+      }
+    }
+
+    if (startDot === -1 || end === -1 ||
+        // We saw a non-dot character immediately before the dot
+        preDotState === 0 ||
+        // The (right-most) trimmed path component is exactly '..'
+        preDotState === 1 && startDot === end - 1 && startDot === startPart + 1) {
+      return '';
+    }
+    return path.slice(startDot, end);
+  },
+
+  format: function format(pathObject) {
+    if (pathObject === null || typeof pathObject !== 'object') {
+      throw new TypeError('The "pathObject" argument must be of type Object. Received type ' + typeof pathObject);
+    }
+    return _format('/', pathObject);
+  },
+
+  parse: function parse(path) {
+    assertPath(path);
+
+    var ret = { root: '', dir: '', base: '', ext: '', name: '' };
+    if (path.length === 0) return ret;
+    var code = path.charCodeAt(0);
+    var isAbsolute = code === 47 /*/*/;
+    var start;
+    if (isAbsolute) {
+      ret.root = '/';
+      start = 1;
+    } else {
+      start = 0;
+    }
+    var startDot = -1;
+    var startPart = 0;
+    var end = -1;
+    var matchedSlash = true;
+    var i = path.length - 1;
+
+    // Track the state of characters (if any) we see before our first dot and
+    // after any path separator we find
+    var preDotState = 0;
+
+    // Get non-dir info
+    for (; i >= start; --i) {
+      code = path.charCodeAt(i);
+      if (code === 47 /*/*/) {
+          // If we reached a path separator that was not part of a set of path
+          // separators at the end of the string, stop now
+          if (!matchedSlash) {
+            startPart = i + 1;
+            break;
+          }
+          continue;
+        }
+      if (end === -1) {
+        // We saw the first non-path separator, mark this as the end of our
+        // extension
+        matchedSlash = false;
+        end = i + 1;
+      }
+      if (code === 46 /*.*/) {
+          // If this is our first dot, mark it as the start of our extension
+          if (startDot === -1) startDot = i;else if (preDotState !== 1) preDotState = 1;
+        } else if (startDot !== -1) {
+        // We saw a non-dot and non-path separator before our dot, so we should
+        // have a good chance at having a non-empty extension
+        preDotState = -1;
+      }
+    }
+
+    if (startDot === -1 || end === -1 ||
+    // We saw a non-dot character immediately before the dot
+    preDotState === 0 ||
+    // The (right-most) trimmed path component is exactly '..'
+    preDotState === 1 && startDot === end - 1 && startDot === startPart + 1) {
+      if (end !== -1) {
+        if (startPart === 0 && isAbsolute) ret.base = ret.name = path.slice(1, end);else ret.base = ret.name = path.slice(startPart, end);
+      }
+    } else {
+      if (startPart === 0 && isAbsolute) {
+        ret.name = path.slice(1, startDot);
+        ret.base = path.slice(1, end);
+      } else {
+        ret.name = path.slice(startPart, startDot);
+        ret.base = path.slice(startPart, end);
+      }
+      ret.ext = path.slice(startDot, end);
+    }
+
+    if (startPart > 0) ret.dir = path.slice(0, startPart - 1);else if (isAbsolute) ret.dir = '/';
+
+    return ret;
+  },
+
+  sep: '/',
+  delimiter: ':',
+  win32: null,
+  posix: null
+};
+
+posix.posix = posix;
+
+module.exports = posix;
+
+}).call(this)}).call(this,require('_process'))
+},{"_process":4}],4:[function(require,module,exports){
+// shim for using process in browser
+var process = module.exports = {};
+
+// cached from whatever global is present so that test runners that stub it
+// don't break things.  But we need to wrap it in a try catch in case it is
+// wrapped in strict mode code which doesn't define any globals.  It's inside a
+// function because try/catches deoptimize in certain engines.
+
+var cachedSetTimeout;
+var cachedClearTimeout;
+
+function defaultSetTimout() {
+    throw new Error('setTimeout has not been defined');
+}
+function defaultClearTimeout () {
+    throw new Error('clearTimeout has not been defined');
+}
+(function () {
+    try {
+        if (typeof setTimeout === 'function') {
+            cachedSetTimeout = setTimeout;
+        } else {
+            cachedSetTimeout = defaultSetTimout;
+        }
+    } catch (e) {
+        cachedSetTimeout = defaultSetTimout;
+    }
+    try {
+        if (typeof clearTimeout === 'function') {
+            cachedClearTimeout = clearTimeout;
+        } else {
+            cachedClearTimeout = defaultClearTimeout;
+        }
+    } catch (e) {
+        cachedClearTimeout = defaultClearTimeout;
+    }
+} ())
+function runTimeout(fun) {
+    if (cachedSetTimeout === setTimeout) {
+        //normal enviroments in sane situations
+        return setTimeout(fun, 0);
+    }
+    // if setTimeout wasn't available but was latter defined
+    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
+        cachedSetTimeout = setTimeout;
+        return setTimeout(fun, 0);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedSetTimeout(fun, 0);
+    } catch(e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
+            return cachedSetTimeout.call(null, fun, 0);
+        } catch(e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
+            return cachedSetTimeout.call(this, fun, 0);
+        }
+    }
+
+
+}
+function runClearTimeout(marker) {
+    if (cachedClearTimeout === clearTimeout) {
+        //normal enviroments in sane situations
+        return clearTimeout(marker);
+    }
+    // if clearTimeout wasn't available but was latter defined
+    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
+        cachedClearTimeout = clearTimeout;
+        return clearTimeout(marker);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedClearTimeout(marker);
+    } catch (e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
+            return cachedClearTimeout.call(null, marker);
+        } catch (e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
+            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
+            return cachedClearTimeout.call(this, marker);
+        }
+    }
+
+
+
+}
+var queue = [];
+var draining = false;
+var currentQueue;
+var queueIndex = -1;
+
+function cleanUpNextTick() {
+    if (!draining || !currentQueue) {
+        return;
+    }
+    draining = false;
+    if (currentQueue.length) {
+        queue = currentQueue.concat(queue);
+    } else {
+        queueIndex = -1;
+    }
+    if (queue.length) {
+        drainQueue();
+    }
+}
+
+function drainQueue() {
+    if (draining) {
+        return;
+    }
+    var timeout = runTimeout(cleanUpNextTick);
+    draining = true;
+
+    var len = queue.length;
+    while(len) {
+        currentQueue = queue;
+        queue = [];
+        while (++queueIndex < len) {
+            if (currentQueue) {
+                currentQueue[queueIndex].run();
+            }
+        }
+        queueIndex = -1;
+        len = queue.length;
+    }
+    currentQueue = null;
+    draining = false;
+    runClearTimeout(timeout);
+}
+
+process.nextTick = function (fun) {
+    var args = new Array(arguments.length - 1);
+    if (arguments.length > 1) {
+        for (var i = 1; i < arguments.length; i++) {
+            args[i - 1] = arguments[i];
+        }
+    }
+    queue.push(new Item(fun, args));
+    if (queue.length === 1 && !draining) {
+        runTimeout(drainQueue);
+    }
+};
+
+// v8 likes predictible objects
+function Item(fun, array) {
+    this.fun = fun;
+    this.array = array;
+}
+Item.prototype.run = function () {
+    this.fun.apply(null, this.array);
+};
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+process.version = ''; // empty string to avoid regexp issues
+process.versions = {};
+
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+process.prependListener = noop;
+process.prependOnceListener = noop;
+
+process.listeners = function (name) { return [] }
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+};
+
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+process.umask = function() { return 0; };
+
+},{}],5:[function(require,module,exports){
 const geolib = require('geolib');
 
 // Calculate total distance of a track segment (represented by an array of points)
@@ -91,7 +863,9 @@ const compareGpx = async (refPoints, challPoints, options) => {
 
 module.exports = compareGpx;
 
-},{"geolib":14}],2:[function(require,module,exports){
+},{"geolib":20}],6:[function(require,module,exports){
+(function (process){(function (){
+require('dotenv').config();
 const parseGpx = require('./parseGpx');
 const compareGpx = require('./compareGpx');
 
@@ -122,24 +896,261 @@ const launchComparison = async (event) => {
   );
 
   // Update DOM
-  missedDistanceEl.innerHTML = `Missed distance of the reference path: ${Math.round(missedDistance)} m`;
-  missedPercentEl.innerHTML = `Missed % of the reference path: ${Math.round(missedDistance / refDistance * 1000) / 10} %`
+  missedDistanceEl.innerHTML = `${Math.round(missedDistance)} m`;
+  missedPercentEl.innerHTML = `${Math.round(missedDistance / refDistance * 1000) / 10} %`;
 };
 
 // load files
 const loadFile = async (evt) => {
   const currentTarget = evt.currentTarget;
   const file = evt.currentTarget.files[0];
+  const id = evt.currentTarget.id;
+  console.log(id)
+  const color = evt.currentTarget.color;
+
   const str = await file.text();
   currentTarget.points = parseGpx(str);
+
+  const data = {
+    'type': 'FeatureCollection',
+    'features': [
+      {
+        'type': 'Feature',
+        'geometry': {
+          'type': 'LineString',
+          'coordinates': [
+            // [-0.565, 44.859]
+          ]
+        }
+      }
+    ]
+  };
+
+  map.addSource(id, { type: 'geojson', data: data });
+
+  currentTarget.points.forEach(point => {
+    data.features[0].geometry.coordinates.push([point.lon, point.lat]);
+  });
+
+  map.getSource(id).setData(data);
+  map.addLayer({
+    id: id,
+    type: 'line',
+    source: id,
+    layout: {
+      'line-join': 'round',
+      'line-cap': 'round',
+    },
+    paint: {
+      'line-color': color,
+      'line-width': 4,
+    },
+  });
 }
 
-// Event listeners
-refFileInputEl.addEventListener('change', loadFile);
-challFileInputEl.addEventListener('change', loadFile);
-formEl.addEventListener('submit', launchComparison);
+// Display empty map
+mapboxgl.accessToken = process.env.MAPBOX_API_KEY;
+var map = new mapboxgl.Map({
+  container: 'map',
+  style: 'mapbox://styles/mapbox/streets-v12',
+  center: [-0.6, 44.83],
+  zoom: 13,
+});
+map.addControl(new mapboxgl.NavigationControl());
 
-},{"./compareGpx":1,"./parseGpx":16}],3:[function(require,module,exports){
+map.on('load', () => {
+  // Event listeners
+  refFileInputEl.id = 'ref';
+  refFileInputEl.color = '#233677';
+
+  challFileInputEl.id = 'chall';
+  challFileInputEl.color = '#00ff3f';
+
+  refFileInputEl.addEventListener('change', loadFile);
+  challFileInputEl.addEventListener('change', loadFile);
+  formEl.addEventListener('submit', launchComparison);
+});
+
+}).call(this)}).call(this,require('_process'))
+},{"./compareGpx":5,"./parseGpx":22,"_process":4,"dotenv":7}],7:[function(require,module,exports){
+(function (process){(function (){
+const fs = require('fs')
+const path = require('path')
+const os = require('os')
+const packageJson = require('../package.json')
+
+const version = packageJson.version
+
+const LINE = /(?:^|^)\s*(?:export\s+)?([\w.-]+)(?:\s*=\s*?|:\s+?)(\s*'(?:\\'|[^'])*'|\s*"(?:\\"|[^"])*"|\s*`(?:\\`|[^`])*`|[^#\r\n]+)?\s*(?:#.*)?(?:$|$)/mg
+
+// Parser src into an Object
+function parse (src) {
+  const obj = {}
+
+  // Convert buffer to string
+  let lines = src.toString()
+
+  // Convert line breaks to same format
+  lines = lines.replace(/\r\n?/mg, '\n')
+
+  let match
+  while ((match = LINE.exec(lines)) != null) {
+    const key = match[1]
+
+    // Default undefined or null to empty string
+    let value = (match[2] || '')
+
+    // Remove whitespace
+    value = value.trim()
+
+    // Check if double quoted
+    const maybeQuote = value[0]
+
+    // Remove surrounding quotes
+    value = value.replace(/^(['"`])([\s\S]*)\1$/mg, '$2')
+
+    // Expand newlines if double quoted
+    if (maybeQuote === '"') {
+      value = value.replace(/\\n/g, '\n')
+      value = value.replace(/\\r/g, '\r')
+    }
+
+    // Add to object
+    obj[key] = value
+  }
+
+  return obj
+}
+
+function _log (message) {
+  console.log(`[dotenv@${version}][DEBUG] ${message}`)
+}
+
+function _resolveHome (envPath) {
+  return envPath[0] === '~' ? path.join(os.homedir(), envPath.slice(1)) : envPath
+}
+
+// Populates process.env from .env file
+function config (options) {
+  let dotenvPath = path.resolve(process.cwd(), '.env')
+  let encoding = 'utf8'
+  const debug = Boolean(options && options.debug)
+  const override = Boolean(options && options.override)
+
+  if (options) {
+    if (options.path != null) {
+      dotenvPath = _resolveHome(options.path)
+    }
+    if (options.encoding != null) {
+      encoding = options.encoding
+    }
+  }
+
+  try {
+    // Specifying an encoding returns a string instead of a buffer
+    const parsed = DotenvModule.parse(fs.readFileSync(dotenvPath, { encoding }))
+
+    Object.keys(parsed).forEach(function (key) {
+      if (!Object.prototype.hasOwnProperty.call(process.env, key)) {
+        process.env[key] = parsed[key]
+      } else {
+        if (override === true) {
+          process.env[key] = parsed[key]
+        }
+
+        if (debug) {
+          if (override === true) {
+            _log(`"${key}" is already defined in \`process.env\` and WAS overwritten`)
+          } else {
+            _log(`"${key}" is already defined in \`process.env\` and was NOT overwritten`)
+          }
+        }
+      }
+    })
+
+    return { parsed }
+  } catch (e) {
+    if (debug) {
+      _log(`Failed to load ${dotenvPath} ${e.message}`)
+    }
+
+    return { error: e }
+  }
+}
+
+const DotenvModule = {
+  config,
+  parse
+}
+
+module.exports.config = DotenvModule.config
+module.exports.parse = DotenvModule.parse
+module.exports = DotenvModule
+
+}).call(this)}).call(this,require('_process'))
+},{"../package.json":8,"_process":4,"fs":1,"os":2,"path":3}],8:[function(require,module,exports){
+module.exports={
+  "name": "dotenv",
+  "version": "16.0.3",
+  "description": "Loads environment variables from .env file",
+  "main": "lib/main.js",
+  "types": "lib/main.d.ts",
+  "exports": {
+    ".": {
+      "require": "./lib/main.js",
+      "types": "./lib/main.d.ts",
+      "default": "./lib/main.js"
+    },
+    "./config": "./config.js",
+    "./config.js": "./config.js",
+    "./lib/env-options": "./lib/env-options.js",
+    "./lib/env-options.js": "./lib/env-options.js",
+    "./lib/cli-options": "./lib/cli-options.js",
+    "./lib/cli-options.js": "./lib/cli-options.js",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "dts-check": "tsc --project tests/types/tsconfig.json",
+    "lint": "standard",
+    "lint-readme": "standard-markdown",
+    "pretest": "npm run lint && npm run dts-check",
+    "test": "tap tests/*.js --100 -Rspec",
+    "prerelease": "npm test",
+    "release": "standard-version"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/motdotla/dotenv.git"
+  },
+  "keywords": [
+    "dotenv",
+    "env",
+    ".env",
+    "environment",
+    "variables",
+    "config",
+    "settings"
+  ],
+  "readmeFilename": "README.md",
+  "license": "BSD-2-Clause",
+  "devDependencies": {
+    "@types/node": "^17.0.9",
+    "decache": "^4.6.1",
+    "dtslint": "^3.7.0",
+    "sinon": "^12.0.1",
+    "standard": "^16.0.4",
+    "standard-markdown": "^7.1.0",
+    "standard-version": "^9.3.2",
+    "tap": "^15.1.6",
+    "tar": "^6.1.11",
+    "typescript": "^4.5.4"
+  },
+  "engines": {
+    "node": ">=12"
+  }
+}
+
+},{}],9:[function(require,module,exports){
 'use strict';
 
 const validator = require('./validator');
@@ -151,7 +1162,7 @@ module.exports = {
   XMLValidator: validator,
   XMLBuilder: XMLBuilder
 }
-},{"./validator":5,"./xmlbuilder/json2xml":6,"./xmlparser/XMLParser":11}],4:[function(require,module,exports){
+},{"./validator":11,"./xmlbuilder/json2xml":12,"./xmlparser/XMLParser":17}],10:[function(require,module,exports){
 'use strict';
 
 const nameStartChar = ':A-Za-z_\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u02FF\\u0370-\\u037D\\u037F-\\u1FFF\\u200C-\\u200D\\u2070-\\u218F\\u2C00-\\u2FEF\\u3001-\\uD7FF\\uF900-\\uFDCF\\uFDF0-\\uFFFD';
@@ -225,7 +1236,7 @@ exports.isName = isName;
 exports.getAllMatches = getAllMatches;
 exports.nameRegexp = nameRegexp;
 
-},{}],5:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 'use strict';
 
 const util = require('./util');
@@ -650,7 +1661,7 @@ function getPositionFromMatch(match) {
   return match.startIndex + match[1].length;
 }
 
-},{"./util":4}],6:[function(require,module,exports){
+},{"./util":10}],12:[function(require,module,exports){
 'use strict';
 //parse Empty Node as self closing node
 const buildFromOrderedJs = require('./orderedJs2Xml');
@@ -911,7 +1922,7 @@ function isAttribute(name /*, options*/) {
 
 module.exports = Builder;
 
-},{"./orderedJs2Xml":7}],7:[function(require,module,exports){
+},{"./orderedJs2Xml":13}],13:[function(require,module,exports){
 const EOL = "\n";
 
 /**
@@ -1044,7 +2055,7 @@ function replaceEntitiesValue(textValue, options) {
 }
 module.exports = toXml;
 
-},{}],8:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 //TODO: handle comments
 function readDocType(xmlData, i){
     
@@ -1162,7 +2173,7 @@ function parseEntityExp(exp, entities){
     }
 }
 module.exports = readDocType;
-},{}],9:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 
 const defaultOptions = {
     preserveOrder: false,
@@ -1207,7 +2218,7 @@ const buildOptions = function(options) {
 
 exports.buildOptions = buildOptions;
 exports.defaultOptions = defaultOptions;
-},{}],10:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 'use strict';
 ///@ts-check
 
@@ -1773,7 +2784,7 @@ function parseValue(val, shouldParse, options) {
 
 module.exports = OrderedObjParser;
 
-},{"../util":4,"./DocTypeReader":8,"./xmlNode":13,"strnum":15}],11:[function(require,module,exports){
+},{"../util":10,"./DocTypeReader":14,"./xmlNode":19,"strnum":21}],17:[function(require,module,exports){
 const { buildOptions} = require("./OptionsBuilder");
 const OrderedObjParser = require("./OrderedObjParser");
 const { prettify} = require("./node2json");
@@ -1832,7 +2843,7 @@ class XMLParser{
 }
 
 module.exports = XMLParser;
-},{"../validator":5,"./OptionsBuilder":9,"./OrderedObjParser":10,"./node2json":12}],12:[function(require,module,exports){
+},{"../validator":11,"./OptionsBuilder":15,"./OrderedObjParser":16,"./node2json":18}],18:[function(require,module,exports){
 'use strict';
 
 /**
@@ -1935,7 +2946,7 @@ function isLeafTag(obj, options){
 }
 exports.prettify = prettify;
 
-},{}],13:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 'use strict';
 
 class XmlNode{
@@ -1959,9 +2970,9 @@ class XmlNode{
 
 
 module.exports = XmlNode;
-},{}],14:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 !function(t,n){"object"==typeof exports&&"object"==typeof module?module.exports=n():"function"==typeof define&&define.amd?define([],n):"object"==typeof exports?exports.geolib=n():t.geolib=n()}("undefined"!=typeof self?self:this,(function(){return function(t){var n={};function r(e){if(n[e])return n[e].exports;var i=n[e]={i:e,l:!1,exports:{}};return t[e].call(i.exports,i,i.exports,r),i.l=!0,i.exports}return r.m=t,r.c=n,r.d=function(t,n,e){r.o(t,n)||Object.defineProperty(t,n,{enumerable:!0,get:e})},r.r=function(t){"undefined"!=typeof Symbol&&Symbol.toStringTag&&Object.defineProperty(t,Symbol.toStringTag,{value:"Module"}),Object.defineProperty(t,"__esModule",{value:!0})},r.t=function(t,n){if(1&n&&(t=r(t)),8&n)return t;if(4&n&&"object"==typeof t&&t&&t.__esModule)return t;var e=Object.create(null);if(r.r(e),Object.defineProperty(e,"default",{enumerable:!0,value:t}),2&n&&"string"!=typeof t)for(var i in t)r.d(e,i,function(n){return t[n]}.bind(null,i));return e},r.n=function(t){var n=t&&t.__esModule?function(){return t.default}:function(){return t};return r.d(n,"a",n),n},r.o=function(t,n){return Object.prototype.hasOwnProperty.call(t,n)},r.p="",r(r.s=0)}([function(t,n,r){"use strict";r.r(n),r.d(n,"computeDestinationPoint",(function(){return C})),r.d(n,"convertArea",(function(){return F})),r.d(n,"convertDistance",(function(){return k})),r.d(n,"convertSpeed",(function(){return T})),r.d(n,"decimalToSexagesimal",(function(){return B})),r.d(n,"findNearest",(function(){return K})),r.d(n,"getAreaOfPolygon",(function(){return Y})),r.d(n,"getBounds",(function(){return Z})),r.d(n,"getBoundsOfDistance",(function(){return G})),r.d(n,"getCenter",(function(){return V})),r.d(n,"getCenterOfBounds",(function(){return U})),r.d(n,"getCompassDirection",(function(){return H})),r.d(n,"getCoordinateKey",(function(){return v})),r.d(n,"getCoordinateKeys",(function(){return S})),r.d(n,"getDistance",(function(){return X})),r.d(n,"getDistanceFromLine",(function(){return J})),r.d(n,"getGreatCircleBearing",(function(){return Q})),r.d(n,"getLatitude",(function(){return A})),r.d(n,"getLongitude",(function(){return I})),r.d(n,"getPathLength",(function(){return nt})),r.d(n,"getPreciseDistance",(function(){return rt})),r.d(n,"getRhumbLineBearing",(function(){return z})),r.d(n,"getRoughCompassDirection",(function(){return et})),r.d(n,"getSpeed",(function(){return it})),r.d(n,"isDecimal",(function(){return m})),r.d(n,"isPointInLine",(function(){return ot})),r.d(n,"isPointInPolygon",(function(){return at})),r.d(n,"isPointNearLine",(function(){return ut})),r.d(n,"isPointWithinRadius",(function(){return ct})),r.d(n,"isSexagesimal",(function(){return p})),r.d(n,"isValidCoordinate",(function(){return w})),r.d(n,"isValidLatitude",(function(){return P})),r.d(n,"isValidLongitude",(function(){return N})),r.d(n,"orderByDistance",(function(){return _})),r.d(n,"sexagesimalToDecimal",(function(){return y})),r.d(n,"toDecimal",(function(){return L})),r.d(n,"toRad",(function(){return W})),r.d(n,"toDeg",(function(){return D})),r.d(n,"wktToPolygon",(function(){return lt})),r.d(n,"sexagesimalPattern",(function(){return e})),r.d(n,"earthRadius",(function(){return i})),r.d(n,"MINLAT",(function(){return o})),r.d(n,"MAXLAT",(function(){return a})),r.d(n,"MINLON",(function(){return u})),r.d(n,"MAXLON",(function(){return c})),r.d(n,"longitudeKeys",(function(){return f})),r.d(n,"latitudeKeys",(function(){return s})),r.d(n,"altitudeKeys",(function(){return l})),r.d(n,"distanceConversion",(function(){return d})),r.d(n,"timeConversion",(function(){return h})),r.d(n,"areaConversion",(function(){return g}));var e=/^([0-9]{1,3})°\s*([0-9]{1,3}(?:\.(?:[0-9]{1,}))?)['′]\s*(([0-9]{1,3}(\.([0-9]{1,}))?)["″]\s*)?([NEOSW]?)$/,i=6378137,o=-90,a=90,u=-180,c=180,f=["lng","lon","longitude",0],s=["lat","latitude",1],l=["alt","altitude","elevation","elev",2],d={m:1,km:.001,cm:100,mm:1e3,mi:1/1609.344,sm:1/1852.216,ft:100/30.48,in:100/2.54,yd:1/.9144},h={m:60,h:3600,d:86400},g={m2:1,km2:1e-6,ha:1e-4,a:.01,ft2:10.763911,yd2:1.19599,in2:1550.0031};g.sqm=g.m2,g.sqkm=g.km2,g.sqft=g.ft2,g.sqyd=g.yd2,g.sqin=g.in2;var v=function(t,n){return n.reduce((function(n,r){if(null==t)throw new Error("'".concat(t,"' is no valid coordinate."));return Object.prototype.hasOwnProperty.call(t,r)&&void 0!==r&&void 0===n?(n=r,r):n}),void 0)},m=function(t){var n=t.toString().trim();return!isNaN(parseFloat(n))&&parseFloat(n)===Number(n)},p=function(t){return e.test(t.toString().trim())},y=function(t){var n=new RegExp(e).exec(t.toString().trim());if(null==n)throw new Error("Given value is not in sexagesimal format");var r=Number(n[2])/60||0,i=Number(n[4])/3600||0,o=parseFloat(n[1])+r+i;return["S","W"].includes(n[7])?-o:o};function b(t,n){var r=Object.keys(t);if(Object.getOwnPropertySymbols){var e=Object.getOwnPropertySymbols(t);n&&(e=e.filter((function(n){return Object.getOwnPropertyDescriptor(t,n).enumerable}))),r.push.apply(r,e)}return r}function M(t){for(var n=1;n<arguments.length;n++){var r=null!=arguments[n]?arguments[n]:{};n%2?b(Object(r),!0).forEach((function(n){O(t,n,r[n])})):Object.getOwnPropertyDescriptors?Object.defineProperties(t,Object.getOwnPropertyDescriptors(r)):b(Object(r)).forEach((function(n){Object.defineProperty(t,n,Object.getOwnPropertyDescriptor(r,n))}))}return t}function O(t,n,r){return n in t?Object.defineProperty(t,n,{value:r,enumerable:!0,configurable:!0,writable:!0}):t[n]=r,t}var S=function(t){var n=arguments.length>1&&void 0!==arguments[1]?arguments[1]:{longitude:f,latitude:s,altitude:l},r=v(t,n.longitude),e=v(t,n.latitude),i=v(t,n.altitude);return M({latitude:e,longitude:r},i?{altitude:i}:{})},P=function t(n){return m(n)?!(parseFloat(n)>a||n<o):!!p(n)&&t(y(n))},N=function t(n){return m(n)?!(parseFloat(n)>c||n<u):!!p(n)&&t(y(n))},w=function(t){var n=S(t),r=n.latitude,e=n.longitude;if(Array.isArray(t)&&t.length>=2)return N(t[0])&&P(t[1]);if(void 0===r||void 0===e)return!1;var i=t[e],o=t[r];return void 0!==o&&void 0!==i&&(!1!==P(o)&&!1!==N(i))};function j(t,n){var r=Object.keys(t);if(Object.getOwnPropertySymbols){var e=Object.getOwnPropertySymbols(t);n&&(e=e.filter((function(n){return Object.getOwnPropertyDescriptor(t,n).enumerable}))),r.push.apply(r,e)}return r}function E(t){for(var n=1;n<arguments.length;n++){var r=null!=arguments[n]?arguments[n]:{};n%2?j(Object(r),!0).forEach((function(n){x(t,n,r[n])})):Object.getOwnPropertyDescriptors?Object.defineProperties(t,Object.getOwnPropertyDescriptors(r)):j(Object(r)).forEach((function(n){Object.defineProperty(t,n,Object.getOwnPropertyDescriptor(r,n))}))}return t}function x(t,n,r){return n in t?Object.defineProperty(t,n,{value:r,enumerable:!0,configurable:!0,writable:!0}):t[n]=r,t}var L=function t(n){if(m(n))return Number(n);if(p(n))return y(n);if(w(n)){var r=S(n);return Array.isArray(n)?n.map((function(n,r){return[0,1].includes(r)?t(n):n})):E(E(E({},n),r.latitude&&x({},r.latitude,t(n[r.latitude]))),r.longitude&&x({},r.longitude,t(n[r.longitude])))}return Array.isArray(n)?n.map((function(n){return w(n)?t(n):n})):n},A=function(t,n){var r=v(t,s);if(null!=r){var e=t[r];return!0===n?e:L(e)}},I=function(t,n){var r=v(t,f);if(null!=r){var e=t[r];return!0===n?e:L(e)}},W=function(t){return t*Math.PI/180},D=function(t){return 180*t/Math.PI},C=function(t,n,r){var e=arguments.length>3&&void 0!==arguments[3]?arguments[3]:6371e3,i=A(t),o=I(t),a=n/e,f=W(r),s=W(i),l=W(o),d=Math.asin(Math.sin(s)*Math.cos(a)+Math.cos(s)*Math.sin(a)*Math.cos(f)),h=l+Math.atan2(Math.sin(f)*Math.sin(a)*Math.cos(s),Math.cos(a)-Math.sin(s)*Math.sin(d)),g=D(h);return(g<u||g>c)&&(h=(h+3*Math.PI)%(2*Math.PI)-Math.PI,g=D(h)),{latitude:D(d),longitude:g}},F=function(t){var n=arguments.length>1&&void 0!==arguments[1]?arguments[1]:"m",r=g[n];if(r)return t*r;throw new Error("Invalid unit used for area conversion.")},k=function(t){var n=arguments.length>1&&void 0!==arguments[1]?arguments[1]:"m",r=d[n];if(r)return t*r;throw new Error("Invalid unit used for distance conversion.")},T=function(t){var n=arguments.length>1&&void 0!==arguments[1]?arguments[1]:"kmh";switch(n){case"kmh":return t*h.h*d.km;case"mph":return t*h.h*d.mi;default:return t}};function q(t,n){return function(t){if(Array.isArray(t))return t}(t)||function(t,n){if("undefined"==typeof Symbol||!(Symbol.iterator in Object(t)))return;var r=[],e=!0,i=!1,o=void 0;try{for(var a,u=t[Symbol.iterator]();!(e=(a=u.next()).done)&&(r.push(a.value),!n||r.length!==n);e=!0);}catch(t){i=!0,o=t}finally{try{e||null==u.return||u.return()}finally{if(i)throw o}}return r}(t,n)||function(t,n){if(!t)return;if("string"==typeof t)return $(t,n);var r=Object.prototype.toString.call(t).slice(8,-1);"Object"===r&&t.constructor&&(r=t.constructor.name);if("Map"===r||"Set"===r)return Array.from(t);if("Arguments"===r||/^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(r))return $(t,n)}(t,n)||function(){throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.")}()}function $(t,n){(null==n||n>t.length)&&(n=t.length);for(var r=0,e=new Array(n);r<n;r++)e[r]=t[r];return e}var B=function(t){var n=q(t.toString().split("."),2),r=n[0],e=n[1],i=Math.abs(Number(r)),o=60*Number("0."+(e||0)),a=o.toString().split("."),u=Math.floor(o),c=q(function(t){var n=arguments.length>1&&void 0!==arguments[1]?arguments[1]:4,r=Math.pow(10,n);return Math.round(t*r)/r}(60*Number("0."+(a[1]||0))).toString().split("."),2),f=c[0],s=c[1],l=void 0===s?"0":s;return i+"° "+u.toString().padStart(2,"0")+"' "+f.padStart(2,"0")+"."+l.padEnd(1,"0")+'"'},R=function(t){return t>1?1:t<-1?-1:t},X=function(t,n){var r=arguments.length>2&&void 0!==arguments[2]?arguments[2]:1;r=void 0===r||isNaN(r)?1:r;var e=A(t),o=I(t),a=A(n),u=I(n),c=Math.acos(R(Math.sin(W(a))*Math.sin(W(e))+Math.cos(W(a))*Math.cos(W(e))*Math.cos(W(o)-W(u))))*i;return Math.round(c/r)*r},_=function(t,n){var r=arguments.length>2&&void 0!==arguments[2]?arguments[2]:X;return r="function"==typeof r?r:X,n.slice().sort((function(n,e){return r(t,n)-r(t,e)}))},K=function(t,n){return _(t,n)[0]},Y=function(t){var n=0;if(t.length>2){for(var r,e,o,a=0;a<t.length;a++){a===t.length-2?(r=t.length-2,e=t.length-1,o=0):a===t.length-1?(r=t.length-1,e=0,o=1):(r=a,e=a+1,o=a+2);var u=I(t[r]),c=A(t[e]),f=I(t[o]);n+=(W(f)-W(u))*Math.sin(W(c))}n=n*i*i/2}return Math.abs(n)},Z=function(t){if(!1===Array.isArray(t)||0===t.length)throw new Error("No points were given.");return t.reduce((function(t,n){var r=A(n),e=I(n);return{maxLat:Math.max(r,t.maxLat),minLat:Math.min(r,t.minLat),maxLng:Math.max(e,t.maxLng),minLng:Math.min(e,t.minLng)}}),{maxLat:-1/0,minLat:1/0,maxLng:-1/0,minLng:1/0})},G=function(t,n){var r,e,f=A(t),s=I(t),l=W(f),d=W(s),h=n/i,g=l-h,v=l+h,m=W(a),p=W(o),y=W(c),b=W(u);if(g>p&&v<m){var M=Math.asin(Math.sin(h)/Math.cos(l));(r=d-M)<b&&(r+=2*Math.PI),(e=d+M)>y&&(e-=2*Math.PI)}else g=Math.max(g,p),v=Math.min(v,m),r=b,e=y;return[{latitude:D(g),longitude:D(r)},{latitude:D(v),longitude:D(e)}]},V=function(t){if(!1===Array.isArray(t)||0===t.length)return!1;var n=t.length,r=t.reduce((function(t,n){var r=W(A(n)),e=W(I(n));return{X:t.X+Math.cos(r)*Math.cos(e),Y:t.Y+Math.cos(r)*Math.sin(e),Z:t.Z+Math.sin(r)}}),{X:0,Y:0,Z:0}),e=r.X/n,i=r.Y/n,o=r.Z/n;return{longitude:D(Math.atan2(i,e)),latitude:D(Math.atan2(o,Math.sqrt(e*e+i*i)))}},U=function(t){var n=Z(t),r=n.minLat+(n.maxLat-n.minLat)/2,e=n.minLng+(n.maxLng-n.minLng)/2;return{latitude:parseFloat(r.toFixed(6)),longitude:parseFloat(e.toFixed(6))}},z=function(t,n){var r=W(I(n))-W(I(t)),e=Math.log(Math.tan(W(A(n))/2+Math.PI/4)/Math.tan(W(A(t))/2+Math.PI/4));return Math.abs(r)>Math.PI&&(r=r>0?-1*(2*Math.PI-r):2*Math.PI+r),(D(Math.atan2(r,e))+360)%360},H=function(t,n){var r=arguments.length>2&&void 0!==arguments[2]?arguments[2]:z,e="function"==typeof r?r(t,n):z(t,n);if(isNaN(e))throw new Error("Could not calculate bearing for given points. Check your bearing function");switch(Math.round(e/22.5)){case 1:return"NNE";case 2:return"NE";case 3:return"ENE";case 4:return"E";case 5:return"ESE";case 6:return"SE";case 7:return"SSE";case 8:return"S";case 9:return"SSW";case 10:return"SW";case 11:return"WSW";case 12:return"W";case 13:return"WNW";case 14:return"NW";case 15:return"NNW";default:return"N"}},J=function(t,n,r){var e=arguments.length>3&&void 0!==arguments[3]?arguments[3]:1,i=X(n,t,e),o=X(t,r,e),a=X(n,r,e),u=Math.acos(R((i*i+a*a-o*o)/(2*i*a))),c=Math.acos(R((o*o+a*a-i*i)/(2*o*a)));return u>Math.PI/2?i:c>Math.PI/2?o:Math.sin(u)*i},Q=function(t,n){var r=A(n),e=I(n),i=A(t),o=I(t);return(D(Math.atan2(Math.sin(W(e)-W(o))*Math.cos(W(r)),Math.cos(W(i))*Math.sin(W(r))-Math.sin(W(i))*Math.cos(W(r))*Math.cos(W(e)-W(o))))+360)%360};function tt(t){return(tt="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t})(t)}var nt=function(t){var n=arguments.length>1&&void 0!==arguments[1]?arguments[1]:X;return t.reduce((function(t,r){return"object"===tt(t)&&null!==t.last&&(t.distance+=n(r,t.last)),t.last=r,t}),{last:null,distance:0}).distance},rt=function(t,n){var r=arguments.length>2&&void 0!==arguments[2]?arguments[2]:1;r=void 0===r||isNaN(r)?1:r;var e,o,a,u,c,f,s,l=A(t),d=I(t),h=A(n),g=I(n),v=6356752.314245,m=1/298.257223563,p=W(g-d),y=Math.atan((1-m)*Math.tan(W(parseFloat(l)))),b=Math.atan((1-m)*Math.tan(W(parseFloat(h)))),M=Math.sin(y),O=Math.cos(y),S=Math.sin(b),P=Math.cos(b),N=p,w=100;do{var j=Math.sin(N),E=Math.cos(N);if(0===(f=Math.sqrt(P*j*(P*j)+(O*S-M*P*E)*(O*S-M*P*E))))return 0;e=M*S+O*P*E,o=Math.atan2(f,e),c=e-2*M*S/(u=1-(a=O*P*j/f)*a),isNaN(c)&&(c=0);var x=m/16*u*(4+m*(4-3*u));s=N,N=p+(1-x)*m*a*(o+x*f*(c+x*e*(2*c*c-1)))}while(Math.abs(N-s)>1e-12&&--w>0);if(0===w)return NaN;var L=u*(i*i-v*v)/(v*v),D=1+L/16384*(4096+L*(L*(320-175*L)-768)),C=L/1024*(256+L*(L*(74-47*L)-128)),F=C*f*(c+C/4*(e*(2*c*c-1)-C/6*c*(4*f*f-3)*(4*c*c-3))),k=v*D*(o-F);return Math.round(k/r)*r},et=function(t){return/^NNE|NE|NNW|N$/.test(t)?"N":/^ENE|E|ESE|SE$/.test(t)?"E":/^SSE|S|SSW|SW$/.test(t)?"S":/^WSW|W|WNW|NW$/.test(t)?"W":void 0},it=function(t,n){var r=arguments.length>2&&void 0!==arguments[2]?arguments[2]:X,e=r(t,n),i=Number(n.time)-Number(t.time),o=e/i*1e3;return o},ot=function(t,n,r){return X(n,t)+X(t,r)===X(n,r)},at=function(t,n){for(var r=!1,e=n.length,i=-1,o=e-1;++i<e;o=i)(I(n[i])<=I(t)&&I(t)<I(n[o])||I(n[o])<=I(t)&&I(t)<I(n[i]))&&A(t)<(A(n[o])-A(n[i]))*(I(t)-I(n[i]))/(I(n[o])-I(n[i]))+A(n[i])&&(r=!r);return r},ut=function(t,n,r,e){return J(t,n,r)<e},ct=function(t,n,r){return X(t,n)<r};function ft(t,n){return function(t){if(Array.isArray(t))return t}(t)||function(t,n){if("undefined"==typeof Symbol||!(Symbol.iterator in Object(t)))return;var r=[],e=!0,i=!1,o=void 0;try{for(var a,u=t[Symbol.iterator]();!(e=(a=u.next()).done)&&(r.push(a.value),!n||r.length!==n);e=!0);}catch(t){i=!0,o=t}finally{try{e||null==u.return||u.return()}finally{if(i)throw o}}return r}(t,n)||function(t,n){if(!t)return;if("string"==typeof t)return st(t,n);var r=Object.prototype.toString.call(t).slice(8,-1);"Object"===r&&t.constructor&&(r=t.constructor.name);if("Map"===r||"Set"===r)return Array.from(t);if("Arguments"===r||/^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(r))return st(t,n)}(t,n)||function(){throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.")}()}function st(t,n){(null==n||n>t.length)&&(n=t.length);for(var r=0,e=new Array(n);r<n;r++)e[r]=t[r];return e}var lt=function(t){if(!t.startsWith("POLYGON"))throw new Error("Invalid wkt.");return t.slice(t.indexOf("(")+2,t.indexOf(")")).split(", ").map((function(t){var n=ft(t.split(" "),2),r=n[0],e=n[1];return{longitude:parseFloat(r),latitude:parseFloat(e)}}))}}])}));
-},{}],15:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 const hexRegex = /^[-+]?0x[a-fA-F0-9]+$/;
 const numRegex = /^([\-\+])?(0*)(\.[0-9]+([eE]\-?[0-9]+)?|[0-9]+(\.[0-9]+([eE]\-?[0-9]+)?)?)$/;
 // const octRegex = /0x[a-z0-9]+/;
@@ -2087,7 +3098,7 @@ function trimZeros(numStr){
 }
 module.exports = toNumber
 
-},{}],16:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 const { XMLParser} = require('fast-xml-parser');
 
 const parseGpx = (str) => {
@@ -2106,4 +3117,4 @@ const parseGpx = (str) => {
 
 module.exports = parseGpx;
 
-},{"fast-xml-parser":3}]},{},[2]);
+},{"fast-xml-parser":9}]},{},[6]);

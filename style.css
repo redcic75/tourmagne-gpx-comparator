@@ -48,3 +48,7 @@ li {
 .form-group label {
   margin-bottom: .3rem;;
 }
+
+#map {
+  height: 90vh;
+}
