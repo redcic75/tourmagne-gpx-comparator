@@ -11,7 +11,7 @@ const parseGpx = (str) => {
   const gpx = parser.parse(str);
 
   // Create points array
-  return gpx.gpx.trk.trkseg.trkpt;
+  return gpx?.gpx?.trk?.trkseg?.trkpt;
 }
 
 module.exports = parseGpx;

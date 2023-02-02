@@ -1,6 +1,7 @@
-require('dotenv').config();
 const parseGpx = require('./parseGpx');
 const compareGpx = require('./compareGpx');
+const displayTrack = require('./displayTrack');
+const generateGpx = require('./generateGpx');
 
 // Links with HTML file
 const refFileInputEl = document.querySelector('#ref');
@@ -9,6 +10,8 @@ const formEl = document.querySelector('#form')
 const missedDistanceEl = document.querySelector('#missedDistance');
 const missedPercentEl = document.querySelector('#missedPercent');
 
+
+// ------ FUNCTIONS ------//
 const launchComparison = async (event) => {
   event.preventDefault();
 
@@ -31,6 +34,13 @@ const launchComparison = async (event) => {
   // Update DOM
   missedDistanceEl.innerHTML = `${Math.round(missedDistance)} m`;
   missedPercentEl.innerHTML = `${Math.round(missedDistance / refDistance * 1000) / 10} %`;
+
+  // Update map
+  missedSegmentsOffTolerance.forEach(async (segment, index) => {
+    displayTrack(map, `missed-${index}`, '#ff0000', segment);
+  });
+  //
+
 };
 
 // load files
@@ -38,55 +48,21 @@ const loadFile = async (evt) => {
   const currentTarget = evt.currentTarget;
   const file = evt.currentTarget.files[0];
   const id = evt.currentTarget.id;
-  console.log(id)
   const color = evt.currentTarget.color;
 
   const str = await file.text();
   currentTarget.points = parseGpx(str);
 
-  const data = {
-    'type': 'FeatureCollection',
-    'features': [
-      {
-        'type': 'Feature',
-        'geometry': {
-          'type': 'LineString',
-          'coordinates': [
-            // [-0.565, 44.859]
-          ]
-        }
-      }
-    ]
-  };
-
-  map.addSource(id, { type: 'geojson', data: data });
-
-  currentTarget.points.forEach(point => {
-    data.features[0].geometry.coordinates.push([point.lon, point.lat]);
-  });
-
-  map.getSource(id).setData(data);
-  map.addLayer({
-    id: id,
-    type: 'line',
-    source: id,
-    layout: {
-      'line-join': 'round',
-      'line-cap': 'round',
-    },
-    paint: {
-      'line-color': color,
-      'line-width': 4,
-    },
-  });
+  displayTrack(map, id, color, currentTarget.points);
 }
 
+// ------ MAIN ------//
 // Display empty map
-mapboxgl.accessToken = process.env.MAPBOX_API_KEY;
-var map = new mapboxgl.Map({
+mapboxgl.accessToken = 'pk.eyJ1IjoicmVkY2ljIiwiYSI6ImNsZG41YzZzMjAweGYzbnEwMjYzOWxpMTYifQ.kEkg6g7sPVWFAf0vvAVzkA';
+const map = new mapboxgl.Map({
   container: 'map',
   style: 'mapbox://styles/mapbox/streets-v12',
-  center: [-0.6, 44.83],
+  center: [-0.6, 44.81],
   zoom: 13,
 });
 map.addControl(new mapboxgl.NavigationControl());

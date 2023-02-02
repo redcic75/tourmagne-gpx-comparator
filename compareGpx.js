@@ -28,6 +28,7 @@ const compareGpx = async (refPoints, challPoints, options) => {
   for (let refIndex = 0; refIndex < refPoints.length; refIndex++) {
     const refPoint = refPoints[refIndex];
 
+    // Log progress
     console.log(Math.floor(refIndex / refPoints.length * 1000) / 10);
 
     let challDetour = 0;
