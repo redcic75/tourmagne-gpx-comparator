@@ -1,5 +1,4 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
-// const fs = require('fs').promises;
 const { XMLParser} = require('fast-xml-parser');
 const geolib = require('geolib');
 
@@ -16,6 +15,8 @@ const options = {
 const parser = new XMLParser(options);
 
 // Links with HTML file
+const refFileInputEl = document.querySelector('#ref');
+const challFileInputEl = document.querySelector('#chall');
 const buttonEl = document.querySelector('#calculateBtn');
 const progressEl = document.querySelector('#progress');
 const missedDistanceEl = document.querySelector('#missedDistance');
@@ -33,9 +34,10 @@ const generateGpx = async (segments) => {
   });
   gpxStr += '</gpx></xml>';
 
-  // Write a GPX file
+  // TODO - Write a GPX file
   // const outputFilePath = `./generated_files/missed---${tolerance}-${maxDetour}.gpx`
   // await fs.writeFile(outputFilePath, gpxStr);
+
   return gpxStr;
 }
 
@@ -48,38 +50,12 @@ const calculateTotalDistance = (points) => {
   return distance;
 }
 
-function readFileAsText(file){
-  return new Promise(function(resolve,reject){
-    let fr = new FileReader();
 
-    fr.onload = function(){
-      resolve(fr.result);
-    };
-
-    fr.onerror = function(){
-      reject(fr);
-    };
-
-    fr.readAsText(file);
-  });
-}
-
-const main = async () => {
+const calculate = async () => {
   progressEl.innerHTML = 'Comparaison en cours';
-  const refFile = document.querySelector('#ref').files[0];
-  const challFile = document.querySelector('#chall').files[0];
 
-  const p1 = readFileAsText(refFile);
-  const p2 = readFileAsText(challFile);
-  const [refStr, challStr] = await Promise.all([p1, p2]);
-
-  // Parse gpx strings -> JS objects
-  const refGpx = parser.parse(refStr);
-  const challGpx = parser.parse(challStr);
-
-  // Create points arrays
-  const refPoints = refGpx.gpx.trk.trkseg.trkpt;
-  const challPoints = challGpx.gpx.trk.trkseg.trkpt;
+  const refPoints = refFileInputEl.points;
+  const challPoints = challFileInputEl.points;
 
   // Initialize the missedSegments array
   // This array will contain segment arrays
@@ -146,7 +122,19 @@ const main = async () => {
   missedPercentEl.innerHTML = `Missed % of the reference path: ${Math.round(missedDistance / refDistance * 1000) / 10} %`
 }
 
-buttonEl.addEventListener('click', main);
+// load files
+const loadFile = async (evt) => {
+  const currentTarget = evt.currentTarget;
+  const file = evt.currentTarget.files[0];
+  const str = await file.text();
+  const gpx = parser.parse(str);
+  currentTarget.points = gpx.gpx.trk.trkseg.trkpt;
+}
+
+// Event listeners
+refFileInputEl.addEventListener('change', loadFile);
+challFileInputEl.addEventListener('change', loadFile);
+buttonEl.addEventListener('click', calculate);
 
 },{"fast-xml-parser":2,"geolib":13}],2:[function(require,module,exports){
 'use strict';

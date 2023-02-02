@@ -14,11 +14,11 @@
     <form action="">
       <div>
         <label for="ref">Choisir le fichier GPX de référence</label>
-        <input type="file" class="files" id="ref" accept=".gpx" />
+        <input type="file" id="ref" accept=".gpx" />
       </div>
       <div>
         <label for="ref">Choisir le fichier GPX du challenger</label>
-        <input type="file" class="files" id="chall" accept=".gpx" />
+        <input type="file" id="chall" accept=".gpx" />
       </div>
       <div>
         <input type="button" id="calculateBtn" value="Lancer la comparaison" />
@@ -26,11 +26,15 @@
       <p id="progress">Comparaison pas commencée</p>
     </form>
     <div>
-      <h2>Résultats de la comparaison :</h2>
+      <h2>Résultats de la comparaison</h2>
       <ul>
         <li id="missedDistance"></li>
         <li id="missedPercent"></li>
       </ul>
+    </div>
+    <div>
+      <h2>Map</h2>
+      <div></div>
     </div>
   </main>
   <script src="bundle.js"></script>
