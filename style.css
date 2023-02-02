@@ -1,12 +1,46 @@
+/* || CONFIGURATION */
+:root {
+  --light: white;
+  --dark: #313231;
+  --red: #e3022c;
+  --blue: #233677;
+  --lightblue: #e6e8f2;
+}
+
+*,
+*:before,
+*:after {
+  box-sizing: border-box;
+}
+
+/* || HTML elements */
+h1, h2 {
+  margin:.5rem 0;
+  padding: 0;
+  color: var(--dark) !important;
+}
+
+p {
+  margin: 0;
+}
+
+section {
+  padding: 1rem;
+  margin: 1rem 0;
+  background-color: var(--lightblue);
+  border-radius: 6px;
+}
+
 ul {
   margin: 0;
-  padding: 0;
+  padding: 0 !important;
 }
 
 li {
   list-style-type: none;
 }
 
+/* || Classes and Ids*/
 .form-group {
   padding: .5rem 0;
 }
