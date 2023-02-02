@@ -36,11 +36,7 @@ const launchComparison = async (event) => {
   missedPercentEl.innerHTML = `${Math.round(missedDistance / refDistance * 1000) / 10} %`;
 
   // Update map
-  missedSegmentsOffTolerance.forEach(async (segment, index) => {
-    displayTrack(map, `missed-${index}`, '#ff0000', segment);
-  });
-  //
-
+  displayTrack(map, 'missed', '#ff0000', missedSegmentsOffTolerance);
 };
 
 // load files
@@ -53,7 +49,15 @@ const loadFile = async (evt) => {
   const str = await file.text();
   currentTarget.points = parseGpx(str);
 
-  displayTrack(map, id, color, currentTarget.points);
+  // Erase missed points tracks
+  if (map.getLayer('missed')) {
+    map.removeLayer('missed');
+  }
+  if (map.getSource('missed')) {
+    map.removeSource('missed');
+  }
+
+  displayTrack(map, id, color, [currentTarget.points]);
 }
 
 // ------ MAIN ------//

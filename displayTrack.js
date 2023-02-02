@@ -1,22 +1,30 @@
 // Display a track
-const displayTrack = (map, id, color, points) => {
-    const data = {
-    'type': 'FeatureCollection',
-    'features': [
-      {
-        'type': 'Feature',
-        'geometry': {
-          'type': 'LineString',
-          'coordinates': [
-            // [-0.565, 44.859]
-          ]
-        }
+const displayTrack = (map, id, color, segments) => {
+  const features = []
+  for (let i = 0; i < segments.length; i++) {
+    features.push({
+      'type': 'Feature',
+      'properties': {},
+      'geometry': {
+        'type': 'LineString',
+        'coordinates': [],
       }
-    ]
+    });
+  };
+
+  const data = {
+    'type': 'FeatureCollection',
+    'features': features,
   };
 
   if (!map.getSource(id)) {
-    map.addSource(id, { type: 'geojson', data: data });
+    map.addSource(id,
+      {
+        type: 'geojson',
+        data: data,
+      }
+    );
+
     map.addLayer({
       id: id,
       type: 'line',
@@ -28,17 +36,17 @@ const displayTrack = (map, id, color, points) => {
       paint: {
         'line-color': color,
         'line-width': 4,
+        'line-opacity': .7,
       },
     });
   }
 
-  if (points) {
+  segments.forEach((points, index) => {
     points.forEach(point => {
-      data.features[0].geometry.coordinates.push([point.lon, point.lat]);
+      data.features[index].geometry.coordinates.push([point.lon, point.lat]);
     });
-  } else {
-    data.features[0].geometry.coordinates = [];
-  }
+  });
+
   map.getSource(id).setData(data);
 }
 

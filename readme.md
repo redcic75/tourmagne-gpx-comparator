@@ -17,4 +17,7 @@ You can create test GPX files and view generated GPX files with https://gpx.stud
 - Handle GPX with multiple tracks or multiple track segments
 - Add performance indicator calculation (distance per 24 hours)
 - Improve format of generated gpx so that it opens in any gpx reader
+- Fit map to displayed tracks : https://docs.mapbox.com/mapbox-gl-js/example/zoomto-linestring/
+- Choose initial center and zoom of map
+- Mapbox API key ?
 - In browser, add possibility to download missed points gpx

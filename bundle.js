@@ -29,6 +29,7 @@ const compareGpx = async (refPoints, challPoints, options) => {
   for (let refIndex = 0; refIndex < refPoints.length; refIndex++) {
     const refPoint = refPoints[refIndex];
 
+    // Log progress
     console.log(Math.floor(refIndex / refPoints.length * 1000) / 10);
 
     let challDetour = 0;
@@ -93,24 +94,32 @@ module.exports = compareGpx;
 
 },{"geolib":16}],2:[function(require,module,exports){
 // Display a track
-const displayTrack = (map, id, color, points) => {
-    const data = {
-    'type': 'FeatureCollection',
-    'features': [
-      {
-        'type': 'Feature',
-        'geometry': {
-          'type': 'LineString',
-          'coordinates': [
-            // [-0.565, 44.859]
-          ]
-        }
+const displayTrack = (map, id, color, segments) => {
+  const features = []
+  for (let i = 0; i < segments.length; i++) {
+    features.push({
+      'type': 'Feature',
+      'properties': {},
+      'geometry': {
+        'type': 'LineString',
+        'coordinates': [],
       }
-    ]
+    });
+  };
+
+  const data = {
+    'type': 'FeatureCollection',
+    'features': features,
   };
 
   if (!map.getSource(id)) {
-    map.addSource(id, { type: 'geojson', data: data });
+    map.addSource(id,
+      {
+        type: 'geojson',
+        data: data,
+      }
+    );
+
     map.addLayer({
       id: id,
       type: 'line',
@@ -122,17 +131,17 @@ const displayTrack = (map, id, color, points) => {
       paint: {
         'line-color': color,
         'line-width': 4,
+        'line-opacity': .7,
       },
     });
   }
 
-  if (points) {
+  segments.forEach((points, index) => {
     points.forEach(point => {
-      data.features[0].geometry.coordinates.push([point.lon, point.lat]);
+      data.features[index].geometry.coordinates.push([point.lon, point.lat]);
     });
-  } else {
-    data.features[0].geometry.coordinates = [];
-  }
+  });
+
   map.getSource(id).setData(data);
 }
 
@@ -207,14 +216,7 @@ const launchComparison = async (event) => {
   missedPercentEl.innerHTML = `${Math.round(missedDistance / refDistance * 1000) / 10} %`;
 
   // Update map
-  console.log(missedSegmentsOffTolerance)
-  missedSegmentsOffTolerance.forEach(async (segment, index) => {
-    // const missedGpx = await generateGpx(segment, options);
-    console.log(segment)
-    displayTrack(map, `missed-${index}`, '#ff0000', segment);
-  });
-  //
-
+  displayTrack(map, 'missed', '#ff0000', missedSegmentsOffTolerance);
 };
 
 // load files
@@ -227,8 +229,15 @@ const loadFile = async (evt) => {
   const str = await file.text();
   currentTarget.points = parseGpx(str);
 
-  console.log(currentTarget.points)
-  displayTrack(map, id, color, currentTarget.points);
+  // Erase missed points tracks
+  if (map.getLayer('missed')) {
+    map.removeLayer('missed');
+  }
+  if (map.getSource('missed')) {
+    map.removeSource('missed');
+  }
+
+  displayTrack(map, id, color, [currentTarget.points]);
 }
 
 // ------ MAIN ------//
