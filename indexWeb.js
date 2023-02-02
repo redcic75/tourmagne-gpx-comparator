@@ -1,11 +1,5 @@
-const { XMLParser} = require('fast-xml-parser');
+const parseGpx = require('./parseGpx');
 const calculate = require('./calculate');
-
-const parser = new XMLParser({
-  ignoreAttributes : false,
-  parseAttributeValue: true,
-  attributeNamePrefix : '',
-});
 
 // Links with HTML file
 const refFileInputEl = document.querySelector('#ref');
@@ -21,7 +15,6 @@ const options = {
   tolerance: 100, // in meters
   maxDetour: 20000, // in meters
 };
-
 
 const launchComparison = async () => {
   progressEl.innerHTML = 'Comparaison en cours';
@@ -45,8 +38,7 @@ const loadFile = async (evt) => {
   const currentTarget = evt.currentTarget;
   const file = evt.currentTarget.files[0];
   const str = await file.text();
-  const gpx = parser.parse(str);
-  currentTarget.points = gpx.gpx.trk.trkseg.trkpt;
+  currentTarget.points = parseGpx(str);
 }
 
 // Event listeners

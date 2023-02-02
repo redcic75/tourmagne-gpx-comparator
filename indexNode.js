@@ -1,7 +1,7 @@
 const fs = require('fs/promises');
-const { XMLParser} = require('fast-xml-parser');
+const parseGpx = require('./parseGpx');
 const calculate = require('./calculate');
-const generateGpx = require('./generate-gpx');
+const generateGpx = require('./generateGpx');
 
 // ------ USER DATA ------//
 // Path to GPX files to read
@@ -32,18 +32,9 @@ const main = async () => {
   const challPromise = fs.readFile(challPath, { encoding: 'utf8' });
   const [refStr, challStr] = await Promise.all([refPromise, challPromise]);
 
-  // Parse gpx strings -> JS objects
-  const parser = new XMLParser({
-    ignoreAttributes : false,
-    parseAttributeValue: true,
-    attributeNamePrefix : '',
-  });
-  const refGpx = parser.parse(refStr);
-  const challGpx = parser.parse(challStr);
-
-  // Create points arrays
-  const refPoints = refGpx.gpx.trk.trkseg.trkpt;
-  const challPoints = challGpx.gpx.trk.trkseg.trkpt;
+  // Parse strings to JS objects
+  const refPoints = parseGpx(refStr);
+  const challPoints = parseGpx(challStr);
 
   const {
     missedSegmentsOffTolerance,
