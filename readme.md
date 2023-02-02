@@ -2,4 +2,9 @@ You can create test GPX files and view generated missed-xxx.gpx files with https
 
 TODO :
 - Handle GPX with multiple tracks or multiple track segments
-- Add html / css and update js to make this tools run in-browser
+- Add performance indicator calculation (distance per 24 hours)
+- Improve format of generated gpx so that it opens in any gpx reader
+- In browser :
+  - Add map
+  - Add input for tolerance & trigger
+  - Add possibility to download missed points gpx

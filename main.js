@@ -3,11 +3,11 @@ const { XMLParser} = require('fast-xml-parser');
 const geolib = require('geolib');
 
 // Path to GPX files to read
-// const refFile = 'ref';
-// const challFile = 'chall-autre-chemin-2-fois';
+const refFile = 'ref';
+const challFile = 'chall-autre-chemin-2-fois';
 
-const refFile = 'orleans-loop-trace';
-const challFile = 'orleans-loop-real';
+// const refFile = 'orleans-loop-trace';
+// const challFile = 'orleans-loop-real';
 
 // const refFile = 'Bordeaux-Paris_2022_trace';
 // const challFile = 'Bordeaux_Paris_2022_real';
@@ -17,6 +17,7 @@ const refPath = prefix + refFile + '.gpx';
 const challPath = prefix + challFile + '.gpx';
 
 // Params
+const trigger = 20; // in meters - trigger must be less than tolerance
 const tolerance = 100; // in meters
 const maxDetour = 20000; // in meters
 
@@ -41,7 +42,7 @@ const generateGpx = async (segments) => {
   gpxStr += '</gpx></xml>';
 
   // Write a GPX file
-  const outputFilePath = `./generated_files/missed-${refFile}-${challFile}-${tolerance}-${maxDetour}.gpx`
+  const outputFilePath = `./generated_files/missed-${refFile}-${challFile}-${trigger}-${tolerance}-${maxDetour}.gpx`
   await fs.writeFile(outputFilePath, gpxStr);
 }
 
@@ -82,7 +83,8 @@ const main = async () => {
 
     console.log(`${Math.floor(refIndex / refPoints.length * 1000) / 10} %`);
 
-    challDetour = 0;
+    let challDetour = 0;
+    let minDist; // minimum distance between current refPoint and chall track;
     challIndexLoop:
     for (let challLocalIndex = challIndex; challLocalIndex < challPoints.length - 1; challLocalIndex++) {
       const dist = geolib.getDistanceFromLine(
@@ -90,7 +92,10 @@ const main = async () => {
         challPoints[challLocalIndex],
         challPoints[challLocalIndex + 1]
       );
-      if (dist <= tolerance) {
+      if (!minDist || dist < minDist) {
+        minDist = dist;
+      }
+      if (dist <= trigger) {
         challIndex = challLocalIndex;
         continue refIndexLoop;
       }
@@ -102,10 +107,11 @@ const main = async () => {
     }
 
     // Passing here only when challenger track
-    // didn't pass close enough (i.e. d < tolerance)
+    // didn't pass close enough (i.e. d > trigger)
     // from the reference track.
     // In this case, add the missed refPoint to the missedSegments array
     refPoint.index = refIndex;
+    refPoint.dist = minDist; // store min distance from reference to challenger track
     let lastMissedSegment = missedSegments[missedSegments.length - 1];
 
     // Append to lastMissedSegment only if current missing trackpoint from reference
@@ -119,17 +125,23 @@ const main = async () => {
     }
   };
 
+  // Filter out missedSegment where max of minDist is < tolerance
+  const missedSegmentsOffTolerance = missedSegments.filter(segment =>
+    segment.some(point => point.dist > tolerance)
+  );
+
   // Generate the file containing the missed segments
-  generateGpx(missedSegments);
+  generateGpx(missedSegmentsOffTolerance);
 
   // Calculate and display synthesis
   const refDistance = calculateTotalDistance(refPoints);
-  const missedDistance = missedSegments.reduce((acc, segment) => acc + calculateTotalDistance(segment), 0);
+  const missedDistance = missedSegmentsOffTolerance.reduce((acc, segment) => acc + calculateTotalDistance(segment), 0);
 
   // Final display
   console.log('\nAnalysis summary:');
   console.log(`Reference gpx file: ${refFile}`);
   console.log(`Challenger gpx file: ${challFile}`);
+  console.log(`Trigger: ${trigger} m`);
   console.log(`Tolerance: ${tolerance} m`);
   console.log(`Max detour: ${maxDetour} m`);
   console.log(`Missed ${Math.round(missedDistance)} meters of the reference path`)
