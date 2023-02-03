@@ -14,10 +14,11 @@
 ## Good to know
 You can create test GPX files and view generated GPX files with https://gpx.studio/l/fr/.
 # To do
-- Handle GPX with multiple tracks or multiple track segments
+## Now
 - Add performance indicator calculation (distance per 24 hours)
-- Mapbox API key ?
 - In browser, add possibility to download missed points gpx
+## Later
 - ESlint
 - Deal with file deselection
-- Fix fs librairy (does not pass browserify)
+- Mapbox API key ?
+- Handle GPX with multiple tracks or multiple track segments

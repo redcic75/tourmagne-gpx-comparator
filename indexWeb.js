@@ -2,7 +2,6 @@ const parseGpx = require('./parseGpx');
 const compareGpx = require('./compareGpx');
 const displayTrack = require('./displayTrack');
 const updateBounds = require('./updateBounds');
-// const generateGpx = require('./generateGpx');
 
 // Links with HTML file
 const refFileInputEl = document.querySelector('#ref');
