@@ -118,7 +118,6 @@ const compareGpx = async (refPoints, challPoints, options) => {
   });
 
   // Find worst period
-  let perf;
   for (let iEnd = 0; iEnd < pt.length; iEnd += 1) {
     const endTime = pt[iEnd].time;
     const startTime = Math.max(0, endTime - duration * 3600 * 1000);
@@ -130,18 +129,19 @@ const compareGpx = async (refPoints, challPoints, options) => {
     pt[iEnd].startRefIndex = pt[iStart].refIndex;
   }
 
+  let perf;
   for (let i = 0; i < pt.length; i += 1) {
     if (pt[i].time > duration * 3600 * 1000
-      && (!perf || pt[i].cumulatedDistance < perf.distance)) {
+      && (!perf || pt[i].lastIntervalDistance < perf.distance)) {
       perf = {
-        distance: pt[i].cumulatedDistance,
+        distance: pt[i].lastIntervalDistance,
         startRefIndex: pt[i].startRefIndex,
         endRefIndex: pt[i].refIndex,
       };
-      perf.speed = (perf.distance / (pt[perf.endRefIndex].time - pt[perf.startRefIndex].time))
-        * 3600 * 1000;
     }
   }
+  perf.speed = (perf.distance / (pt[perf.endRefIndex].time - pt[perf.startRefIndex].time))
+    * 3600 * 1000;
 
   // Filter out missedSegment where max of minDist is < tolerance
   const missedSegmentsOffTolerance = missedSegments.filter(
@@ -160,6 +160,7 @@ const compareGpx = async (refPoints, challPoints, options) => {
     refDistance,
     missedDistance,
     perf,
+    pt,
   };
 };
 

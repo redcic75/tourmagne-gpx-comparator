@@ -11,11 +11,11 @@ const generateGpxStr = require('./services/generateGpxStr');
 // const refFile = 'ref';
 // const challFile = 'chall-autre-chemin-2-fois';
 
-const refFile = 'orleans-loop-trace';
-const challFile = 'orleans-loop-real';
+// const refFile = 'orleans-loop-trace';
+// const challFile = 'orleans-loop-real';
 
-// const refFile = 'Bordeaux-Paris_2022_trace';
-// const challFile = 'Bordeaux_Paris_2022_real';
+const refFile = 'Bordeaux-Paris_2022_trace';
+const challFile = 'Bordeaux_Paris_2022_real';
 
 // Params
 const options = {
@@ -45,6 +45,7 @@ const main = async () => {
     refDistance,
     missedDistance,
     perf,
+    pt,
   } = await compareGpx(refPoints, challPoints, options);
 
   // Generate the file containing the missed segments
@@ -67,7 +68,9 @@ const main = async () => {
   console.log('');
   console.log(`Missed distance of the reference path in m: ${Math.round(missedDistance)} m`);
   console.log(`Missed distance of the reference path in %: ${Math.round((missedDistance / refDistance) * 1000) / 10} %`);
-  console.log(`Distance done during the worst ${options.duration} h: ${Math.round(perf.speed) / 1000} km`);
+  console.log(`Worst ${options.duration} h:`);
+  console.log(`  - Started after ${Math.round(pt[perf.startRefIndex].time / (3600 * 10)) / 100} h at km ${pt[perf.startRefIndex].cumulatedDistance / 1000}`);
+  console.log(`  - Distance travelled during this period: ${Math.round(perf.speed) / 1000} km`);
 };
 
 main();

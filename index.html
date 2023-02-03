@@ -73,13 +73,22 @@
       <h3>Résultats</h3>
       <ul>
         <li>Nombre de km de la trace de référence non parcourus :
-          <span id="missedDistance">calcul non lancé</span>
+          <span id="missedDistance">calcul non lancé ou en cours</span>
         </li>
         <li>Pourcentage de la trace de référence non parcouru :
-          <span id="missedPercent">calcul non lancé</span>
+          <span id="missedPercent">calcul non lancé ou en cours</span>
         </li>
-        <li>Indicateur de performance :
-          <span id="perf">calcul non lancé</span>
+        <li>Période la plus lente :
+          <ul>
+            <li>-
+              <span id="perfKm">calcul non lancé ou en cours</span>
+            </li>
+            <li>-
+              <span id="perfWhen">calcul non lancé ou en cours</span>
+            </li>
+
+          </ul>
+
         </li>
       </ul>
       <button id="downloadGpx" class="btn btn-primary disabled">Télécharger le fichier GPX des écarts</button>

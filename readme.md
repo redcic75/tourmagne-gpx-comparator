@@ -14,9 +14,13 @@
 ## Good to know
 You can create test GPX files and view generated GPX files with https://gpx.studio/l/fr/.
 # To do
-- Performance indicator : now gives the time of track leaving to all points above tolerance
-=> velocity is infinite on these segments => can give an advantage to the challenger => to be smoothened
-- Refacto performance indicator calculation (distance per 24 hours)
+- Deal with case when challenger gpx does not have timestamps
+- Performance indicator :
+  - when the challenger is out of the reference track, time of the refpoint
+  is taken from the closest point on the challenger track
+  => It can  can give an advantage to the challenger, to be fixed
+  - To be refactored
+  - Display the slowest zone on the map
 - Mapbox API key ?
 - Handle GPX with multiple tracks or multiple track segments
 - Display waiting message while loading big files or while comparing big files

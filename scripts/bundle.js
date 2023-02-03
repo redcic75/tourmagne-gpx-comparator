@@ -2209,7 +2209,8 @@ const toleranceParamEl = document.querySelector('#toleranceParam');
 const detourMaxParamEl = document.querySelector('#detourMaxParam');
 const missedDistanceEl = document.querySelector('#missedDistance');
 const missedPercentEl = document.querySelector('#missedPercent');
-const perfEl = document.querySelector('#perf');
+const perfWhenEl = document.querySelector('#perfWhen');
+const perfKmEl = document.querySelector('#perfKm');
 const downloadGpxEl = document.querySelector('#downloadGpx');
 
 let gpxStr = '';
@@ -2235,6 +2236,7 @@ const launchComparison = async (event) => {
     refDistance,
     missedDistance,
     perf,
+    pt,
   } = await compareGpx(
     refFileInputEl.points,
     challFileInputEl.points,
@@ -2251,7 +2253,8 @@ const launchComparison = async (event) => {
   detourMaxParamEl.innerHTML = `${formEl.trigger.value} km`;
   missedDistanceEl.innerHTML = `${Math.round(missedDistance)} m`;
   missedPercentEl.innerHTML = `${Math.round((missedDistance / refDistance) * 1000) / 10} %`;
-  perfEl.innerHTML = `Distance parcourue dans les pires ${formEl.duration.value} h : ${Math.round(perf.speed) / 1000} km`;
+  perfKmEl.innerHTML = `Distance parcourue dans les pires ${formEl.duration.value} h : ${Math.round(perf.speed) / 1000} km`;
+  perfWhenEl.innerHTML = `Période commencée après ${Math.round(pt[perf.startRefIndex].time / (3600 * 10)) / 100} h au km ${pt[perf.startRefIndex].cumulatedDistance / 1000}`;
 
   // Update map
   displayTrack(map, 'missed', '#ff0000', missedSegmentsOffTolerance);
@@ -2469,7 +2472,6 @@ const compareGpx = async (refPoints, challPoints, options) => {
   });
 
   // Find worst period
-  let perf;
   for (let iEnd = 0; iEnd < pt.length; iEnd += 1) {
     const endTime = pt[iEnd].time;
     const startTime = Math.max(0, endTime - duration * 3600 * 1000);
@@ -2481,18 +2483,19 @@ const compareGpx = async (refPoints, challPoints, options) => {
     pt[iEnd].startRefIndex = pt[iStart].refIndex;
   }
 
+  let perf;
   for (let i = 0; i < pt.length; i += 1) {
     if (pt[i].time > duration * 3600 * 1000
-      && (!perf || pt[i].cumulatedDistance < perf.distance)) {
+      && (!perf || pt[i].lastIntervalDistance < perf.distance)) {
       perf = {
-        distance: pt[i].cumulatedDistance,
+        distance: pt[i].lastIntervalDistance,
         startRefIndex: pt[i].startRefIndex,
         endRefIndex: pt[i].refIndex,
       };
-      perf.speed = (perf.distance / (pt[perf.endRefIndex].time - pt[perf.startRefIndex].time))
-        * 3600 * 1000;
     }
   }
+  perf.speed = (perf.distance / (pt[perf.endRefIndex].time - pt[perf.startRefIndex].time))
+    * 3600 * 1000;
 
   // Filter out missedSegment where max of minDist is < tolerance
   const missedSegmentsOffTolerance = missedSegments.filter(
@@ -2511,6 +2514,7 @@ const compareGpx = async (refPoints, challPoints, options) => {
     refDistance,
     missedDistance,
     perf,
+    pt,
   };
 };
 
