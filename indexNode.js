@@ -1,15 +1,15 @@
 const fs = require('fs/promises');
 const parseGpx = require('./parseGpx');
 const compareGpx = require('./compareGpx');
-const generateGpx = require('./generateGpx');
+const generateGpxStr = require('./generateGpxStr');
 
 // ------ USER DATA ------//
 // Path to GPX files to read
-// const refFile = 'ref';
-// const challFile = 'chall-autre-chemin-2-fois';
+const refFile = 'ref';
+const challFile = 'chall-autre-chemin-2-fois';
 
-const refFile = 'orleans-loop-trace';
-const challFile = 'orleans-loop-real';
+// const refFile = 'orleans-loop-trace';
+// const challFile = 'orleans-loop-real';
 
 // const refFile = 'Bordeaux-Paris_2022_trace';
 // const challFile = 'Bordeaux_Paris_2022_real';
@@ -43,14 +43,11 @@ const main = async () => {
   } = await compareGpx(refPoints, challPoints, options);
 
   // Generate the file containing the missed segments
-  generateGpx(
-    missedSegmentsOffTolerance,
-    {
-      ...options,
-      refFile,
-      challFile,
-    }
-  );
+  const gpxStr = await generateGpxStr(missedSegmentsOffTolerance, options);
+
+  // Write GPX file on disk
+  const outputFilePath = `./generated_files/missed-${refFile}-${challFile}-${options.trigger}-${options.tolerance}-${options.maxDetour}.gpx`
+  await fs.writeFile(outputFilePath, gpxStr);
 
   // Final display
   console.log('\nAnalysis summary:');
