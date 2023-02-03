@@ -14,13 +14,14 @@
 ## Good to know
 You can create test GPX files and view generated GPX files with https://gpx.studio/l/fr/.
 # To do
-- Deal with case when challenger gpx does not have timestamps
+- Deal with case where challenger gpx does not have timestamps
+- Deal with case where parameters are not coherent (tolerance < trigger, duration > durée du parcours du challenger)
 - Performance indicator :
   - when the challenger is out of the reference track, time of the refpoint
   is taken from the closest point on the challenger track
   => It can  can give an advantage to the challenger, to be fixed
   - To be refactored
-  - Display the slowest zone on the map
+- Get rid of global variables in indexWeb.js
 - Mapbox API key ?
 - Handle GPX with multiple tracks or multiple track segments
 - Display waiting message while loading big files or while comparing big files

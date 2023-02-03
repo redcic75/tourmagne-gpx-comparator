@@ -70,7 +70,7 @@ const main = async () => {
   console.log(`Missed distance of the reference path in %: ${Math.round((missedDistance / refDistance) * 1000) / 10} %`);
   console.log(`Worst ${options.duration} h:`);
   console.log(`  - Started after ${Math.round(pt[perf.startRefIndex].time / (3600 * 10)) / 100} h at km ${pt[perf.startRefIndex].cumulatedDistance / 1000}`);
-  console.log(`  - Distance travelled during this period: ${Math.round(perf.speed) / 1000} km`);
+  console.log(`  - Mean speed during this period: ${Math.round(perf.speed) / 1000} km/h`);
 };
 
 main();

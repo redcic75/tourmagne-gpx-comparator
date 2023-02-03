@@ -25,6 +25,7 @@ const downloadGpxEl = document.querySelector('#downloadGpx');
 
 let gpxStr = '';
 const geolibBounds = {};
+let refPoints;
 
 // ------ FUNCTIONS ------//
 const launchComparison = async (event) => {
@@ -63,11 +64,12 @@ const launchComparison = async (event) => {
   detourMaxParamEl.innerHTML = `${formEl.trigger.value} km`;
   missedDistanceEl.innerHTML = `${Math.round(missedDistance)} m`;
   missedPercentEl.innerHTML = `${Math.round((missedDistance / refDistance) * 1000) / 10} %`;
-  perfKmEl.innerHTML = `Distance parcourue dans les pires ${formEl.duration.value} h : ${Math.round(perf.speed) / 1000} km`;
+  perfKmEl.innerHTML = `Vitesse moyenne pendant les pires ${formEl.duration.value} h : ${Math.round(perf.speed) / 1000} km/h`;
   perfWhenEl.innerHTML = `Période commencée après ${Math.round(pt[perf.startRefIndex].time / (3600 * 10)) / 100} h au km ${pt[perf.startRefIndex].cumulatedDistance / 1000}`;
 
   // Update map
   displayTrack(map, 'missed', '#ff0000', missedSegmentsOffTolerance);
+  displayTrack(map, 'slowest', '#000000', [refPoints.slice(perf.startRefIndex, perf.endRefIndex + 1)]);
 
   // Generate the file containing the missed segments
   gpxStr = await generateGpxStr(missedSegmentsOffTolerance, options);
@@ -113,18 +115,24 @@ const loadFile = async (event) => {
     }
   }
 
-  // Erase missed points tracks
-  if (map.getLayer('missed')) {
-    map.removeLayer('missed');
-  }
-  if (map.getSource('missed')) {
-    map.removeSource('missed');
-  }
+  // Erase missed points and slowest zone tracks
+  ['missed', 'slowest'].forEach((trackId) => {
+    if (map.getLayer(trackId)) {
+      map.removeLayer(trackId);
+    }
+    if (map.getSource(trackId)) {
+      map.removeSource(trackId);
+    }
+  });
 
   // Display track and update bounds
   displayTrack(map, id, color, [currentTarget.points]);
   geolibBounds[id] = updateBounds(map, geolibBounds, [currentTarget.points]);
   fitBounds(map, geolibBounds);
+
+  if (id === 'ref') {
+    refPoints = [...currentTarget.points];
+  }
 };
 
 // ------ MAIN ------//
