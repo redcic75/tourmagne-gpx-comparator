@@ -1,6 +1,7 @@
 const parseGpx = require('./parseGpx');
 const compareGpx = require('./compareGpx');
 const displayTrack = require('./displayTrack');
+const updateBounds = require('./updateBounds');
 // const generateGpx = require('./generateGpx');
 
 // Links with HTML file
@@ -52,26 +53,14 @@ const loadFile = async (evt) => {
   // Erase missed points tracks
   if (map.getLayer('missed')) {
     map.removeLayer('missed');
-    delete geolibBounds.missed;
   }
   if (map.getSource('missed')) {
     map.removeSource('missed');
   }
 
-  geolibBounds[id] = displayTrack(map, id, color, [currentTarget.points]);
-  geolibGlobalBounds = {
-    minLat: Math.min(...[geolibBounds['ref']?.minLat, geolibBounds['chall']?.minLat, geolibBounds['missed']?.minLat].filter(Number.isFinite)),
-    minLng: Math.min(...[geolibBounds['ref']?.minLng, geolibBounds['chall']?.minLng, geolibBounds['missed']?.minLng].filter(Number.isFinite)),
-    maxLat: Math.max(...[geolibBounds['ref']?.maxLat, geolibBounds['chall']?.maxLat, geolibBounds['missed']?.maxLat].filter(Number.isFinite)),
-    maxLng: Math.max(...[geolibBounds['ref']?.maxLng, geolibBounds['chall']?.maxLng, geolibBounds['missed']?.maxLng].filter(Number.isFinite)),
-  };
-  map.fitBounds(
-    [ [geolibGlobalBounds.minLng, geolibGlobalBounds.minLat],
-      [geolibGlobalBounds.maxLng, geolibGlobalBounds.maxLat]],
-    {
-      padding: 20,
-    },
-  );
+  // Display track and update bounds
+  displayTrack(map, id, color, [currentTarget.points]);
+  geolibBounds = updateBounds(map, id, geolibBounds, [currentTarget.points]);
 }
 
 // ------ MAIN ------//
@@ -85,7 +74,7 @@ const map = new mapboxgl.Map({
 });
 map.addControl(new mapboxgl.NavigationControl());
 
-const geolibBounds = {};
+let geolibBounds = {};
 
 map.on('load', () => {
   // Event listeners

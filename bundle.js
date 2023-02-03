@@ -93,8 +93,6 @@ const compareGpx = async (refPoints, challPoints, options) => {
 module.exports = compareGpx;
 
 },{"geolib":15}],2:[function(require,module,exports){
-const geolib = require('geolib');
-
 // Display a track
 const displayTrack = (map, id, color, segments) => {
   const features = []
@@ -138,33 +136,22 @@ const displayTrack = (map, id, color, segments) => {
     });
   }
 
-  let geolibBounds = {};
   segments.forEach((points, index) => {
     points.forEach(point => {
       data.features[index].geometry.coordinates.push([point.lon, point.lat]);
     });
-    // Update bounding box
-    const geolibSegmentBounds = geolib.getBounds(points);
-    console.log(geolibSegmentBounds);
-    geolibBounds.minLat = Math.min(...[geolibBounds.minLat, geolibSegmentBounds.minLat].filter(Number.isFinite));
-    geolibBounds.minLng = Math.min(...[geolibBounds.minLng, geolibSegmentBounds.minLng].filter(Number.isFinite));
-    geolibBounds.maxLat = Math.max(...[geolibBounds.maxLat, geolibSegmentBounds.maxLat].filter(Number.isFinite));
-    geolibBounds.maxLng = Math.max(...[geolibBounds.maxLng, geolibSegmentBounds.maxLng].filter(Number.isFinite));
   });
 
   map.getSource(id).setData(data);
-
-  console.log(geolibBounds)
-
-  return geolibBounds;
 }
 
 module.exports = displayTrack;
 
-},{"geolib":15}],3:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 const parseGpx = require('./parseGpx');
 const compareGpx = require('./compareGpx');
 const displayTrack = require('./displayTrack');
+const updateBounds = require('./updateBounds');
 // const generateGpx = require('./generateGpx');
 
 // Links with HTML file
@@ -216,26 +203,13 @@ const loadFile = async (evt) => {
   // Erase missed points tracks
   if (map.getLayer('missed')) {
     map.removeLayer('missed');
-    delete geolibBounds.missed;
   }
   if (map.getSource('missed')) {
     map.removeSource('missed');
   }
 
-  geolibBounds[id] = displayTrack(map, id, color, [currentTarget.points]);
-  geolibGlobalBounds = {
-    minLat: Math.min(...[geolibBounds['ref']?.minLat, geolibBounds['chall']?.minLat, geolibBounds['missed']?.minLat].filter(Number.isFinite)),
-    minLng: Math.min(...[geolibBounds['ref']?.minLng, geolibBounds['chall']?.minLng, geolibBounds['missed']?.minLng].filter(Number.isFinite)),
-    maxLat: Math.max(...[geolibBounds['ref']?.maxLat, geolibBounds['chall']?.maxLat, geolibBounds['missed']?.maxLat].filter(Number.isFinite)),
-    maxLng: Math.max(...[geolibBounds['ref']?.maxLng, geolibBounds['chall']?.maxLng, geolibBounds['missed']?.maxLng].filter(Number.isFinite)),
-  };
-  map.fitBounds(
-    [ [geolibGlobalBounds.minLng, geolibGlobalBounds.minLat],
-      [geolibGlobalBounds.maxLng, geolibGlobalBounds.maxLat]],
-    {
-      padding: 20,
-    },
-  );
+  displayTrack(map, id, color, [currentTarget.points]);
+  geolibBounds = updateBounds(map, id, geolibBounds, [currentTarget.points]);
 }
 
 // ------ MAIN ------//
@@ -249,7 +223,7 @@ const map = new mapboxgl.Map({
 });
 map.addControl(new mapboxgl.NavigationControl());
 
-const geolibBounds = {};
+let geolibBounds = {};
 
 map.on('load', () => {
   // Event listeners
@@ -264,7 +238,7 @@ map.on('load', () => {
   formEl.addEventListener('submit', launchComparison);
 });
 
-},{"./compareGpx":1,"./displayTrack":2,"./parseGpx":17}],4:[function(require,module,exports){
+},{"./compareGpx":1,"./displayTrack":2,"./parseGpx":17,"./updateBounds":18}],4:[function(require,module,exports){
 'use strict';
 
 const validator = require('./validator');
@@ -2231,4 +2205,49 @@ const parseGpx = (str) => {
 
 module.exports = parseGpx;
 
-},{"fast-xml-parser":4}]},{},[3]);
+},{"fast-xml-parser":4}],18:[function(require,module,exports){
+const geolib = require('geolib');
+
+// Helper functions
+const min = (...args) => {
+  return Math.min(...args.filter(Number.isFinite));
+};
+
+const max = (...args) => {
+  return Math.max(...args.filter(Number.isFinite));
+};
+
+const updateBounds = (map, id, geolibBounds, segments) => {
+  let geolibTrackBounds = {};
+  segments.forEach(points => {
+    const geolibSegmentBounds = geolib.getBounds(points);
+
+    geolibTrackBounds.minLat = min(geolibTrackBounds.minLat, geolibSegmentBounds.minLat);
+    geolibTrackBounds.minLng = min(geolibTrackBounds.minLng, geolibSegmentBounds.minLng);
+    geolibTrackBounds.maxLat = max(geolibTrackBounds.maxLat, geolibSegmentBounds.maxLat);
+    geolibTrackBounds.maxLng = max(geolibTrackBounds.maxLng, geolibSegmentBounds.maxLng);
+  });
+
+  geolibBounds[id] = geolibTrackBounds;
+
+  bounds = {
+    minLat: min(geolibBounds['ref']?.minLat, geolibBounds['chall']?.minLat),
+    minLng: min(geolibBounds['ref']?.minLng, geolibBounds['chall']?.minLng),
+    maxLat: max(geolibBounds['ref']?.maxLat, geolibBounds['chall']?.maxLat),
+    maxLng: max(geolibBounds['ref']?.maxLng, geolibBounds['chall']?.maxLng),
+  };
+
+  map.fitBounds(
+    [ [bounds.minLng, bounds.minLat],
+      [bounds.maxLng, bounds.maxLat]],
+    {
+      padding: 20,
+    },
+  );
+
+  return geolibBounds;
+}
+
+module.exports = updateBounds;
+
+},{"geolib":15}]},{},[3]);
