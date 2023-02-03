@@ -5,11 +5,11 @@ const generateGpx = require('./generateGpx');
 
 // ------ USER DATA ------//
 // Path to GPX files to read
-const refFile = 'ref';
-const challFile = 'chall-autre-chemin-2-fois';
+// const refFile = 'ref';
+// const challFile = 'chall-autre-chemin-2-fois';
 
-// const refFile = 'orleans-loop-trace';
-// const challFile = 'orleans-loop-real';
+const refFile = 'orleans-loop-trace';
+const challFile = 'orleans-loop-real';
 
 // const refFile = 'Bordeaux-Paris_2022_trace';
 // const challFile = 'Bordeaux_Paris_2022_real';
@@ -43,7 +43,14 @@ const main = async () => {
   } = await compareGpx(refPoints, challPoints, options);
 
   // Generate the file containing the missed segments
-  generateGpx(missedSegmentsOffTolerance, options);
+  generateGpx(
+    missedSegmentsOffTolerance,
+    {
+      ...options,
+      refFile,
+      challFile,
+    }
+  );
 
   // Final display
   console.log('\nAnalysis summary:');
