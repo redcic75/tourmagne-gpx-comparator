@@ -1,11 +1,4 @@
-const generateGpxStr = async (segments, options) => {
-  const {
-    trigger,
-    tolerance,
-    maxDetour,
-  } = options;
-
-  // Generate GPX string from segments
+const generateGpxStr = async (segments) => {
   let gpxStr = `<?xml version="1.0" encoding="UTF-8"?>
 <gpx
   version="1.0"
@@ -15,15 +8,15 @@ const generateGpxStr = async (segments, options) => {
   xsi:schemaLocation="http://www.topografix.com/GPX/1/0 http://www.topografix.com/GPX/1/0/gpx.xsd">
   <trk>`;
   segments.forEach((seg) => {
-    gpxStr += '\n    <trkseg>'
+    gpxStr += '\n    <trkseg>';
     seg.forEach((point) => {
-      gpxStr += `\n      <trkpt lat="${point.lat}" lon="${point.lon}"></trkpt>`
+      gpxStr += `\n      <trkpt lat="${point.lat}" lon="${point.lon}"></trkpt>`;
     });
-    gpxStr += '\n    </trkseg>'
+    gpxStr += '\n    </trkseg>';
   });
   gpxStr += '\n  </trk>\n</gpx>';
 
   return gpxStr;
-}
+};
 
 module.exports = generateGpxStr;

@@ -1,5 +1,7 @@
 const mapboxgl = require('mapbox-gl/dist/mapbox-gl');
+const FileSaver = require('file-saver');
 
+const generateGpxStr = require('./services/generateGpxStr');
 const parseGpx = require('./services/parseGpx');
 const compareGpx = require('./services/compareGpx');
 const displayTrack = require('./services/displayTrack');
@@ -17,6 +19,10 @@ const detourMaxParamEl = document.querySelector('#detourMaxParam');
 const missedDistanceEl = document.querySelector('#missedDistance');
 const missedPercentEl = document.querySelector('#missedPercent');
 const perfEl = document.querySelector('#perf');
+const downloadGpxEl = document.querySelector('#downloadGpx');
+
+let gpxStr = '';
+const geolibBounds = {};
 
 // ------ FUNCTIONS ------//
 const launchComparison = async (event) => {
@@ -49,11 +55,24 @@ const launchComparison = async (event) => {
   toleranceParamEl.innerHTML = `${formEl.tolerance.value} m`;
   detourMaxParamEl.innerHTML = `${formEl.trigger.value} km`;
   missedDistanceEl.innerHTML = `${Math.round(missedDistance)} m`;
-  missedPercentEl.innerHTML = `${Math.round(missedDistance / (refDistance * 1000)) / 10} %`;
+  missedPercentEl.innerHTML = `${Math.round((missedDistance / refDistance) * 1000) / 10} %`;
   perfEl.innerHTML = 'TODO';
 
   // Update map
   displayTrack(map, 'missed', '#ff0000', missedSegmentsOffTolerance);
+
+  // Generate the file containing the missed segments
+  gpxStr = await generateGpxStr(missedSegmentsOffTolerance, options);
+};
+
+const downloadFile = () => {
+  const filename = 'missed.gpx';
+
+  const blob = new Blob([gpxStr], {
+    type: 'text/plain;charset=utf-8',
+  });
+
+  FileSaver.saveAs(blob, filename);
 };
 
 // load files
@@ -65,7 +84,6 @@ const loadFile = async (event) => {
       id,
       color,
       map,
-      geolibBounds,
     },
   } = event;
 
@@ -111,8 +129,6 @@ const map = new mapboxgl.Map({
 });
 map.addControl(new mapboxgl.NavigationControl());
 
-const geolibBounds = {};
-
 map.on('load', () => {
   // Event listeners for file loads
   refFileInputEl.id = 'ref';
@@ -131,4 +147,7 @@ map.on('load', () => {
   // Event listener for comparison launch
   formEl.map = map;
   formEl.addEventListener('submit', launchComparison);
+
+  // Event listener for downloading gpx file of the gaps
+  downloadGpxEl.addEventListener('click', downloadFile);
 });

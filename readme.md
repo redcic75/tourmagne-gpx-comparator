@@ -16,8 +16,6 @@ You can create test GPX files and view generated GPX files with https://gpx.stud
 # To do
 ## Now
 - Add performance indicator calculation (distance per 24 hours)
-- In browser, add possibility to download missed points gpx
 ## Later
-- ESlint
 - Mapbox API key ?
 - Handle GPX with multiple tracks or multiple track segments

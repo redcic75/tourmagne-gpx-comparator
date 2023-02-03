@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 const fs = require('fs/promises');
 const path = require('path');
 
@@ -25,7 +26,7 @@ const options = {
 
 // ------ SCRIPT ------ //
 const main = async () => {
-  const prefix = path.resolve(__dirname, '../data/gpx/')
+  const prefix = path.resolve(__dirname, '../data/gpx/');
   const refPath = `${prefix}/${refFile}.gpx`;
   const challPath = `${prefix}/${challFile}.gpx`;
 
@@ -45,7 +46,7 @@ const main = async () => {
   } = await compareGpx(refPoints, challPoints, options);
 
   // Generate the file containing the missed segments
-  const gpxStr = await generateGpxStr(missedSegmentsOffTolerance, options);
+  const gpxStr = await generateGpxStr(missedSegmentsOffTolerance);
 
   // Write GPX file on disk
   const outputFilePath = path.resolve(__dirname, `../data/generated_files/missed-${refFile}-${challFile}-${options.trigger}-${options.tolerance}-${options.maxDetour}.gpx`);
@@ -58,8 +59,8 @@ const main = async () => {
   console.log(`Trigger: ${options.trigger} m`);
   console.log(`Tolerance: ${options.tolerance} m`);
   console.log(`Max detour: ${options.maxDetour} m`);
-  console.log(`Missed ${Math.round(missedDistance)} meters of the reference path`)
-  console.log(`Missed ${Math.round(missedDistance / refDistance * 1000) / 10} % of the reference path`)
-}
+  console.log(`Missed ${Math.round(missedDistance)} meters of the reference path`);
+  console.log(`Missed ${Math.round((missedDistance / refDistance) * 1000) / 10} % of the reference path`);
+};
 
 main();
