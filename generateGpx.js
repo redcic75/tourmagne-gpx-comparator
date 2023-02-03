@@ -1,4 +1,4 @@
-const fs = require('fs/promises');
+// const fs = require('fs/promises');
 
 const generateGpx = async (segments, options) => {
   const {
@@ -21,8 +21,8 @@ const generateGpx = async (segments, options) => {
   gpxStr += '</gpx>';
 
   // Write a GPX file
-  const outputFilePath = `./generated_files/missed-${refFile}-${challFile}-${trigger}-${tolerance}-${maxDetour}.gpx`
-  await fs.writeFile(outputFilePath, gpxStr);
+  // const outputFilePath = `./generated_files/missed-${refFile}-${challFile}-${trigger}-${tolerance}-${maxDetour}.gpx`
+  // await fs.writeFile(outputFilePath, gpxStr);
 
   return gpxStr;
 }

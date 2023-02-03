@@ -66,8 +66,8 @@ mapboxgl.accessToken = 'pk.eyJ1IjoicmVkY2ljIiwiYSI6ImNsZG41YzZzMjAweGYzbnEwMjYzO
 const map = new mapboxgl.Map({
   container: 'map',
   style: 'mapbox://styles/mapbox/streets-v12',
-  center: [-0.6, 44.81],
-  zoom: 13,
+  center: [3.11, 46.42], // Display Melun - Nîme zone
+  zoom: 6,
 });
 map.addControl(new mapboxgl.NavigationControl());
 

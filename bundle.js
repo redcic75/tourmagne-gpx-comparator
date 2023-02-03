@@ -155,21 +155,23 @@ const generateGpx = async (segments, options) => {
     trigger,
     tolerance,
     maxDetour,
+    refFile,
+    challFile,
   } = options;
 
   // Generate GPX string from segments
-  let gpxStr = '<?xml version="1.0" encoding="UTF-8"?><gpx><trk>';
+  let gpxStr = '<?xml version="1.0" encoding="UTF-8"?><gpx>';
   segments.forEach((seg) => {
-    gpxStr += '<trkseg>'
+    gpxStr += '<trk><trkseg>'
     seg.forEach((point) => {
       gpxStr += `<trkpt lat="${point.lat}" lon="${point.lon}"></trkpt>`
     });
-    gpxStr += '</trkseg>'
+    gpxStr += '</trkseg></trk>'
   });
-  gpxStr += '</trk></gpx>';
+  gpxStr += '</gpx>';
 
   // Write a GPX file
-  // const outputFilePath = `./generated_files/missed---${trigger}-${tolerance}-${maxDetour}.gpx`
+  // const outputFilePath = `./generated_files/missed-${refFile}-${challFile}-${trigger}-${tolerance}-${maxDetour}.gpx`
   // await fs.writeFile(outputFilePath, gpxStr);
 
   return gpxStr;
@@ -246,8 +248,8 @@ mapboxgl.accessToken = 'pk.eyJ1IjoicmVkY2ljIiwiYSI6ImNsZG41YzZzMjAweGYzbnEwMjYzO
 const map = new mapboxgl.Map({
   container: 'map',
   style: 'mapbox://styles/mapbox/streets-v12',
-  center: [-0.6, 44.81],
-  zoom: 13,
+  center: [3.11, 46.42], // Display Melun - Nîme zone
+  zoom: 6,
 });
 map.addControl(new mapboxgl.NavigationControl());
 
