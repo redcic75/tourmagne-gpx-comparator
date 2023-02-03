@@ -1,12 +1,14 @@
+const mapboxgl = require('mapbox-gl/dist/mapbox-gl');
+
 const parseGpx = require('./services/parseGpx');
 const compareGpx = require('./services/compareGpx');
 const displayTrack = require('./services/displayTrack');
-const updateBounds = require('./services/updateBounds');
+const { updateBounds, fitBounds } = require('./services/updateBounds');
 
 // Links with HTML file
 const refFileInputEl = document.querySelector('#ref');
 const challFileInputEl = document.querySelector('#chall');
-const formEl = document.querySelector('#form')
+const formEl = document.querySelector('#form');
 const refParamEl = document.querySelector('#refParam');
 const challParamEl = document.querySelector('#challParam');
 const triggerParamEl = document.querySelector('#triggerParam');
@@ -16,10 +18,13 @@ const missedDistanceEl = document.querySelector('#missedDistance');
 const missedPercentEl = document.querySelector('#missedPercent');
 const perfEl = document.querySelector('#perf');
 
-
 // ------ FUNCTIONS ------//
 const launchComparison = async (event) => {
   event.preventDefault();
+
+  const {
+    map,
+  } = event.currentTarget;
 
   // Get options from form inputs
   const options = {
@@ -44,7 +49,7 @@ const launchComparison = async (event) => {
   toleranceParamEl.innerHTML = `${formEl.tolerance.value} m`;
   detourMaxParamEl.innerHTML = `${formEl.trigger.value} km`;
   missedDistanceEl.innerHTML = `${Math.round(missedDistance)} m`;
-  missedPercentEl.innerHTML = `${Math.round(missedDistance / refDistance * 1000) / 10} %`;
+  missedPercentEl.innerHTML = `${Math.round(missedDistance / (refDistance * 1000)) / 10} %`;
   perfEl.innerHTML = 'TODO';
 
   // Update map
@@ -52,18 +57,26 @@ const launchComparison = async (event) => {
 };
 
 // load files
-const loadFile = async (evt) => {
-  console.log('change');
-  const currentTarget = evt.currentTarget;
-  const file = evt.currentTarget.files[0];
-  const id = evt.currentTarget.id;
-  const color = evt.currentTarget.color;
+const loadFile = async (event) => {
+  const {
+    currentTarget,
+    currentTarget: {
+      files,
+      id,
+      color,
+      map,
+      geolibBounds,
+    },
+  } = event;
+
+  const file = files[0];
 
   if (file) {
     const str = await file.text();
     currentTarget.points = parseGpx(str);
   } else {
     currentTarget.points = [];
+
     // Erase track
     if (map.getLayer(id)) {
       map.removeLayer(id);
@@ -83,10 +96,9 @@ const loadFile = async (evt) => {
 
   // Display track and update bounds
   displayTrack(map, id, color, [currentTarget.points]);
-  console.log(geolibBounds)
-  geolibBounds = updateBounds(map, id, geolibBounds, [currentTarget.points]);
-  console.log(geolibBounds)
-}
+  geolibBounds[id] = updateBounds(map, geolibBounds, [currentTarget.points]);
+  fitBounds(map, geolibBounds);
+};
 
 // ------ MAIN ------//
 // Display empty map
@@ -99,19 +111,24 @@ const map = new mapboxgl.Map({
 });
 map.addControl(new mapboxgl.NavigationControl());
 
-let geolibBounds = {};
+const geolibBounds = {};
 
 map.on('load', () => {
   // Event listeners for file loads
   refFileInputEl.id = 'ref';
   refFileInputEl.color = '#233677';
+  refFileInputEl.map = map;
+  refFileInputEl.geolibBounds = geolibBounds;
 
   challFileInputEl.id = 'chall';
   challFileInputEl.color = '#00ff3f';
+  challFileInputEl.map = map;
+  challFileInputEl.geolibBounds = geolibBounds;
 
   refFileInputEl.addEventListener('change', loadFile);
   challFileInputEl.addEventListener('change', loadFile);
 
   // Event listener for comparison launch
+  formEl.map = map;
   formEl.addEventListener('submit', launchComparison);
 });

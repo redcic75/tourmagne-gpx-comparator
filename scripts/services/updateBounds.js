@@ -1,20 +1,17 @@
 const geolib = require('geolib');
 
 // Helper functions
-const min = (...args) => {
-  return Math.min(...args.filter(Number.isFinite));
-};
+const min = (...args) => Math.min(...args.filter(Number.isFinite));
 
-const max = (...args) => {
-  return Math.max(...args.filter(Number.isFinite));
-};
+const max = (...args) => Math.max(...args.filter(Number.isFinite));
 
 // Update bounds function
-const updateBounds = (map, id, geolibBounds, segments) => {
-  let geolibTrackBounds = {};
-  segments.forEach(points => {
-    if (points.length) {
-      const geolibSegmentBounds = geolib.getBounds(points);
+const updateBounds = (map, geolibBounds, segments) => {
+  const geolibTrackBounds = {};
+
+  segments.forEach((segment) => {
+    if (segment.length) {
+      const geolibSegmentBounds = geolib.getBounds(segment);
 
       geolibTrackBounds.minLat = min(geolibTrackBounds.minLat, geolibSegmentBounds.minLat);
       geolibTrackBounds.minLng = min(geolibTrackBounds.minLng, geolibSegmentBounds.minLng);
@@ -23,24 +20,27 @@ const updateBounds = (map, id, geolibBounds, segments) => {
     }
   });
 
-  geolibBounds[id] = geolibTrackBounds;
+  return geolibTrackBounds;
+};
 
-  bounds = {
-    minLat: min(geolibBounds['ref']?.minLat, geolibBounds['chall']?.minLat),
-    minLng: min(geolibBounds['ref']?.minLng, geolibBounds['chall']?.minLng),
-    maxLat: max(geolibBounds['ref']?.maxLat, geolibBounds['chall']?.maxLat),
-    maxLng: max(geolibBounds['ref']?.maxLng, geolibBounds['chall']?.maxLng),
+const fitBounds = (map, geolibBounds) => {
+  const bounds = {
+    minLat: min(geolibBounds.ref?.minLat, geolibBounds.chall?.minLat),
+    minLng: min(geolibBounds.ref?.minLng, geolibBounds.chall?.minLng),
+    maxLat: max(geolibBounds.ref?.maxLat, geolibBounds.chall?.maxLat),
+    maxLng: max(geolibBounds.ref?.maxLng, geolibBounds.chall?.maxLng),
   };
 
   map.fitBounds(
-    [ [bounds.minLng, bounds.minLat],
+    [[bounds.minLng, bounds.minLat],
       [bounds.maxLng, bounds.maxLat]],
     {
       padding: 20,
     },
   );
+};
 
-  return geolibBounds;
-}
-
-module.exports = updateBounds;
+module.exports = {
+  updateBounds,
+  fitBounds,
+};
