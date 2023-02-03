@@ -19,3 +19,4 @@ You can create test GPX files and view generated GPX files with https://gpx.stud
 ## Later
 - Mapbox API key ?
 - Handle GPX with multiple tracks or multiple track segments
+- Display waiting message while loading big files or while comparing big files

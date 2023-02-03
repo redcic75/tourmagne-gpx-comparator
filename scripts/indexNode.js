@@ -19,6 +19,7 @@ const challFile = 'chall-autre-chemin-2-fois';
 
 // Params
 const options = {
+  duration: 1, // in hours
   trigger: 20, // in meters - trigger must be less than tolerance
   tolerance: 100, // in meters
   maxDetour: 20000, // in meters
@@ -43,6 +44,7 @@ const main = async () => {
     missedSegmentsOffTolerance,
     refDistance,
     missedDistance,
+    perf,
   } = await compareGpx(refPoints, challPoints, options);
 
   // Generate the file containing the missed segments
@@ -53,14 +55,18 @@ const main = async () => {
   await fs.writeFile(outputFilePath, gpxStr);
 
   // Final display
-  console.log('\nAnalysis summary:');
+  console.log('');
+  console.log('Analysis summary:');
+  console.log('-----------------');
   console.log(`Reference gpx file: ${refFile}`);
   console.log(`Challenger gpx file: ${challFile}`);
   console.log(`Trigger: ${options.trigger} m`);
   console.log(`Tolerance: ${options.tolerance} m`);
   console.log(`Max detour: ${options.maxDetour} m`);
-  console.log(`Missed ${Math.round(missedDistance)} meters of the reference path`);
-  console.log(`Missed ${Math.round((missedDistance / refDistance) * 1000) / 10} % of the reference path`);
+  console.log('');
+  console.log(`Missed distance of the reference path in m: ${Math.round(missedDistance)} m`);
+  console.log(`Missed distance of the reference path in %: ${Math.round((missedDistance / refDistance) * 1000) / 10} %`);
+  console.log(`Distance done during the worst ${options.duration} h: ${perf} km`);
 };
 
 main();

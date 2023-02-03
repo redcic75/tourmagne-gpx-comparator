@@ -2203,6 +2203,7 @@ const challFileInputEl = document.querySelector('#chall');
 const formEl = document.querySelector('#form');
 const refParamEl = document.querySelector('#refParam');
 const challParamEl = document.querySelector('#challParam');
+const durationParamEl = document.querySelector('#durationParam');
 const triggerParamEl = document.querySelector('#triggerParam');
 const toleranceParamEl = document.querySelector('#toleranceParam');
 const detourMaxParamEl = document.querySelector('#detourMaxParam');
@@ -2224,6 +2225,7 @@ const launchComparison = async (event) => {
 
   // Get options from form inputs
   const options = {
+    duration: formEl.duration.value * 3600, // in seconds
     trigger: formEl.trigger.value, // in meters - trigger must be less than tolerance
     tolerance: formEl.tolerance.value, // in meters
     maxDetour: formEl.maxDetour.value * 1000, // in meters
@@ -2232,6 +2234,7 @@ const launchComparison = async (event) => {
     missedSegmentsOffTolerance,
     refDistance,
     missedDistance,
+    perf,
   } = await compareGpx(
     refFileInputEl.points,
     challFileInputEl.points,
@@ -2241,12 +2244,14 @@ const launchComparison = async (event) => {
   // Update DOM
   refParamEl.innerHTML = formEl.ref.value.split('\\').slice(-1);
   challParamEl.innerHTML = formEl.chall.value.split('\\').slice(-1);
+
+  durationParamEl.innerHTML = `${formEl.duration.value} h`;
   triggerParamEl.innerHTML = `${formEl.trigger.value} m`;
   toleranceParamEl.innerHTML = `${formEl.tolerance.value} m`;
   detourMaxParamEl.innerHTML = `${formEl.trigger.value} km`;
   missedDistanceEl.innerHTML = `${Math.round(missedDistance)} m`;
   missedPercentEl.innerHTML = `${Math.round((missedDistance / refDistance) * 1000) / 10} %`;
-  perfEl.innerHTML = 'TODO';
+  perfEl.innerHTML = `Distance parcourue dans les pires ${formEl.duration.value} h : ${perf} km`;
 
   // Update map
   displayTrack(map, 'missed', '#ff0000', missedSegmentsOffTolerance);
@@ -2362,10 +2367,13 @@ const calculateTotalDistance = (points) => {
 
 const compareGpx = async (refPoints, challPoints, options) => {
   const {
+    duration,
     trigger,
     tolerance,
     maxDetour,
   } = options;
+
+  const perf = duration * 10;
 
   // Initialize the missedSegments array
   // This array will contain segment arrays
@@ -2447,6 +2455,7 @@ const compareGpx = async (refPoints, challPoints, options) => {
     missedSegmentsOffTolerance,
     refDistance,
     missedDistance,
+    perf,
   };
 };
 

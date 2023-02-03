@@ -26,9 +26,14 @@
           <input type="file" id="chall" class="form-control" accept=".gpx" required/>
         </div>
         <div class="form-group">
+          <label for="perf">Durée à prendre en compte pour le calcul de la performance en h</label>
+          <input type="number" id="duration" class="form-control" value="1" required/>
+        </div>
+        <div class="form-group">
           <label for="trigger">Distance de déclenchement en m</label>
           <input type="number" id="trigger" class="form-control" value="20" required/>
         </div>
+
         <div class="form-group">
           <label for="tolerance">Tolérance d'écart en m</label>
           <input type="number" id="tolerance" class="form-control" value="100" required/>
@@ -38,7 +43,7 @@
           <input type="number" id="maxDetour" class="form-control" value="20" required/>
         </div>
         <div class="form-group">
-          <button type="submit" id="calculateBtn" class="btn btn-primary">Lancer la comparaison</button>
+          <button type="submit" class="btn btn-primary">Lancer la comparaison</button>
         </div>
       </form>
     </section>
@@ -51,6 +56,9 @@
         </li>
         <li>Fichier GPX de la trace parcourue :
           <span id="challParam"></span>
+        </li>
+        <li>Durée prise en compte pour le calcul de la performance :
+          <span id="durationParam"></span>
         </li>
         <li>Distance de déclenchement :
           <span id="triggerParam"></span>

@@ -16,10 +16,13 @@ const calculateTotalDistance = (points) => {
 
 const compareGpx = async (refPoints, challPoints, options) => {
   const {
+    duration,
     trigger,
     tolerance,
     maxDetour,
   } = options;
+
+  const perf = duration * 10;
 
   // Initialize the missedSegments array
   // This array will contain segment arrays
@@ -101,6 +104,7 @@ const compareGpx = async (refPoints, challPoints, options) => {
     missedSegmentsOffTolerance,
     refDistance,
     missedDistance,
+    perf,
   };
 };
 
