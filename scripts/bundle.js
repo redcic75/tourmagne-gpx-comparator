@@ -2253,6 +2253,7 @@ const launchComparison = async (event) => {
 
   // Generate the file containing the missed segments
   gpxStr = await generateGpxStr(missedSegmentsOffTolerance, options);
+  downloadGpxEl.classList.remove('disabled');
 };
 
 const downloadFile = () => {
