@@ -116,12 +116,12 @@ const geolibBounds = {};
 map.on('load', () => {
   // Event listeners for file loads
   refFileInputEl.id = 'ref';
-  refFileInputEl.color = '#233677';
+  refFileInputEl.color = '#0000ff';
   refFileInputEl.map = map;
   refFileInputEl.geolibBounds = geolibBounds;
 
   challFileInputEl.id = 'chall';
-  challFileInputEl.color = '#00ff3f';
+  challFileInputEl.color = '#00ff00';
   challFileInputEl.map = map;
   challFileInputEl.geolibBounds = geolibBounds;
 
