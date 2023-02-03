@@ -8,11 +8,11 @@ const generateGpxStr = require('./services/generateGpxStr');
 
 // ------ USER DATA ------//
 // Path to GPX files to read
-const refFile = 'ref';
-const challFile = 'chall-autre-chemin-2-fois';
+// const refFile = 'ref';
+// const challFile = 'chall-autre-chemin-2-fois';
 
-// const refFile = 'orleans-loop-trace';
-// const challFile = 'orleans-loop-real';
+const refFile = 'orleans-loop-trace';
+const challFile = 'orleans-loop-real';
 
 // const refFile = 'Bordeaux-Paris_2022_trace';
 // const challFile = 'Bordeaux_Paris_2022_real';
@@ -60,13 +60,14 @@ const main = async () => {
   console.log('-----------------');
   console.log(`Reference gpx file: ${refFile}`);
   console.log(`Challenger gpx file: ${challFile}`);
+  console.log(`Duration: ${options.duration} h`);
   console.log(`Trigger: ${options.trigger} m`);
   console.log(`Tolerance: ${options.tolerance} m`);
   console.log(`Max detour: ${options.maxDetour} m`);
   console.log('');
   console.log(`Missed distance of the reference path in m: ${Math.round(missedDistance)} m`);
   console.log(`Missed distance of the reference path in %: ${Math.round((missedDistance / refDistance) * 1000) / 10} %`);
-  console.log(`Distance done during the worst ${options.duration} h: ${perf} km`);
+  console.log(`Distance done during the worst ${options.duration} h: ${Math.round(perf.speed) / 1000} km`);
 };
 
 main();

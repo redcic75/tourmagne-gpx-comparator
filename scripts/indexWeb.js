@@ -35,7 +35,7 @@ const launchComparison = async (event) => {
 
   // Get options from form inputs
   const options = {
-    duration: formEl.duration.value * 3600, // in seconds
+    duration: formEl.duration.value, // in seconds
     trigger: formEl.trigger.value, // in meters - trigger must be less than tolerance
     tolerance: formEl.tolerance.value, // in meters
     maxDetour: formEl.maxDetour.value * 1000, // in meters
@@ -61,7 +61,7 @@ const launchComparison = async (event) => {
   detourMaxParamEl.innerHTML = `${formEl.trigger.value} km`;
   missedDistanceEl.innerHTML = `${Math.round(missedDistance)} m`;
   missedPercentEl.innerHTML = `${Math.round((missedDistance / refDistance) * 1000) / 10} %`;
-  perfEl.innerHTML = `Distance parcourue dans les pires ${formEl.duration.value} h : ${perf} km`;
+  perfEl.innerHTML = `Distance parcourue dans les pires ${formEl.duration.value} h : ${Math.round(perf.speed) / 1000} km`;
 
   // Update map
   displayTrack(map, 'missed', '#ff0000', missedSegmentsOffTolerance);

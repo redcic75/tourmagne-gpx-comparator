@@ -22,7 +22,20 @@ const compareGpx = async (refPoints, challPoints, options) => {
     maxDetour,
   } = options;
 
-  const perf = duration * 10;
+  // passageTimes is an array containing cumulative distances from refPoints start
+  // This array will then be extended with challenger passage time
+  const passageTimes = [{
+    refIndex: 0,
+    cumulatedDistance: 0,
+  }];
+  for (let refIndex = 1; refIndex < refPoints.length; refIndex += 1) {
+    const cumulatedDistance = passageTimes[refIndex - 1].cumulatedDistance
+      + geolib.getDistance(refPoints[refIndex - 1], refPoints[refIndex]);
+    passageTimes.push({
+      refIndex,
+      cumulatedDistance,
+    });
+  }
 
   // Initialize the missedSegments array
   // This array will contain segment arrays
@@ -38,7 +51,7 @@ const compareGpx = async (refPoints, challPoints, options) => {
 
     // Log progress
     // eslint-disable-next-line no-console
-    console.log(Math.floor(refIndex / (refPoints.length * 1000)) / 10);
+    console.log(Math.floor((refIndex / refPoints.length) * 1000) / 10);
 
     let challDetour = 0;
     let minDist; // minimum distance between current refPoint and chall track;
@@ -52,17 +65,22 @@ const compareGpx = async (refPoints, challPoints, options) => {
         challPoints[challLocalIndex],
         challPoints[challLocalIndex + 1],
       );
+
       if (!minDist || dist < minDist) {
         minDist = dist;
+        passageTimes[refIndex].time = new Date(challPoints[challIndex].time).valueOf();
       }
+
       if (dist <= trigger) {
         challIndex = challLocalIndex;
         continue refIndexLoop;
       }
+
       challDetour += geolib.getDistance(
         challPoints[challLocalIndex],
         challPoints[challLocalIndex + 1],
       );
+
       // Only look for waypoint in challFile in the next maxDetour meters from the last waypoint
       if (challDetour > maxDetour) {
         break challIndexLoop;
@@ -85,6 +103,43 @@ const compareGpx = async (refPoints, challPoints, options) => {
       lastMissedSegment.push(refPoint);
     } else {
       missedSegments.push([refPoint]);
+    }
+  }
+
+  // Filter out passageTimes points where challenger did not pass
+  // Filter out passageTimes points where time is < duration
+  const initialTime = passageTimes[0].time;
+  // eslint-disable-next-line arrow-body-style
+  const pt = passageTimes.map((passageTime) => {
+    return {
+      ...passageTime,
+      time: passageTime.time - initialTime,
+    };
+  });
+
+  // Find worst period
+  let perf;
+  for (let iEnd = 0; iEnd < pt.length; iEnd += 1) {
+    const endTime = pt[iEnd].time;
+    const startTime = Math.max(0, endTime - duration * 3600 * 1000);
+    let iStart = 0;
+    while (pt[iStart].time < startTime) {
+      iStart += 1;
+    }
+    pt[iEnd].lastIntervalDistance = pt[iEnd].cumulatedDistance - pt[iStart].cumulatedDistance;
+    pt[iEnd].startRefIndex = pt[iStart].refIndex;
+  }
+
+  for (let i = 0; i < pt.length; i += 1) {
+    if (pt[i].time > duration * 3600 * 1000
+      && (!perf || pt[i].cumulatedDistance < perf.distance)) {
+      perf = {
+        distance: pt[i].cumulatedDistance,
+        startRefIndex: pt[i].startRefIndex,
+        endRefIndex: pt[i].refIndex,
+      };
+      perf.speed = (perf.distance / (pt[perf.endRefIndex].time - pt[perf.startRefIndex].time))
+        * 3600 * 1000;
     }
   }
 
