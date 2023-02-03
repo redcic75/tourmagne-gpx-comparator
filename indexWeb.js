@@ -8,8 +8,14 @@ const updateBounds = require('./updateBounds');
 const refFileInputEl = document.querySelector('#ref');
 const challFileInputEl = document.querySelector('#chall');
 const formEl = document.querySelector('#form')
+const refParamEl = document.querySelector('#refParam');
+const challParamEl = document.querySelector('#challParam');
+const triggerParamEl = document.querySelector('#triggerParam');
+const toleranceParamEl = document.querySelector('#toleranceParam');
+const detourMaxParamEl = document.querySelector('#detourMaxParam');
 const missedDistanceEl = document.querySelector('#missedDistance');
 const missedPercentEl = document.querySelector('#missedPercent');
+const perfEl = document.querySelector('#perf');
 
 
 // ------ FUNCTIONS ------//
@@ -33,8 +39,14 @@ const launchComparison = async (event) => {
   );
 
   // Update DOM
+  refParamEl.innerHTML = formEl.ref.value;
+  challParamEl.innerHTML = formEl.chall.value;
+  triggerParamEl.innerHTML = `${formEl.trigger.value} m`;
+  toleranceParamEl.innerHTML = `${formEl.tolerance.value} m`;
+  detourMaxParamEl.innerHTML = `${formEl.trigger.value} km`;
   missedDistanceEl.innerHTML = `${Math.round(missedDistance)} m`;
   missedPercentEl.innerHTML = `${Math.round(missedDistance / refDistance * 1000) / 10} %`;
+  perfEl.innerHTML = 'TODO';
 
   // Update map
   displayTrack(map, 'missed', '#ff0000', missedSegmentsOffTolerance);
@@ -77,7 +89,7 @@ map.addControl(new mapboxgl.NavigationControl());
 let geolibBounds = {};
 
 map.on('load', () => {
-  // Event listeners
+  // Event listeners for file loads
   refFileInputEl.id = 'ref';
   refFileInputEl.color = '#233677';
 
@@ -86,5 +98,7 @@ map.on('load', () => {
 
   refFileInputEl.addEventListener('change', loadFile);
   challFileInputEl.addEventListener('change', loadFile);
+
+  // Event listener for comparison launch
   formEl.addEventListener('submit', launchComparison);
 });
