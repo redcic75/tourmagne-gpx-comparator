@@ -49,6 +49,26 @@ li {
   margin-bottom: .3rem;;
 }
 
+.blue {
+  color: #0000FF;
+  font-weight: bolder;
+}
+
+.red {
+  color: #FF0000;
+  font-weight: bolder;
+}
+
+.green {
+  color: #00FF00;
+  font-weight: bolder;
+}
+
+.black {
+  color: #000000;
+  font-weight: bolder;
+}
+
 #map {
   height: 90vh;
 }
