@@ -1,7 +1,9 @@
 const fs = require('fs/promises');
-const parseGpx = require('./parseGpx');
-const compareGpx = require('./compareGpx');
-const generateGpxStr = require('./generateGpxStr');
+const path = require('path');
+
+const parseGpx = require('./services/parseGpx');
+const compareGpx = require('./services/compareGpx');
+const generateGpxStr = require('./services/generateGpxStr');
 
 // ------ USER DATA ------//
 // Path to GPX files to read
@@ -23,9 +25,9 @@ const options = {
 
 // ------ SCRIPT ------ //
 const main = async () => {
-  const prefix = './gpx/'
-  const refPath = prefix + refFile + '.gpx';
-  const challPath = prefix + challFile + '.gpx';
+  const prefix = path.resolve(__dirname, '../data/gpx/')
+  const refPath = `${prefix}/${refFile}.gpx`;
+  const challPath = `${prefix}/${challFile}.gpx`;
 
   // Load files -> strings
   const refPromise = fs.readFile(refPath, { encoding: 'utf8' });
@@ -46,7 +48,7 @@ const main = async () => {
   const gpxStr = await generateGpxStr(missedSegmentsOffTolerance, options);
 
   // Write GPX file on disk
-  const outputFilePath = `./generated_files/missed-${refFile}-${challFile}-${options.trigger}-${options.tolerance}-${options.maxDetour}.gpx`
+  const outputFilePath = path.resolve(__dirname, `../data/generated_files/missed-${refFile}-${challFile}-${options.trigger}-${options.tolerance}-${options.maxDetour}.gpx`);
   await fs.writeFile(outputFilePath, gpxStr);
 
   // Final display

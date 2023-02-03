@@ -1,258 +1,4 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
-const geolib = require('geolib');
-
-// Calculate total distance of a track segment (represented by an array of points)
-const calculateTotalDistance = (points) => {
-  let distance = 0;
-  for (let i = 1; i < points.length; i++) {
-    distance += geolib.getDistance(points[i-1], points[i]);
-  }
-  return distance;
-}
-
-const compareGpx = async (refPoints, challPoints, options) => {
-  const {
-    trigger,
-    tolerance,
-    maxDetour,
-  } = options;
-
-  // Initialize the missedSegments array
-  // This array will contain segment arrays
-  // Each segment array will contain consecutive missed trackpoints
-  const missedSegments = [[]];
-
-  let challIndex = 0;
-
-  // Loop through all reference track points
-  refIndexLoop:
-  for (let refIndex = 0; refIndex < refPoints.length; refIndex++) {
-    const refPoint = refPoints[refIndex];
-
-    // Log progress
-    console.log(Math.floor(refIndex / refPoints.length * 1000) / 10);
-
-    let challDetour = 0;
-    let minDist; // minimum distance between current refPoint and chall track;
-    challIndexLoop:
-    for (let challLocalIndex = challIndex; challLocalIndex < challPoints.length - 1; challLocalIndex++) {
-      const dist = geolib.getDistanceFromLine(
-        refPoint,
-        challPoints[challLocalIndex],
-        challPoints[challLocalIndex + 1]
-      );
-      if (!minDist || dist < minDist) {
-        minDist = dist;
-      }
-      if (dist <= trigger) {
-        challIndex = challLocalIndex;
-        continue refIndexLoop;
-      }
-      challDetour += geolib.getDistance(challPoints[challLocalIndex], challPoints[challLocalIndex + 1]);
-      // Only look for waypoint in challFile in the next maxDetour meters from the last waypoint
-      if (challDetour > maxDetour) {
-        break challIndexLoop;
-      }
-    }
-
-    // Passing here only when challenger track
-    // didn't pass close enough (i.e. d > trigger)
-    // from the reference track.
-    // In this case, add the missed refPoint to the missedSegments array
-    refPoint.index = refIndex;
-    refPoint.dist = minDist; // store min distance from reference to challenger track
-    let lastMissedSegment = missedSegments[missedSegments.length - 1];
-
-    // Append to lastMissedSegment only if current missing trackpoint from reference
-    // immediatly follows the last one added.
-    // If not create a new segment in missedSegments.
-    if (lastMissedSegment.length === 0 ||
-        lastMissedSegment[lastMissedSegment.length - 1].index === refIndex - 1) {
-      lastMissedSegment.push(refPoint);
-    } else {
-      missedSegments.push([refPoint]);
-    }
-  };
-
-  // Filter out missedSegment where max of minDist is < tolerance
-  const missedSegmentsOffTolerance = missedSegments.filter(segment =>
-    segment.some(point => point.dist > tolerance)
-  );
-
-  // Calculate and display synthesis
-  const refDistance = calculateTotalDistance(refPoints);
-  const missedDistance = missedSegmentsOffTolerance.reduce((acc, segment) => acc + calculateTotalDistance(segment), 0);
-
-  return {
-    missedSegmentsOffTolerance,
-    refDistance,
-    missedDistance,
-  }
-}
-
-module.exports = compareGpx;
-
-},{"geolib":15}],2:[function(require,module,exports){
-// Display a track
-const displayTrack = (map, id, color, segments) => {
-  const features = []
-  for (let i = 0; i < segments.length; i++) {
-    features.push({
-      'type': 'Feature',
-      'properties': {},
-      'geometry': {
-        'type': 'LineString',
-        'coordinates': [],
-      }
-    });
-  };
-
-  const data = {
-    'type': 'FeatureCollection',
-    'features': features,
-  };
-
-  if (!map.getSource(id)) {
-    map.addSource(id,
-      {
-        type: 'geojson',
-        data: data,
-      }
-    );
-
-    map.addLayer({
-      id: id,
-      type: 'line',
-      source: id,
-      layout: {
-        'line-join': 'round',
-        'line-cap': 'round',
-      },
-      paint: {
-        'line-color': color,
-        'line-width': 4,
-        'line-opacity': .7,
-      },
-    });
-  }
-
-  segments.forEach((points, index) => {
-    points.forEach(point => {
-      data.features[index].geometry.coordinates.push([point.lon, point.lat]);
-    });
-  });
-
-  map.getSource(id).setData(data);
-}
-
-module.exports = displayTrack;
-
-},{}],3:[function(require,module,exports){
-const parseGpx = require('./parseGpx');
-const compareGpx = require('./compareGpx');
-const displayTrack = require('./displayTrack');
-const updateBounds = require('./updateBounds');
-
-// Links with HTML file
-const refFileInputEl = document.querySelector('#ref');
-const challFileInputEl = document.querySelector('#chall');
-const formEl = document.querySelector('#form')
-const refParamEl = document.querySelector('#refParam');
-const challParamEl = document.querySelector('#challParam');
-const triggerParamEl = document.querySelector('#triggerParam');
-const toleranceParamEl = document.querySelector('#toleranceParam');
-const detourMaxParamEl = document.querySelector('#detourMaxParam');
-const missedDistanceEl = document.querySelector('#missedDistance');
-const missedPercentEl = document.querySelector('#missedPercent');
-const perfEl = document.querySelector('#perf');
-
-
-// ------ FUNCTIONS ------//
-const launchComparison = async (event) => {
-  event.preventDefault();
-
-  // Get options from form inputs
-  const options = {
-    trigger: formEl.trigger.value, // in meters - trigger must be less than tolerance
-    tolerance: formEl.tolerance.value, // in meters
-    maxDetour: formEl.maxDetour.value * 1000, // in meters
-  };
-  const {
-    missedSegmentsOffTolerance,
-    refDistance,
-    missedDistance,
-  } = await compareGpx(
-    refFileInputEl.points,
-    challFileInputEl.points,
-    options,
-  );
-
-  // Update DOM
-  refParamEl.innerHTML = formEl.ref.value;
-  challParamEl.innerHTML = formEl.chall.value;
-  triggerParamEl.innerHTML = `${formEl.trigger.value} m`;
-  toleranceParamEl.innerHTML = `${formEl.tolerance.value} m`;
-  detourMaxParamEl.innerHTML = `${formEl.trigger.value} km`;
-  missedDistanceEl.innerHTML = `${Math.round(missedDistance)} m`;
-  missedPercentEl.innerHTML = `${Math.round(missedDistance / refDistance * 1000) / 10} %`;
-  perfEl.innerHTML = 'TODO';
-
-  // Update map
-  displayTrack(map, 'missed', '#ff0000', missedSegmentsOffTolerance);
-};
-
-// load files
-const loadFile = async (evt) => {
-  const currentTarget = evt.currentTarget;
-  const file = evt.currentTarget.files[0];
-  const id = evt.currentTarget.id;
-  const color = evt.currentTarget.color;
-
-  const str = await file.text();
-  currentTarget.points = parseGpx(str);
-
-  // Erase missed points tracks
-  if (map.getLayer('missed')) {
-    map.removeLayer('missed');
-  }
-  if (map.getSource('missed')) {
-    map.removeSource('missed');
-  }
-
-  // Display track and update bounds
-  displayTrack(map, id, color, [currentTarget.points]);
-  geolibBounds = updateBounds(map, id, geolibBounds, [currentTarget.points]);
-}
-
-// ------ MAIN ------//
-// Display empty map
-mapboxgl.accessToken = 'pk.eyJ1IjoicmVkY2ljIiwiYSI6ImNsZG41YzZzMjAweGYzbnEwMjYzOWxpMTYifQ.kEkg6g7sPVWFAf0vvAVzkA';
-const map = new mapboxgl.Map({
-  container: 'map',
-  style: 'mapbox://styles/mapbox/streets-v12',
-  center: [3.11, 46.42], // Display Melun - Nîme zone
-  zoom: 6,
-});
-map.addControl(new mapboxgl.NavigationControl());
-
-let geolibBounds = {};
-
-map.on('load', () => {
-  // Event listeners for file loads
-  refFileInputEl.id = 'ref';
-  refFileInputEl.color = '#233677';
-
-  challFileInputEl.id = 'chall';
-  challFileInputEl.color = '#00ff3f';
-
-  refFileInputEl.addEventListener('change', loadFile);
-  challFileInputEl.addEventListener('change', loadFile);
-
-  // Event listener for comparison launch
-  formEl.addEventListener('submit', launchComparison);
-});
-
-},{"./compareGpx":1,"./displayTrack":2,"./parseGpx":17,"./updateBounds":18}],4:[function(require,module,exports){
 'use strict';
 
 const validator = require('./validator');
@@ -264,7 +10,7 @@ module.exports = {
   XMLValidator: validator,
   XMLBuilder: XMLBuilder
 }
-},{"./validator":6,"./xmlbuilder/json2xml":7,"./xmlparser/XMLParser":12}],5:[function(require,module,exports){
+},{"./validator":3,"./xmlbuilder/json2xml":4,"./xmlparser/XMLParser":9}],2:[function(require,module,exports){
 'use strict';
 
 const nameStartChar = ':A-Za-z_\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u02FF\\u0370-\\u037D\\u037F-\\u1FFF\\u200C-\\u200D\\u2070-\\u218F\\u2C00-\\u2FEF\\u3001-\\uD7FF\\uF900-\\uFDCF\\uFDF0-\\uFFFD';
@@ -338,7 +84,7 @@ exports.isName = isName;
 exports.getAllMatches = getAllMatches;
 exports.nameRegexp = nameRegexp;
 
-},{}],6:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 'use strict';
 
 const util = require('./util');
@@ -763,7 +509,7 @@ function getPositionFromMatch(match) {
   return match.startIndex + match[1].length;
 }
 
-},{"./util":5}],7:[function(require,module,exports){
+},{"./util":2}],4:[function(require,module,exports){
 'use strict';
 //parse Empty Node as self closing node
 const buildFromOrderedJs = require('./orderedJs2Xml');
@@ -1024,7 +770,7 @@ function isAttribute(name /*, options*/) {
 
 module.exports = Builder;
 
-},{"./orderedJs2Xml":8}],8:[function(require,module,exports){
+},{"./orderedJs2Xml":5}],5:[function(require,module,exports){
 const EOL = "\n";
 
 /**
@@ -1157,7 +903,7 @@ function replaceEntitiesValue(textValue, options) {
 }
 module.exports = toXml;
 
-},{}],9:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 //TODO: handle comments
 function readDocType(xmlData, i){
     
@@ -1275,7 +1021,7 @@ function parseEntityExp(exp, entities){
     }
 }
 module.exports = readDocType;
-},{}],10:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 
 const defaultOptions = {
     preserveOrder: false,
@@ -1320,7 +1066,7 @@ const buildOptions = function(options) {
 
 exports.buildOptions = buildOptions;
 exports.defaultOptions = defaultOptions;
-},{}],11:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 'use strict';
 ///@ts-check
 
@@ -1886,7 +1632,7 @@ function parseValue(val, shouldParse, options) {
 
 module.exports = OrderedObjParser;
 
-},{"../util":5,"./DocTypeReader":9,"./xmlNode":14,"strnum":16}],12:[function(require,module,exports){
+},{"../util":2,"./DocTypeReader":6,"./xmlNode":11,"strnum":13}],9:[function(require,module,exports){
 const { buildOptions} = require("./OptionsBuilder");
 const OrderedObjParser = require("./OrderedObjParser");
 const { prettify} = require("./node2json");
@@ -1945,7 +1691,7 @@ class XMLParser{
 }
 
 module.exports = XMLParser;
-},{"../validator":6,"./OptionsBuilder":10,"./OrderedObjParser":11,"./node2json":13}],13:[function(require,module,exports){
+},{"../validator":3,"./OptionsBuilder":7,"./OrderedObjParser":8,"./node2json":10}],10:[function(require,module,exports){
 'use strict';
 
 /**
@@ -2048,7 +1794,7 @@ function isLeafTag(obj, options){
 }
 exports.prettify = prettify;
 
-},{}],14:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 'use strict';
 
 class XmlNode{
@@ -2072,9 +1818,9 @@ class XmlNode{
 
 
 module.exports = XmlNode;
-},{}],15:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 !function(t,n){"object"==typeof exports&&"object"==typeof module?module.exports=n():"function"==typeof define&&define.amd?define([],n):"object"==typeof exports?exports.geolib=n():t.geolib=n()}("undefined"!=typeof self?self:this,(function(){return function(t){var n={};function r(e){if(n[e])return n[e].exports;var i=n[e]={i:e,l:!1,exports:{}};return t[e].call(i.exports,i,i.exports,r),i.l=!0,i.exports}return r.m=t,r.c=n,r.d=function(t,n,e){r.o(t,n)||Object.defineProperty(t,n,{enumerable:!0,get:e})},r.r=function(t){"undefined"!=typeof Symbol&&Symbol.toStringTag&&Object.defineProperty(t,Symbol.toStringTag,{value:"Module"}),Object.defineProperty(t,"__esModule",{value:!0})},r.t=function(t,n){if(1&n&&(t=r(t)),8&n)return t;if(4&n&&"object"==typeof t&&t&&t.__esModule)return t;var e=Object.create(null);if(r.r(e),Object.defineProperty(e,"default",{enumerable:!0,value:t}),2&n&&"string"!=typeof t)for(var i in t)r.d(e,i,function(n){return t[n]}.bind(null,i));return e},r.n=function(t){var n=t&&t.__esModule?function(){return t.default}:function(){return t};return r.d(n,"a",n),n},r.o=function(t,n){return Object.prototype.hasOwnProperty.call(t,n)},r.p="",r(r.s=0)}([function(t,n,r){"use strict";r.r(n),r.d(n,"computeDestinationPoint",(function(){return C})),r.d(n,"convertArea",(function(){return F})),r.d(n,"convertDistance",(function(){return k})),r.d(n,"convertSpeed",(function(){return T})),r.d(n,"decimalToSexagesimal",(function(){return B})),r.d(n,"findNearest",(function(){return K})),r.d(n,"getAreaOfPolygon",(function(){return Y})),r.d(n,"getBounds",(function(){return Z})),r.d(n,"getBoundsOfDistance",(function(){return G})),r.d(n,"getCenter",(function(){return V})),r.d(n,"getCenterOfBounds",(function(){return U})),r.d(n,"getCompassDirection",(function(){return H})),r.d(n,"getCoordinateKey",(function(){return v})),r.d(n,"getCoordinateKeys",(function(){return S})),r.d(n,"getDistance",(function(){return X})),r.d(n,"getDistanceFromLine",(function(){return J})),r.d(n,"getGreatCircleBearing",(function(){return Q})),r.d(n,"getLatitude",(function(){return A})),r.d(n,"getLongitude",(function(){return I})),r.d(n,"getPathLength",(function(){return nt})),r.d(n,"getPreciseDistance",(function(){return rt})),r.d(n,"getRhumbLineBearing",(function(){return z})),r.d(n,"getRoughCompassDirection",(function(){return et})),r.d(n,"getSpeed",(function(){return it})),r.d(n,"isDecimal",(function(){return m})),r.d(n,"isPointInLine",(function(){return ot})),r.d(n,"isPointInPolygon",(function(){return at})),r.d(n,"isPointNearLine",(function(){return ut})),r.d(n,"isPointWithinRadius",(function(){return ct})),r.d(n,"isSexagesimal",(function(){return p})),r.d(n,"isValidCoordinate",(function(){return w})),r.d(n,"isValidLatitude",(function(){return P})),r.d(n,"isValidLongitude",(function(){return N})),r.d(n,"orderByDistance",(function(){return _})),r.d(n,"sexagesimalToDecimal",(function(){return y})),r.d(n,"toDecimal",(function(){return L})),r.d(n,"toRad",(function(){return W})),r.d(n,"toDeg",(function(){return D})),r.d(n,"wktToPolygon",(function(){return lt})),r.d(n,"sexagesimalPattern",(function(){return e})),r.d(n,"earthRadius",(function(){return i})),r.d(n,"MINLAT",(function(){return o})),r.d(n,"MAXLAT",(function(){return a})),r.d(n,"MINLON",(function(){return u})),r.d(n,"MAXLON",(function(){return c})),r.d(n,"longitudeKeys",(function(){return f})),r.d(n,"latitudeKeys",(function(){return s})),r.d(n,"altitudeKeys",(function(){return l})),r.d(n,"distanceConversion",(function(){return d})),r.d(n,"timeConversion",(function(){return h})),r.d(n,"areaConversion",(function(){return g}));var e=/^([0-9]{1,3})°\s*([0-9]{1,3}(?:\.(?:[0-9]{1,}))?)['′]\s*(([0-9]{1,3}(\.([0-9]{1,}))?)["″]\s*)?([NEOSW]?)$/,i=6378137,o=-90,a=90,u=-180,c=180,f=["lng","lon","longitude",0],s=["lat","latitude",1],l=["alt","altitude","elevation","elev",2],d={m:1,km:.001,cm:100,mm:1e3,mi:1/1609.344,sm:1/1852.216,ft:100/30.48,in:100/2.54,yd:1/.9144},h={m:60,h:3600,d:86400},g={m2:1,km2:1e-6,ha:1e-4,a:.01,ft2:10.763911,yd2:1.19599,in2:1550.0031};g.sqm=g.m2,g.sqkm=g.km2,g.sqft=g.ft2,g.sqyd=g.yd2,g.sqin=g.in2;var v=function(t,n){return n.reduce((function(n,r){if(null==t)throw new Error("'".concat(t,"' is no valid coordinate."));return Object.prototype.hasOwnProperty.call(t,r)&&void 0!==r&&void 0===n?(n=r,r):n}),void 0)},m=function(t){var n=t.toString().trim();return!isNaN(parseFloat(n))&&parseFloat(n)===Number(n)},p=function(t){return e.test(t.toString().trim())},y=function(t){var n=new RegExp(e).exec(t.toString().trim());if(null==n)throw new Error("Given value is not in sexagesimal format");var r=Number(n[2])/60||0,i=Number(n[4])/3600||0,o=parseFloat(n[1])+r+i;return["S","W"].includes(n[7])?-o:o};function b(t,n){var r=Object.keys(t);if(Object.getOwnPropertySymbols){var e=Object.getOwnPropertySymbols(t);n&&(e=e.filter((function(n){return Object.getOwnPropertyDescriptor(t,n).enumerable}))),r.push.apply(r,e)}return r}function M(t){for(var n=1;n<arguments.length;n++){var r=null!=arguments[n]?arguments[n]:{};n%2?b(Object(r),!0).forEach((function(n){O(t,n,r[n])})):Object.getOwnPropertyDescriptors?Object.defineProperties(t,Object.getOwnPropertyDescriptors(r)):b(Object(r)).forEach((function(n){Object.defineProperty(t,n,Object.getOwnPropertyDescriptor(r,n))}))}return t}function O(t,n,r){return n in t?Object.defineProperty(t,n,{value:r,enumerable:!0,configurable:!0,writable:!0}):t[n]=r,t}var S=function(t){var n=arguments.length>1&&void 0!==arguments[1]?arguments[1]:{longitude:f,latitude:s,altitude:l},r=v(t,n.longitude),e=v(t,n.latitude),i=v(t,n.altitude);return M({latitude:e,longitude:r},i?{altitude:i}:{})},P=function t(n){return m(n)?!(parseFloat(n)>a||n<o):!!p(n)&&t(y(n))},N=function t(n){return m(n)?!(parseFloat(n)>c||n<u):!!p(n)&&t(y(n))},w=function(t){var n=S(t),r=n.latitude,e=n.longitude;if(Array.isArray(t)&&t.length>=2)return N(t[0])&&P(t[1]);if(void 0===r||void 0===e)return!1;var i=t[e],o=t[r];return void 0!==o&&void 0!==i&&(!1!==P(o)&&!1!==N(i))};function j(t,n){var r=Object.keys(t);if(Object.getOwnPropertySymbols){var e=Object.getOwnPropertySymbols(t);n&&(e=e.filter((function(n){return Object.getOwnPropertyDescriptor(t,n).enumerable}))),r.push.apply(r,e)}return r}function E(t){for(var n=1;n<arguments.length;n++){var r=null!=arguments[n]?arguments[n]:{};n%2?j(Object(r),!0).forEach((function(n){x(t,n,r[n])})):Object.getOwnPropertyDescriptors?Object.defineProperties(t,Object.getOwnPropertyDescriptors(r)):j(Object(r)).forEach((function(n){Object.defineProperty(t,n,Object.getOwnPropertyDescriptor(r,n))}))}return t}function x(t,n,r){return n in t?Object.defineProperty(t,n,{value:r,enumerable:!0,configurable:!0,writable:!0}):t[n]=r,t}var L=function t(n){if(m(n))return Number(n);if(p(n))return y(n);if(w(n)){var r=S(n);return Array.isArray(n)?n.map((function(n,r){return[0,1].includes(r)?t(n):n})):E(E(E({},n),r.latitude&&x({},r.latitude,t(n[r.latitude]))),r.longitude&&x({},r.longitude,t(n[r.longitude])))}return Array.isArray(n)?n.map((function(n){return w(n)?t(n):n})):n},A=function(t,n){var r=v(t,s);if(null!=r){var e=t[r];return!0===n?e:L(e)}},I=function(t,n){var r=v(t,f);if(null!=r){var e=t[r];return!0===n?e:L(e)}},W=function(t){return t*Math.PI/180},D=function(t){return 180*t/Math.PI},C=function(t,n,r){var e=arguments.length>3&&void 0!==arguments[3]?arguments[3]:6371e3,i=A(t),o=I(t),a=n/e,f=W(r),s=W(i),l=W(o),d=Math.asin(Math.sin(s)*Math.cos(a)+Math.cos(s)*Math.sin(a)*Math.cos(f)),h=l+Math.atan2(Math.sin(f)*Math.sin(a)*Math.cos(s),Math.cos(a)-Math.sin(s)*Math.sin(d)),g=D(h);return(g<u||g>c)&&(h=(h+3*Math.PI)%(2*Math.PI)-Math.PI,g=D(h)),{latitude:D(d),longitude:g}},F=function(t){var n=arguments.length>1&&void 0!==arguments[1]?arguments[1]:"m",r=g[n];if(r)return t*r;throw new Error("Invalid unit used for area conversion.")},k=function(t){var n=arguments.length>1&&void 0!==arguments[1]?arguments[1]:"m",r=d[n];if(r)return t*r;throw new Error("Invalid unit used for distance conversion.")},T=function(t){var n=arguments.length>1&&void 0!==arguments[1]?arguments[1]:"kmh";switch(n){case"kmh":return t*h.h*d.km;case"mph":return t*h.h*d.mi;default:return t}};function q(t,n){return function(t){if(Array.isArray(t))return t}(t)||function(t,n){if("undefined"==typeof Symbol||!(Symbol.iterator in Object(t)))return;var r=[],e=!0,i=!1,o=void 0;try{for(var a,u=t[Symbol.iterator]();!(e=(a=u.next()).done)&&(r.push(a.value),!n||r.length!==n);e=!0);}catch(t){i=!0,o=t}finally{try{e||null==u.return||u.return()}finally{if(i)throw o}}return r}(t,n)||function(t,n){if(!t)return;if("string"==typeof t)return $(t,n);var r=Object.prototype.toString.call(t).slice(8,-1);"Object"===r&&t.constructor&&(r=t.constructor.name);if("Map"===r||"Set"===r)return Array.from(t);if("Arguments"===r||/^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(r))return $(t,n)}(t,n)||function(){throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.")}()}function $(t,n){(null==n||n>t.length)&&(n=t.length);for(var r=0,e=new Array(n);r<n;r++)e[r]=t[r];return e}var B=function(t){var n=q(t.toString().split("."),2),r=n[0],e=n[1],i=Math.abs(Number(r)),o=60*Number("0."+(e||0)),a=o.toString().split("."),u=Math.floor(o),c=q(function(t){var n=arguments.length>1&&void 0!==arguments[1]?arguments[1]:4,r=Math.pow(10,n);return Math.round(t*r)/r}(60*Number("0."+(a[1]||0))).toString().split("."),2),f=c[0],s=c[1],l=void 0===s?"0":s;return i+"° "+u.toString().padStart(2,"0")+"' "+f.padStart(2,"0")+"."+l.padEnd(1,"0")+'"'},R=function(t){return t>1?1:t<-1?-1:t},X=function(t,n){var r=arguments.length>2&&void 0!==arguments[2]?arguments[2]:1;r=void 0===r||isNaN(r)?1:r;var e=A(t),o=I(t),a=A(n),u=I(n),c=Math.acos(R(Math.sin(W(a))*Math.sin(W(e))+Math.cos(W(a))*Math.cos(W(e))*Math.cos(W(o)-W(u))))*i;return Math.round(c/r)*r},_=function(t,n){var r=arguments.length>2&&void 0!==arguments[2]?arguments[2]:X;return r="function"==typeof r?r:X,n.slice().sort((function(n,e){return r(t,n)-r(t,e)}))},K=function(t,n){return _(t,n)[0]},Y=function(t){var n=0;if(t.length>2){for(var r,e,o,a=0;a<t.length;a++){a===t.length-2?(r=t.length-2,e=t.length-1,o=0):a===t.length-1?(r=t.length-1,e=0,o=1):(r=a,e=a+1,o=a+2);var u=I(t[r]),c=A(t[e]),f=I(t[o]);n+=(W(f)-W(u))*Math.sin(W(c))}n=n*i*i/2}return Math.abs(n)},Z=function(t){if(!1===Array.isArray(t)||0===t.length)throw new Error("No points were given.");return t.reduce((function(t,n){var r=A(n),e=I(n);return{maxLat:Math.max(r,t.maxLat),minLat:Math.min(r,t.minLat),maxLng:Math.max(e,t.maxLng),minLng:Math.min(e,t.minLng)}}),{maxLat:-1/0,minLat:1/0,maxLng:-1/0,minLng:1/0})},G=function(t,n){var r,e,f=A(t),s=I(t),l=W(f),d=W(s),h=n/i,g=l-h,v=l+h,m=W(a),p=W(o),y=W(c),b=W(u);if(g>p&&v<m){var M=Math.asin(Math.sin(h)/Math.cos(l));(r=d-M)<b&&(r+=2*Math.PI),(e=d+M)>y&&(e-=2*Math.PI)}else g=Math.max(g,p),v=Math.min(v,m),r=b,e=y;return[{latitude:D(g),longitude:D(r)},{latitude:D(v),longitude:D(e)}]},V=function(t){if(!1===Array.isArray(t)||0===t.length)return!1;var n=t.length,r=t.reduce((function(t,n){var r=W(A(n)),e=W(I(n));return{X:t.X+Math.cos(r)*Math.cos(e),Y:t.Y+Math.cos(r)*Math.sin(e),Z:t.Z+Math.sin(r)}}),{X:0,Y:0,Z:0}),e=r.X/n,i=r.Y/n,o=r.Z/n;return{longitude:D(Math.atan2(i,e)),latitude:D(Math.atan2(o,Math.sqrt(e*e+i*i)))}},U=function(t){var n=Z(t),r=n.minLat+(n.maxLat-n.minLat)/2,e=n.minLng+(n.maxLng-n.minLng)/2;return{latitude:parseFloat(r.toFixed(6)),longitude:parseFloat(e.toFixed(6))}},z=function(t,n){var r=W(I(n))-W(I(t)),e=Math.log(Math.tan(W(A(n))/2+Math.PI/4)/Math.tan(W(A(t))/2+Math.PI/4));return Math.abs(r)>Math.PI&&(r=r>0?-1*(2*Math.PI-r):2*Math.PI+r),(D(Math.atan2(r,e))+360)%360},H=function(t,n){var r=arguments.length>2&&void 0!==arguments[2]?arguments[2]:z,e="function"==typeof r?r(t,n):z(t,n);if(isNaN(e))throw new Error("Could not calculate bearing for given points. Check your bearing function");switch(Math.round(e/22.5)){case 1:return"NNE";case 2:return"NE";case 3:return"ENE";case 4:return"E";case 5:return"ESE";case 6:return"SE";case 7:return"SSE";case 8:return"S";case 9:return"SSW";case 10:return"SW";case 11:return"WSW";case 12:return"W";case 13:return"WNW";case 14:return"NW";case 15:return"NNW";default:return"N"}},J=function(t,n,r){var e=arguments.length>3&&void 0!==arguments[3]?arguments[3]:1,i=X(n,t,e),o=X(t,r,e),a=X(n,r,e),u=Math.acos(R((i*i+a*a-o*o)/(2*i*a))),c=Math.acos(R((o*o+a*a-i*i)/(2*o*a)));return u>Math.PI/2?i:c>Math.PI/2?o:Math.sin(u)*i},Q=function(t,n){var r=A(n),e=I(n),i=A(t),o=I(t);return(D(Math.atan2(Math.sin(W(e)-W(o))*Math.cos(W(r)),Math.cos(W(i))*Math.sin(W(r))-Math.sin(W(i))*Math.cos(W(r))*Math.cos(W(e)-W(o))))+360)%360};function tt(t){return(tt="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t})(t)}var nt=function(t){var n=arguments.length>1&&void 0!==arguments[1]?arguments[1]:X;return t.reduce((function(t,r){return"object"===tt(t)&&null!==t.last&&(t.distance+=n(r,t.last)),t.last=r,t}),{last:null,distance:0}).distance},rt=function(t,n){var r=arguments.length>2&&void 0!==arguments[2]?arguments[2]:1;r=void 0===r||isNaN(r)?1:r;var e,o,a,u,c,f,s,l=A(t),d=I(t),h=A(n),g=I(n),v=6356752.314245,m=1/298.257223563,p=W(g-d),y=Math.atan((1-m)*Math.tan(W(parseFloat(l)))),b=Math.atan((1-m)*Math.tan(W(parseFloat(h)))),M=Math.sin(y),O=Math.cos(y),S=Math.sin(b),P=Math.cos(b),N=p,w=100;do{var j=Math.sin(N),E=Math.cos(N);if(0===(f=Math.sqrt(P*j*(P*j)+(O*S-M*P*E)*(O*S-M*P*E))))return 0;e=M*S+O*P*E,o=Math.atan2(f,e),c=e-2*M*S/(u=1-(a=O*P*j/f)*a),isNaN(c)&&(c=0);var x=m/16*u*(4+m*(4-3*u));s=N,N=p+(1-x)*m*a*(o+x*f*(c+x*e*(2*c*c-1)))}while(Math.abs(N-s)>1e-12&&--w>0);if(0===w)return NaN;var L=u*(i*i-v*v)/(v*v),D=1+L/16384*(4096+L*(L*(320-175*L)-768)),C=L/1024*(256+L*(L*(74-47*L)-128)),F=C*f*(c+C/4*(e*(2*c*c-1)-C/6*c*(4*f*f-3)*(4*c*c-3))),k=v*D*(o-F);return Math.round(k/r)*r},et=function(t){return/^NNE|NE|NNW|N$/.test(t)?"N":/^ENE|E|ESE|SE$/.test(t)?"E":/^SSE|S|SSW|SW$/.test(t)?"S":/^WSW|W|WNW|NW$/.test(t)?"W":void 0},it=function(t,n){var r=arguments.length>2&&void 0!==arguments[2]?arguments[2]:X,e=r(t,n),i=Number(n.time)-Number(t.time),o=e/i*1e3;return o},ot=function(t,n,r){return X(n,t)+X(t,r)===X(n,r)},at=function(t,n){for(var r=!1,e=n.length,i=-1,o=e-1;++i<e;o=i)(I(n[i])<=I(t)&&I(t)<I(n[o])||I(n[o])<=I(t)&&I(t)<I(n[i]))&&A(t)<(A(n[o])-A(n[i]))*(I(t)-I(n[i]))/(I(n[o])-I(n[i]))+A(n[i])&&(r=!r);return r},ut=function(t,n,r,e){return J(t,n,r)<e},ct=function(t,n,r){return X(t,n)<r};function ft(t,n){return function(t){if(Array.isArray(t))return t}(t)||function(t,n){if("undefined"==typeof Symbol||!(Symbol.iterator in Object(t)))return;var r=[],e=!0,i=!1,o=void 0;try{for(var a,u=t[Symbol.iterator]();!(e=(a=u.next()).done)&&(r.push(a.value),!n||r.length!==n);e=!0);}catch(t){i=!0,o=t}finally{try{e||null==u.return||u.return()}finally{if(i)throw o}}return r}(t,n)||function(t,n){if(!t)return;if("string"==typeof t)return st(t,n);var r=Object.prototype.toString.call(t).slice(8,-1);"Object"===r&&t.constructor&&(r=t.constructor.name);if("Map"===r||"Set"===r)return Array.from(t);if("Arguments"===r||/^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(r))return st(t,n)}(t,n)||function(){throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.")}()}function st(t,n){(null==n||n>t.length)&&(n=t.length);for(var r=0,e=new Array(n);r<n;r++)e[r]=t[r];return e}var lt=function(t){if(!t.startsWith("POLYGON"))throw new Error("Invalid wkt.");return t.slice(t.indexOf("(")+2,t.indexOf(")")).split(", ").map((function(t){var n=ft(t.split(" "),2),r=n[0],e=n[1];return{longitude:parseFloat(r),latitude:parseFloat(e)}}))}}])}));
-},{}],16:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 const hexRegex = /^[-+]?0x[a-fA-F0-9]+$/;
 const numRegex = /^([\-\+])?(0*)(\.[0-9]+([eE]\-?[0-9]+)?|[0-9]+(\.[0-9]+([eE]\-?[0-9]+)?)?)$/;
 // const octRegex = /0x[a-z0-9]+/;
@@ -2200,6 +1946,260 @@ function trimZeros(numStr){
 }
 module.exports = toNumber
 
+},{}],14:[function(require,module,exports){
+const parseGpx = require('./services/parseGpx');
+const compareGpx = require('./services/compareGpx');
+const displayTrack = require('./services/displayTrack');
+const updateBounds = require('./services/updateBounds');
+
+// Links with HTML file
+const refFileInputEl = document.querySelector('#ref');
+const challFileInputEl = document.querySelector('#chall');
+const formEl = document.querySelector('#form')
+const refParamEl = document.querySelector('#refParam');
+const challParamEl = document.querySelector('#challParam');
+const triggerParamEl = document.querySelector('#triggerParam');
+const toleranceParamEl = document.querySelector('#toleranceParam');
+const detourMaxParamEl = document.querySelector('#detourMaxParam');
+const missedDistanceEl = document.querySelector('#missedDistance');
+const missedPercentEl = document.querySelector('#missedPercent');
+const perfEl = document.querySelector('#perf');
+
+
+// ------ FUNCTIONS ------//
+const launchComparison = async (event) => {
+  event.preventDefault();
+
+  // Get options from form inputs
+  const options = {
+    trigger: formEl.trigger.value, // in meters - trigger must be less than tolerance
+    tolerance: formEl.tolerance.value, // in meters
+    maxDetour: formEl.maxDetour.value * 1000, // in meters
+  };
+  const {
+    missedSegmentsOffTolerance,
+    refDistance,
+    missedDistance,
+  } = await compareGpx(
+    refFileInputEl.points,
+    challFileInputEl.points,
+    options,
+  );
+
+  // Update DOM
+  refParamEl.innerHTML = formEl.ref.value;
+  challParamEl.innerHTML = formEl.chall.value;
+  triggerParamEl.innerHTML = `${formEl.trigger.value} m`;
+  toleranceParamEl.innerHTML = `${formEl.tolerance.value} m`;
+  detourMaxParamEl.innerHTML = `${formEl.trigger.value} km`;
+  missedDistanceEl.innerHTML = `${Math.round(missedDistance)} m`;
+  missedPercentEl.innerHTML = `${Math.round(missedDistance / refDistance * 1000) / 10} %`;
+  perfEl.innerHTML = 'TODO';
+
+  // Update map
+  displayTrack(map, 'missed', '#ff0000', missedSegmentsOffTolerance);
+};
+
+// load files
+const loadFile = async (evt) => {
+  const currentTarget = evt.currentTarget;
+  const file = evt.currentTarget.files[0];
+  const id = evt.currentTarget.id;
+  const color = evt.currentTarget.color;
+
+  const str = await file.text();
+  currentTarget.points = parseGpx(str);
+
+  // Erase missed points tracks
+  if (map.getLayer('missed')) {
+    map.removeLayer('missed');
+  }
+  if (map.getSource('missed')) {
+    map.removeSource('missed');
+  }
+
+  // Display track and update bounds
+  displayTrack(map, id, color, [currentTarget.points]);
+  geolibBounds = updateBounds(map, id, geolibBounds, [currentTarget.points]);
+}
+
+// ------ MAIN ------//
+// Display empty map
+mapboxgl.accessToken = 'pk.eyJ1IjoicmVkY2ljIiwiYSI6ImNsZG41YzZzMjAweGYzbnEwMjYzOWxpMTYifQ.kEkg6g7sPVWFAf0vvAVzkA';
+const map = new mapboxgl.Map({
+  container: 'map',
+  style: 'mapbox://styles/mapbox/streets-v12',
+  center: [3.11, 46.42], // Display Melun - Nîme zone
+  zoom: 6,
+});
+map.addControl(new mapboxgl.NavigationControl());
+
+let geolibBounds = {};
+
+map.on('load', () => {
+  // Event listeners for file loads
+  refFileInputEl.id = 'ref';
+  refFileInputEl.color = '#233677';
+
+  challFileInputEl.id = 'chall';
+  challFileInputEl.color = '#00ff3f';
+
+  refFileInputEl.addEventListener('change', loadFile);
+  challFileInputEl.addEventListener('change', loadFile);
+
+  // Event listener for comparison launch
+  formEl.addEventListener('submit', launchComparison);
+});
+
+},{"./services/compareGpx":15,"./services/displayTrack":16,"./services/parseGpx":17,"./services/updateBounds":18}],15:[function(require,module,exports){
+const geolib = require('geolib');
+
+// Calculate total distance of a track segment (represented by an array of points)
+const calculateTotalDistance = (points) => {
+  let distance = 0;
+  for (let i = 1; i < points.length; i++) {
+    distance += geolib.getDistance(points[i-1], points[i]);
+  }
+  return distance;
+}
+
+const compareGpx = async (refPoints, challPoints, options) => {
+  const {
+    trigger,
+    tolerance,
+    maxDetour,
+  } = options;
+
+  // Initialize the missedSegments array
+  // This array will contain segment arrays
+  // Each segment array will contain consecutive missed trackpoints
+  const missedSegments = [[]];
+
+  let challIndex = 0;
+
+  // Loop through all reference track points
+  refIndexLoop:
+  for (let refIndex = 0; refIndex < refPoints.length; refIndex++) {
+    const refPoint = refPoints[refIndex];
+
+    // Log progress
+    console.log(Math.floor(refIndex / refPoints.length * 1000) / 10);
+
+    let challDetour = 0;
+    let minDist; // minimum distance between current refPoint and chall track;
+    challIndexLoop:
+    for (let challLocalIndex = challIndex; challLocalIndex < challPoints.length - 1; challLocalIndex++) {
+      const dist = geolib.getDistanceFromLine(
+        refPoint,
+        challPoints[challLocalIndex],
+        challPoints[challLocalIndex + 1]
+      );
+      if (!minDist || dist < minDist) {
+        minDist = dist;
+      }
+      if (dist <= trigger) {
+        challIndex = challLocalIndex;
+        continue refIndexLoop;
+      }
+      challDetour += geolib.getDistance(challPoints[challLocalIndex], challPoints[challLocalIndex + 1]);
+      // Only look for waypoint in challFile in the next maxDetour meters from the last waypoint
+      if (challDetour > maxDetour) {
+        break challIndexLoop;
+      }
+    }
+
+    // Passing here only when challenger track
+    // didn't pass close enough (i.e. d > trigger)
+    // from the reference track.
+    // In this case, add the missed refPoint to the missedSegments array
+    refPoint.index = refIndex;
+    refPoint.dist = minDist; // store min distance from reference to challenger track
+    let lastMissedSegment = missedSegments[missedSegments.length - 1];
+
+    // Append to lastMissedSegment only if current missing trackpoint from reference
+    // immediatly follows the last one added.
+    // If not create a new segment in missedSegments.
+    if (lastMissedSegment.length === 0 ||
+        lastMissedSegment[lastMissedSegment.length - 1].index === refIndex - 1) {
+      lastMissedSegment.push(refPoint);
+    } else {
+      missedSegments.push([refPoint]);
+    }
+  };
+
+  // Filter out missedSegment where max of minDist is < tolerance
+  const missedSegmentsOffTolerance = missedSegments.filter(segment =>
+    segment.some(point => point.dist > tolerance)
+  );
+
+  // Calculate and display synthesis
+  const refDistance = calculateTotalDistance(refPoints);
+  const missedDistance = missedSegmentsOffTolerance.reduce((acc, segment) => acc + calculateTotalDistance(segment), 0);
+
+  return {
+    missedSegmentsOffTolerance,
+    refDistance,
+    missedDistance,
+  }
+}
+
+module.exports = compareGpx;
+
+},{"geolib":12}],16:[function(require,module,exports){
+// Display a track
+const displayTrack = (map, id, color, segments) => {
+  const features = []
+  for (let i = 0; i < segments.length; i++) {
+    features.push({
+      'type': 'Feature',
+      'properties': {},
+      'geometry': {
+        'type': 'LineString',
+        'coordinates': [],
+      }
+    });
+  };
+
+  const data = {
+    'type': 'FeatureCollection',
+    'features': features,
+  };
+
+  if (!map.getSource(id)) {
+    map.addSource(id,
+      {
+        type: 'geojson',
+        data: data,
+      }
+    );
+
+    map.addLayer({
+      id: id,
+      type: 'line',
+      source: id,
+      layout: {
+        'line-join': 'round',
+        'line-cap': 'round',
+      },
+      paint: {
+        'line-color': color,
+        'line-width': 4,
+        'line-opacity': .7,
+      },
+    });
+  }
+
+  segments.forEach((points, index) => {
+    points.forEach(point => {
+      data.features[index].geometry.coordinates.push([point.lon, point.lat]);
+    });
+  });
+
+  map.getSource(id).setData(data);
+}
+
+module.exports = displayTrack;
+
 },{}],17:[function(require,module,exports){
 const { XMLParser} = require('fast-xml-parser');
 
@@ -2219,7 +2219,7 @@ const parseGpx = (str) => {
 
 module.exports = parseGpx;
 
-},{"fast-xml-parser":4}],18:[function(require,module,exports){
+},{"fast-xml-parser":1}],18:[function(require,module,exports){
 const geolib = require('geolib');
 
 // Helper functions
@@ -2265,4 +2265,4 @@ const updateBounds = (map, id, geolibBounds, segments) => {
 
 module.exports = updateBounds;
 
-},{"geolib":15}]},{},[3]);
+},{"geolib":12}]},{},[14]);

@@ -1,7 +1,7 @@
-const parseGpx = require('./parseGpx');
-const compareGpx = require('./compareGpx');
-const displayTrack = require('./displayTrack');
-const updateBounds = require('./updateBounds');
+const parseGpx = require('./services/parseGpx');
+const compareGpx = require('./services/compareGpx');
+const displayTrack = require('./services/displayTrack');
+const updateBounds = require('./services/updateBounds');
 
 // Links with HTML file
 const refFileInputEl = document.querySelector('#ref');
