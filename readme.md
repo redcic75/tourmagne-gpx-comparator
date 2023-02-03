@@ -19,6 +19,5 @@ You can create test GPX files and view generated GPX files with https://gpx.stud
 - In browser, add possibility to download missed points gpx
 ## Later
 - ESlint
-- Deal with file deselection
 - Mapbox API key ?
 - Handle GPX with multiple tracks or multiple track segments

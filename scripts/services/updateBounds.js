@@ -13,12 +13,14 @@ const max = (...args) => {
 const updateBounds = (map, id, geolibBounds, segments) => {
   let geolibTrackBounds = {};
   segments.forEach(points => {
-    const geolibSegmentBounds = geolib.getBounds(points);
+    if (points.length) {
+      const geolibSegmentBounds = geolib.getBounds(points);
 
-    geolibTrackBounds.minLat = min(geolibTrackBounds.minLat, geolibSegmentBounds.minLat);
-    geolibTrackBounds.minLng = min(geolibTrackBounds.minLng, geolibSegmentBounds.minLng);
-    geolibTrackBounds.maxLat = max(geolibTrackBounds.maxLat, geolibSegmentBounds.maxLat);
-    geolibTrackBounds.maxLng = max(geolibTrackBounds.maxLng, geolibSegmentBounds.maxLng);
+      geolibTrackBounds.minLat = min(geolibTrackBounds.minLat, geolibSegmentBounds.minLat);
+      geolibTrackBounds.minLng = min(geolibTrackBounds.minLng, geolibSegmentBounds.minLng);
+      geolibTrackBounds.maxLat = max(geolibTrackBounds.maxLat, geolibSegmentBounds.maxLat);
+      geolibTrackBounds.maxLng = max(geolibTrackBounds.maxLng, geolibSegmentBounds.maxLng);
+    }
   });
 
   geolibBounds[id] = geolibTrackBounds;

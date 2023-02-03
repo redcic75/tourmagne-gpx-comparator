@@ -53,13 +53,25 @@ const launchComparison = async (event) => {
 
 // load files
 const loadFile = async (evt) => {
+  console.log('change');
   const currentTarget = evt.currentTarget;
   const file = evt.currentTarget.files[0];
   const id = evt.currentTarget.id;
   const color = evt.currentTarget.color;
 
-  const str = await file.text();
-  currentTarget.points = parseGpx(str);
+  if (file) {
+    const str = await file.text();
+    currentTarget.points = parseGpx(str);
+  } else {
+    currentTarget.points = [];
+    // Erase track
+    if (map.getLayer(id)) {
+      map.removeLayer(id);
+    }
+    if (map.getSource(id)) {
+      map.removeSource(id);
+    }
+  }
 
   // Erase missed points tracks
   if (map.getLayer('missed')) {
@@ -71,7 +83,9 @@ const loadFile = async (evt) => {
 
   // Display track and update bounds
   displayTrack(map, id, color, [currentTarget.points]);
+  console.log(geolibBounds)
   geolibBounds = updateBounds(map, id, geolibBounds, [currentTarget.points]);
+  console.log(geolibBounds)
 }
 
 // ------ MAIN ------//
