@@ -49,8 +49,8 @@ const launchComparison = async (event) => {
   );
 
   // Update DOM
-  refParamEl.innerHTML = formEl.ref.value;
-  challParamEl.innerHTML = formEl.chall.value;
+  refParamEl.innerHTML = formEl.ref.value.split('\\').slice(-1);
+  challParamEl.innerHTML = formEl.chall.value.split('\\').slice(-1);
   triggerParamEl.innerHTML = `${formEl.trigger.value} m`;
   toleranceParamEl.innerHTML = `${formEl.tolerance.value} m`;
   detourMaxParamEl.innerHTML = `${formEl.trigger.value} km`;
@@ -66,7 +66,7 @@ const launchComparison = async (event) => {
 };
 
 const downloadFile = () => {
-  const filename = 'missed.gpx';
+  const filename = 'écart.gpx';
 
   const blob = new Blob([gpxStr], {
     type: 'text/plain;charset=utf-8',
