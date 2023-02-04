@@ -1,5 +1,5 @@
 // Display a track
-const displayTrack = (map, id, color, segments) => {
+const displayTrack = (map, id, segments, paint) => {
   const features = [];
   for (let i = 0; i < segments.length; i += 1) {
     features.push({
@@ -34,11 +34,7 @@ const displayTrack = (map, id, color, segments) => {
         'line-join': 'round',
         'line-cap': 'round',
       },
-      paint: {
-        'line-color': color,
-        'line-width': 4,
-        'line-opacity': 0.7,
-      },
+      paint,
     });
   }
 

@@ -68,8 +68,19 @@ const launchComparison = async (event) => {
   perfWhenEl.innerHTML = `Période commencée après ${Math.round(pt[perf.startRefIndex].time / (3600 * 10)) / 100} h au km ${pt[perf.startRefIndex].cumulatedDistance / 1000}`;
 
   // Update map
-  displayTrack(map, 'missed', '#ff0000', missedSegmentsOffTolerance);
-  displayTrack(map, 'slowest', '#000000', [refPoints.slice(perf.startRefIndex, perf.endRefIndex + 1)]);
+  const paintMissed = {
+    'line-color': '#ff0000',
+    'line-width': 6,
+    'line-opacity': 0.7,
+  };
+  displayTrack(map, 'missed', missedSegmentsOffTolerance, paintMissed);
+
+  const paintSlowest = {
+    'line-color': '#ffffff',
+    'line-width': 2,
+    'line-opacity': 1,
+  };
+  displayTrack(map, 'slowest', [refPoints.slice(perf.startRefIndex, perf.endRefIndex + 1)], paintSlowest);
 
   // Generate the file containing the missed segments
   gpxStr = await generateGpxStr(missedSegmentsOffTolerance, options);
@@ -126,7 +137,12 @@ const loadFile = async (event) => {
   });
 
   // Display track and update bounds
-  displayTrack(map, id, color, [currentTarget.points]);
+  const paint = {
+    'line-color': color,
+    'line-width': 4,
+    'line-opacity': 0.7,
+  };
+  displayTrack(map, id, [currentTarget.points], paint);
   geolibBounds[id] = updateBounds(map, geolibBounds, [currentTarget.points]);
   fitBounds(map, geolibBounds);
 
@@ -154,7 +170,7 @@ map.on('load', () => {
   refFileInputEl.geolibBounds = geolibBounds;
 
   challFileInputEl.id = 'chall';
-  challFileInputEl.color = '#00ff00';
+  challFileInputEl.color = '#009100';
   challFileInputEl.map = map;
   challFileInputEl.geolibBounds = geolibBounds;
 
