@@ -47,7 +47,7 @@ const launchComparison = async (event) => {
     refDistance,
     missedDistance,
     perf,
-    pt,
+    passageTimes,
   } = await compareGpx(
     refFileInputEl.points,
     challFileInputEl.points,
@@ -65,7 +65,7 @@ const launchComparison = async (event) => {
   missedDistanceEl.innerHTML = `${Math.round(missedDistance)} m`;
   missedPercentEl.innerHTML = `${Math.round((missedDistance / refDistance) * 1000) / 10} %`;
   perfKmEl.innerHTML = `Vitesse moyenne pendant les pires ${formEl.duration.value} h : ${Math.round(perf.speed) / 1000} km/h`;
-  perfWhenEl.innerHTML = `Période commencée après ${Math.round(pt[perf.startRefIndex].time / (3600 * 10)) / 100} h au km ${pt[perf.startRefIndex].cumulatedDistance / 1000}`;
+  perfWhenEl.innerHTML = `Période commencée après ${Math.round(passageTimes[perf.startRefIndex].duration / (3600 * 10)) / 100} h au km ${passageTimes[perf.startRefIndex].cumulatedDistance / 1000}`;
 
   // Update map
   const paintMissed = {

@@ -45,7 +45,7 @@ const main = async () => {
     refDistance,
     missedDistance,
     perf,
-    pt,
+    passageTimes,
   } = await compareGpx(refPoints, challPoints, options);
 
   // Generate the file containing the missed segments
@@ -69,7 +69,7 @@ const main = async () => {
   console.log(`Missed distance of the reference path in m: ${Math.round(missedDistance)} m`);
   console.log(`Missed distance of the reference path in %: ${Math.round((missedDistance / refDistance) * 1000) / 10} %`);
   console.log(`Worst ${options.duration} h:`);
-  console.log(`  - Started after ${Math.round(pt[perf.startRefIndex].time / (3600 * 10)) / 100} h at km ${pt[perf.startRefIndex].cumulatedDistance / 1000}`);
+  console.log(`  - Started after ${Math.round(passageTimes[perf.startRefIndex].duration / (3600 * 10)) / 100} h at km ${passageTimes[perf.startRefIndex].cumulatedDistance / 1000}`);
   console.log(`  - Mean speed during this period: ${Math.round(perf.speed) / 1000} km/h`);
 };
 

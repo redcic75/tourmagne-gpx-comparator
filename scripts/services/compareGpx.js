@@ -24,7 +24,7 @@ const compareGpx = async (refPoints, challPoints, options) => {
 
   // passageTimes is an array containing cumulative distances from refPoints start
   // This array will then be extended with challenger passage time
-  const passageTimes = [{
+  let passageTimes = [{
     refIndex: 0,
     cumulatedDistance: 0,
   }];
@@ -68,11 +68,14 @@ const compareGpx = async (refPoints, challPoints, options) => {
 
       if (!minDist || dist < minDist) {
         minDist = dist;
+        // Add timestamp of the moment the challenger passed the closest to each point
+        // (or the first moment when dist <= trigger) of the reference track to passageTimes
         passageTimes[refIndex].time = new Date(challPoints[challIndex].time).valueOf();
       }
 
       if (dist <= trigger) {
         challIndex = challLocalIndex;
+        passageTimes[refIndex].onTrack = true;
         continue refIndexLoop;
       }
 
@@ -106,41 +109,42 @@ const compareGpx = async (refPoints, challPoints, options) => {
     }
   }
 
-  // Filter out passageTimes points where challenger did not pass
-  // Filter out passageTimes points where time is < duration
+  // Append duration spent from the beginning of the reference track to passageTimes
   const initialTime = passageTimes[0].time;
   // eslint-disable-next-line arrow-body-style
-  const pt = passageTimes.map((passageTime) => {
+  passageTimes = passageTimes.map((passageTime) => {
     return {
       ...passageTime,
-      time: passageTime.time - initialTime,
+      duration: passageTime.time - initialTime,
     };
   });
 
   // Find worst period
-  for (let iEnd = 0; iEnd < pt.length; iEnd += 1) {
-    const endTime = pt[iEnd].time;
+  for (let iEnd = 0; iEnd < passageTimes.length; iEnd += 1) {
+    const endTime = passageTimes[iEnd].duration;
     const startTime = Math.max(0, endTime - duration * 3600 * 1000);
     let iStart = 0;
-    while (pt[iStart].time < startTime) {
+    while (passageTimes[iStart].duration < startTime) {
       iStart += 1;
     }
-    pt[iEnd].lastIntervalDistance = pt[iEnd].cumulatedDistance - pt[iStart].cumulatedDistance;
-    pt[iEnd].startRefIndex = pt[iStart].refIndex;
+    passageTimes[iEnd].lastIntervalDistance = passageTimes[iEnd].cumulatedDistance
+      - passageTimes[iStart].cumulatedDistance;
+    passageTimes[iEnd].startRefIndex = passageTimes[iStart].refIndex;
   }
 
   let perf;
-  for (let i = 0; i < pt.length; i += 1) {
-    if (pt[i].time > duration * 3600 * 1000
-      && (!perf || pt[i].lastIntervalDistance < perf.distance)) {
+  for (let i = 0; i < passageTimes.length; i += 1) {
+    if (passageTimes[i].duration > duration * 3600 * 1000
+      && (!perf || passageTimes[i].lastIntervalDistance < perf.distance)) {
       perf = {
-        distance: pt[i].lastIntervalDistance,
-        startRefIndex: pt[i].startRefIndex,
-        endRefIndex: pt[i].refIndex,
+        distance: passageTimes[i].lastIntervalDistance,
+        startRefIndex: passageTimes[i].startRefIndex,
+        endRefIndex: passageTimes[i].refIndex,
       };
     }
   }
-  perf.speed = (perf.distance / (pt[perf.endRefIndex].time - pt[perf.startRefIndex].time))
+  perf.speed = (perf.distance
+    / (passageTimes[perf.endRefIndex].duration - passageTimes[perf.startRefIndex].duration))
     * 3600 * 1000;
 
   // Filter out missedSegment where max of minDist is < tolerance
@@ -160,7 +164,7 @@ const compareGpx = async (refPoints, challPoints, options) => {
     refDistance,
     missedDistance,
     perf,
-    pt,
+    passageTimes,
   };
 };
 
