@@ -54,7 +54,9 @@ const compareGpx = async (refPoints, challPoints, options) => {
     console.log(Math.floor((refIndex / refPoints.length) * 1000) / 10);
 
     let challDetour = 0;
-    let minDist; // minimum distance between current refPoint and chall track;
+    // minimum distance between current refPoint and chall track
+    // taking into account only challPoints not further than maxDetour
+    let minDist;
     challIndexLoop:
     for (
       let challLocalIndex = challIndex;
@@ -71,11 +73,11 @@ const compareGpx = async (refPoints, challPoints, options) => {
         // Add timestamp of the moment the challenger passed the closest to each point
         // (or the first moment when dist <= trigger) of the reference track to passageTimes
         passageTimes[refIndex].time = new Date(challPoints[challIndex].time).valueOf();
+        passageTimes[refIndex].minDist = minDist;
       }
 
       if (dist <= trigger) {
         challIndex = challLocalIndex;
-        passageTimes[refIndex].onTrack = true;
         continue refIndexLoop;
       }
 
@@ -119,6 +121,13 @@ const compareGpx = async (refPoints, challPoints, options) => {
     };
   });
 
+  // Filter out missedSegment where max of minDist is < tolerance
+  const missedSegmentsOffTolerance = missedSegments.filter(
+    (segment) => segment.some(
+      (point) => point.dist > tolerance,
+    ),
+  );
+
   // Find worst period
   for (let iEnd = 0; iEnd < passageTimes.length; iEnd += 1) {
     const endTime = passageTimes[iEnd].duration;
@@ -146,13 +155,6 @@ const compareGpx = async (refPoints, challPoints, options) => {
   perf.speed = (perf.distance
     / (passageTimes[perf.endRefIndex].duration - passageTimes[perf.startRefIndex].duration))
     * 3600 * 1000;
-
-  // Filter out missedSegment where max of minDist is < tolerance
-  const missedSegmentsOffTolerance = missedSegments.filter(
-    (segment) => segment.some(
-      (point) => point.dist > tolerance,
-    ),
-  );
 
   // Calculate and display synthesis
   const refDistance = calculateTotalDistance(refPoints);

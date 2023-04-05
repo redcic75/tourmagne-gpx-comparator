@@ -22,6 +22,7 @@ You can create test GPX files and view generated GPX files with https://gpx.stud
   => It can  can give an advantage to the challenger, to be fixed
   => Only take into account km of the reference track where the challenger was on track.
   - To be refactored
+  - Get rid of `break` and `continue` ?
 - Get rid of global variables in indexWeb.js
 - Mapbox API key ?
 - Handle GPX with multiple tracks or multiple track segments + handle multiple GPX files (with auto sorting)

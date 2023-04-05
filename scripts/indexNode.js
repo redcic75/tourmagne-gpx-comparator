@@ -11,11 +11,11 @@ const generateGpxStr = require('./services/generateGpxStr');
 // const refFile = 'ref';
 // const challFile = 'chall-autre-chemin-2-fois';
 
-// const refFile = 'orleans-loop-trace';
-// const challFile = 'orleans-loop-real';
+const refFile = 'orleans-loop-trace';
+const challFile = 'orleans-loop-real';
 
-const refFile = 'Bordeaux-Paris_2022_trace';
-const challFile = 'Bordeaux_Paris_2022_real';
+// const refFile = 'Bordeaux-Paris_2022_trace';
+// const challFile = 'Bordeaux_Paris_2022_real';
 
 // Params
 const options = {

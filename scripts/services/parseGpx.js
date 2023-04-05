@@ -11,7 +11,11 @@ const parseGpx = (str) => {
   const gpx = parser.parse(str);
 
   // Create points array
-  return gpx?.gpx?.trk?.trkseg?.trkpt;
+  const trkpts = gpx?.gpx?.trk?.trkseg?.trkpt;
+  // Only keep relevant properties (i.e. lat, lon & time)
+  const keepLatLonTime = (({ lat, lon, time }) => ({ lat, lon, time }));
+  const result = trkpts.map((trkpt) => keepLatLonTime(trkpt));
+  return result;
 };
 
 module.exports = parseGpx;
