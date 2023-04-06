@@ -6,11 +6,15 @@ const { XMLParser } = require('fast-xml-parser');
 // * latRef: ref point latitude
 // * lonRef: ref point longitude
 // * timeChall: time when challenger passed the closest to ref point
-// * closestDist: distance between ref point & challenger
+// * closestDistance: distance between ref point & challenger
 //   when challenger was the closest (before maxDetour)
+// * missed: 0 if closestDistance < trigger
+//           1 if closestDistance between trigger & tolerance
+//           2 if closestDistance > tolerance
 const calculateClosest = (refPoints, challPoints, options) => {
   const {
     trigger,
+    tolerance,
     maxDetour,
   } = options;
 
@@ -23,6 +27,7 @@ const calculateClosest = (refPoints, challPoints, options) => {
     let detour = 0;
     let minDistance;
     let distance;
+    let missed = 0;
 
     while (
       challLocalIndex + 1 < challPoints.length
@@ -42,12 +47,18 @@ const calculateClosest = (refPoints, challPoints, options) => {
       );
       challLocalIndex += 1;
     }
-    return ({
+    if (minDistance > tolerance) {
+      missed = 2;
+    } else if (minDistance > trigger) {
+      missed = 1;
+    }
+    return {
       latRef: refPoint.lat,
       lonRef: refPoint.lon,
       timeChall: challPoints[challLocalIndex].time,
       closestDistance: minDistance,
-    });
+      missed,
+    };
   });
 };
 
@@ -56,8 +67,34 @@ const calculateClosest = (refPoints, challPoints, options) => {
 // * missedSegmentNb: undefined if ref point reached by the challenger
 //   Integer representing the number of the missed segment starting at 0
 const calculateMissed = (refPointsPassBy) => {
-  const result = [];
-  return result;
+  const result = new Array(refPointsPassBy.length);
+  let segmentNb = 0;
+  let ind = 0;
+  while (ind < refPointsPassBy.length) {
+    if (refPointsPassBy[ind].missed === 0) {
+      result[ind] = null;
+      ind += 1;
+    } else {
+      const startInd = ind;
+      let localInd = ind;
+      let missed = false;
+      while (localInd < refPointsPassBy.length && refPointsPassBy[localInd].missed !== 0) {
+        if (refPointsPassBy[localInd].missed === 2) missed = true;
+        localInd += 1;
+      }
+      if (missed) {
+        result.fill(segmentNb, startInd, localInd);
+        segmentNb += 1;
+      } else {
+        result.fill(null, startInd, localInd);
+      }
+      ind = localInd;
+    }
+  }
+  return refPointsPassBy.map((el, index) => ({
+    ...el,
+    missedSegmentNb: result[index],
+  }));
 };
 
 // Calculate rolling duration distances (Tourmagne KPI)
