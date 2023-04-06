@@ -1,7 +1,7 @@
 const { XMLParser } = require('fast-xml-parser');
 
+// Parses gpx string -> [{lat, lon, time}]
 const parseGpx = (str) => {
-  // Parse gpx string -> JS object
   const parser = new XMLParser({
     ignoreAttributes: false,
     parseAttributeValue: true,
@@ -12,10 +12,11 @@ const parseGpx = (str) => {
 
   // Create points array
   const trkpts = gpx?.gpx?.trk?.trkseg?.trkpt;
+
   // Only keep relevant properties (i.e. lat, lon & time)
   const keepLatLonTime = (({ lat, lon, time }) => ({ lat, lon, time }));
-  const result = trkpts.map((trkpt) => keepLatLonTime(trkpt));
-  return result;
+
+  return trkpts.map((trkpt) => keepLatLonTime(trkpt));
 };
 
 module.exports = parseGpx;

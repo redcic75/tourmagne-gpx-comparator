@@ -2,7 +2,7 @@ const mapboxgl = require('mapbox-gl/dist/mapbox-gl');
 const FileSaver = require('file-saver');
 
 const generateGpxStr = require('./services/generateGpxStr');
-const parseGpx = require('./services/parseGpx');
+const parseGpx = require('./services/helpers/parseGpx');
 const compareGpx = require('./services/compareGpx');
 const displayTrack = require('./services/displayTrack');
 const { updateBounds, fitBounds } = require('./services/updateBounds');

@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+
 const Mocha = require('mocha');
 const should = require('chai').should();
 

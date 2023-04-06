@@ -51,7 +51,7 @@ const compareGpx = async (refPoints, challPoints, options) => {
 
     // Log progress
     // eslint-disable-next-line no-console
-    console.log(Math.floor((refIndex / refPoints.length) * 1000) / 10);
+    // console.log(Math.floor((refIndex / refPoints.length) * 1000) / 10);
 
     let challDetour = 0;
     // minimum distance between current refPoint and chall track

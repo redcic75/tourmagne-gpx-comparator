@@ -2,7 +2,7 @@
 const fs = require('fs/promises');
 const path = require('path');
 
-const parseGpx = require('./services/parseGpx');
+const parseGpx = require('./services/helpers/parseGpx');
 const compareGpx = require('./services/compareGpx');
 const generateGpxStr = require('./services/generateGpxStr');
 

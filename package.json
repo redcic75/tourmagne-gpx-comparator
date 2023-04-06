@@ -4,7 +4,8 @@
   "description": "",
   "main": "main.js",
   "scripts": {
-    "test": "mocha 'test/**/*.js'"
+    "test": "mocha 'test/**/*.js'",
+    "node": "node scripts/indexNode.js"
   },
   "author": "",
   "license": "ISC",
@@ -19,6 +20,6 @@
     "eslint": "8.33.0",
     "eslint-config-airbnb-base": "15.0.0",
     "eslint-plugin-import": "2.27.5",
-    "mocha": "10.2.0"
+    "mocha": "^10.2.0"
   }
 }

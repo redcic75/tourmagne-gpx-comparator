@@ -2192,7 +2192,7 @@ const mapboxgl = require('mapbox-gl/dist/mapbox-gl');
 const FileSaver = require('file-saver');
 
 const generateGpxStr = require('./services/generateGpxStr');
-const parseGpx = require('./services/parseGpx');
+const parseGpx = require('./services/helpers/parseGpx');
 const compareGpx = require('./services/compareGpx');
 const displayTrack = require('./services/displayTrack');
 const { updateBounds, fitBounds } = require('./services/updateBounds');
@@ -2375,7 +2375,7 @@ map.on('load', () => {
   downloadGpxEl.addEventListener('click', downloadFile);
 });
 
-},{"./services/compareGpx":18,"./services/displayTrack":19,"./services/generateGpxStr":20,"./services/parseGpx":21,"./services/updateBounds":22,"file-saver":13,"mapbox-gl/dist/mapbox-gl":15}],18:[function(require,module,exports){
+},{"./services/compareGpx":18,"./services/displayTrack":19,"./services/generateGpxStr":20,"./services/helpers/parseGpx":21,"./services/updateBounds":22,"file-saver":13,"mapbox-gl/dist/mapbox-gl":15}],18:[function(require,module,exports){
 /* eslint-disable no-extra-label */
 /* eslint-disable no-continue */
 /* eslint-disable no-restricted-syntax */
@@ -2429,10 +2429,12 @@ const compareGpx = async (refPoints, challPoints, options) => {
 
     // Log progress
     // eslint-disable-next-line no-console
-    console.log(Math.floor((refIndex / refPoints.length) * 1000) / 10);
+    // console.log(Math.floor((refIndex / refPoints.length) * 1000) / 10);
 
     let challDetour = 0;
-    let minDist; // minimum distance between current refPoint and chall track;
+    // minimum distance between current refPoint and chall track
+    // taking into account only challPoints not further than maxDetour
+    let minDist;
     challIndexLoop:
     for (
       let challLocalIndex = challIndex;
@@ -2449,11 +2451,11 @@ const compareGpx = async (refPoints, challPoints, options) => {
         // Add timestamp of the moment the challenger passed the closest to each point
         // (or the first moment when dist <= trigger) of the reference track to passageTimes
         passageTimes[refIndex].time = new Date(challPoints[challIndex].time).valueOf();
+        passageTimes[refIndex].minDist = minDist;
       }
 
       if (dist <= trigger) {
         challIndex = challLocalIndex;
-        passageTimes[refIndex].onTrack = true;
         continue refIndexLoop;
       }
 
@@ -2497,6 +2499,13 @@ const compareGpx = async (refPoints, challPoints, options) => {
     };
   });
 
+  // Filter out missedSegment where max of minDist is < tolerance
+  const missedSegmentsOffTolerance = missedSegments.filter(
+    (segment) => segment.some(
+      (point) => point.dist > tolerance,
+    ),
+  );
+
   // Find worst period
   for (let iEnd = 0; iEnd < passageTimes.length; iEnd += 1) {
     const endTime = passageTimes[iEnd].duration;
@@ -2524,13 +2533,6 @@ const compareGpx = async (refPoints, challPoints, options) => {
   perf.speed = (perf.distance
     / (passageTimes[perf.endRefIndex].duration - passageTimes[perf.startRefIndex].duration))
     * 3600 * 1000;
-
-  // Filter out missedSegment where max of minDist is < tolerance
-  const missedSegmentsOffTolerance = missedSegments.filter(
-    (segment) => segment.some(
-      (point) => point.dist > tolerance,
-    ),
-  );
 
   // Calculate and display synthesis
   const refDistance = calculateTotalDistance(refPoints);
@@ -2627,8 +2629,8 @@ module.exports = generateGpxStr;
 },{}],21:[function(require,module,exports){
 const { XMLParser } = require('fast-xml-parser');
 
+// Parses gpx string -> [{lat, lon, time}]
 const parseGpx = (str) => {
-  // Parse gpx string -> JS object
   const parser = new XMLParser({
     ignoreAttributes: false,
     parseAttributeValue: true,
@@ -2638,7 +2640,12 @@ const parseGpx = (str) => {
   const gpx = parser.parse(str);
 
   // Create points array
-  return gpx?.gpx?.trk?.trkseg?.trkpt;
+  const trkpts = gpx?.gpx?.trk?.trkseg?.trkpt;
+
+  // Only keep relevant properties (i.e. lat, lon & time)
+  const keepLatLonTime = (({ lat, lon, time }) => ({ lat, lon, time }));
+
+  return trkpts.map((trkpt) => keepLatLonTime(trkpt));
 };
 
 module.exports = parseGpx;
