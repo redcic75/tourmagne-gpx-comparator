@@ -53,8 +53,8 @@ const calculateClosest = (refPoints, challPoints, options) => {
       missed = 1;
     }
     return {
-      latRef: refPoint.lat,
-      lonRef: refPoint.lon,
+      lat: refPoint.lat,
+      lon: refPoint.lon,
       timeChall: challPoints[challLocalIndex].time,
       closestDistance: minDistance,
       missed,
@@ -133,10 +133,20 @@ const calculateTotalDistance = (points) => {
 // -> [[{latRef, lonRef}]]
 // * Wrapping array is an array of segments
 // * Nested arrays are missed segments
-const generateMissedSegments = () => {
-  // TODO
-  const result = [];
-  return result;
+const generateMissedSegments = (refPointsMissed) => {
+  const missedSegments = [];
+  let segmentNb = 0;
+  let missedSegmentLeft = true;
+  while (missedSegmentLeft) {
+    const missedSegment = refPointsMissed.filter((point) => point.missedSegmentNb === segmentNb);
+    if (missedSegment.length > 0) {
+      missedSegments.push(missedSegment);
+      segmentNb += 1;
+    } else {
+      missedSegmentLeft = false;
+    }
+  }
+  return missedSegments;
 };
 
 // Parse gpx string
