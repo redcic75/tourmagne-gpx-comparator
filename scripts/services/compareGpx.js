@@ -1,9 +1,51 @@
-/* eslint-disable no-extra-label */
-/* eslint-disable no-continue */
-/* eslint-disable no-restricted-syntax */
-/* eslint-disable no-labels */
-
 const geolib = require('geolib');
+const { XMLParser } = require('fast-xml-parser');
+
+// Calculate challenger passage time at each ref point
+// -> [{latRef, lonRef, timeChall, closestDist}]
+// * latRef: ref point latitude
+// * lonRef: ref point longitude
+// * timeChall: time when challenger passed the closest to ref point
+// * closestDist: distance between ref point & challenger
+//   when challenger was the closest (before maxDetour)
+const calculateClosest = () => {
+  // TODO
+  const result = [];
+  return result;
+};
+
+// Calculate ref points the challenger missed
+// -> [{latRef, lonRef, timeChall, missedSegmentNb}]
+// * missedSegmentNb: undefined if ref point reached by the challenger
+//   Integer representing the number of the missed segment starting at 0
+const calculateMissed = () => {
+  // TODO
+  const result = [];
+  return result;
+};
+
+// Calculate rolling duration distances (Tourmagne KPI)
+// -> [{rollingDurationDistance, rollingDurationEndIndex}]
+// * rollingDurationDistance: distance travelled by challenger during the next rolling duration
+//   null for ref points of the last rollingDuration
+// * rollingDurationEndIndex: last index of refPoints included in rollingDurationDistance
+//   null for ref points of the last rollingDuration
+const calculateRollingDurationDistances = () => {
+  // TODO
+  const result = [];
+  return result;
+};
+
+// Calculate elapsed challenger time & cumulated distance (without missed segments)
+// -> [{elapsedChallTime, cumulatedDistance}]
+// * elapsedChallTime: time elapsed since challenger passed by its 1st ref point
+//   null if ref point missed
+// * cumulatedDistance: cumulated distance on ref track excluding segments missed by challenger
+const calculateTimeDistanceTable = () => {
+  // TODO
+  const result = [];
+  return result;
+};
 
 // Calculate total distance of a track segment (represented by an array of points)
 const calculateTotalDistance = (points) => {
@@ -14,159 +56,117 @@ const calculateTotalDistance = (points) => {
   return distance;
 };
 
-const compareGpx = async (refPoints, challPoints, options) => {
-  const {
-    duration,
-    trigger,
-    tolerance,
-    maxDetour,
-  } = options;
+// Generate missed segments
+// -> [[{latRef, lonRef}]]
+// * Wrapping array is an array of segments
+// * Nested arrays are missed segments
+const generateMissedSegments = () => {
+  // TODO
+  const result = [];
+  return result;
+};
 
-  // passageTimes is an array containing cumulative distances from refPoints start
-  // This array will then be extended with challenger passage time
-  let passageTimes = [{
-    refIndex: 0,
-    cumulatedDistance: 0,
-  }];
-  for (let refIndex = 1; refIndex < refPoints.length; refIndex += 1) {
-    const cumulatedDistance = passageTimes[refIndex - 1].cumulatedDistance
-      + geolib.getDistance(refPoints[refIndex - 1], refPoints[refIndex]);
-    passageTimes.push({
-      refIndex,
-      cumulatedDistance,
-    });
-  }
-
-  // Initialize the missedSegments array
-  // This array will contain segment arrays
-  // Each segment array will contain consecutive missed trackpoints
-  const missedSegments = [[]];
-
-  let challIndex = 0;
-
-  // Loop through all reference track points
-  refIndexLoop:
-  for (let refIndex = 0; refIndex < refPoints.length; refIndex += 1) {
-    const refPoint = refPoints[refIndex];
-
-    // Log progress
-    // eslint-disable-next-line no-console
-    // console.log(Math.floor((refIndex / refPoints.length) * 1000) / 10);
-
-    let challDetour = 0;
-    // minimum distance between current refPoint and chall track
-    // taking into account only challPoints not further than maxDetour
-    let minDist;
-    challIndexLoop:
-    for (
-      let challLocalIndex = challIndex;
-      challLocalIndex < challPoints.length - 1;
-      challLocalIndex += 1) {
-      const dist = geolib.getDistanceFromLine(
-        refPoint,
-        challPoints[challLocalIndex],
-        challPoints[challLocalIndex + 1],
-      );
-
-      if (!minDist || dist < minDist) {
-        minDist = dist;
-        // Add timestamp of the moment the challenger passed the closest to each point
-        // (or the first moment when dist <= trigger) of the reference track to passageTimes
-        passageTimes[refIndex].time = new Date(challPoints[challIndex].time).valueOf();
-        passageTimes[refIndex].minDist = minDist;
-      }
-
-      if (dist <= trigger) {
-        challIndex = challLocalIndex;
-        continue refIndexLoop;
-      }
-
-      challDetour += geolib.getDistance(
-        challPoints[challLocalIndex],
-        challPoints[challLocalIndex + 1],
-      );
-
-      // Only look for waypoint in challFile in the next maxDetour meters from the last waypoint
-      if (challDetour > maxDetour) {
-        break challIndexLoop;
-      }
-    }
-
-    // Passing here only when challenger track
-    // didn't pass close enough (i.e. d > trigger)
-    // from the reference track.
-    // In this case, add the missed refPoint to the missedSegments array
-    refPoint.index = refIndex;
-    refPoint.dist = minDist; // store min distance from reference to challenger track
-    const lastMissedSegment = missedSegments[missedSegments.length - 1];
-
-    // Append to lastMissedSegment only if current missing trackpoint from reference
-    // immediatly follows the last one added.
-    // If not create a new segment in missedSegments.
-    if (lastMissedSegment.length === 0
-      || lastMissedSegment[lastMissedSegment.length - 1].index === refIndex - 1) {
-      lastMissedSegment.push(refPoint);
-    } else {
-      missedSegments.push([refPoint]);
-    }
-  }
-
-  // Append duration spent from the beginning of the reference track to passageTimes
-  const initialTime = passageTimes[0].time;
-  // eslint-disable-next-line arrow-body-style
-  passageTimes = passageTimes.map((passageTime) => {
-    return {
-      ...passageTime,
-      duration: passageTime.time - initialTime,
-    };
+// Parse gpx string
+// -> [{lat, lon, time}]
+const parseGpx = (str) => {
+  const parser = new XMLParser({
+    ignoreAttributes: false,
+    parseAttributeValue: true,
+    attributeNamePrefix: '',
   });
 
-  // Filter out missedSegment where max of minDist is < tolerance
-  const missedSegmentsOffTolerance = missedSegments.filter(
-    (segment) => segment.some(
-      (point) => point.dist > tolerance,
-    ),
-  );
+  const gpx = parser.parse(str);
 
-  // Find worst period
-  for (let iEnd = 0; iEnd < passageTimes.length; iEnd += 1) {
-    const endTime = passageTimes[iEnd].duration;
-    const startTime = Math.max(0, endTime - duration * 3600 * 1000);
-    let iStart = 0;
-    while (passageTimes[iStart].duration < startTime) {
-      iStart += 1;
-    }
-    passageTimes[iEnd].lastIntervalDistance = passageTimes[iEnd].cumulatedDistance
-      - passageTimes[iStart].cumulatedDistance;
-    passageTimes[iEnd].startRefIndex = passageTimes[iStart].refIndex;
-  }
+  // Create points array
+  const trkpts = gpx?.gpx?.trk?.trkseg?.trkpt;
 
-  let perf;
-  for (let i = 0; i < passageTimes.length; i += 1) {
-    if (passageTimes[i].duration > duration * 3600 * 1000
-      && (!perf || passageTimes[i].lastIntervalDistance < perf.distance)) {
-      perf = {
-        distance: passageTimes[i].lastIntervalDistance,
-        startRefIndex: passageTimes[i].startRefIndex,
-        endRefIndex: passageTimes[i].refIndex,
-      };
-    }
-  }
-  perf.speed = (perf.distance
-    / (passageTimes[perf.endRefIndex].duration - passageTimes[perf.startRefIndex].duration))
-    * 3600 * 1000;
+  // Only keep relevant properties (i.e. lat, lon & time)
+  const keepLatLonTime = (({ lat, lon, time }) => ({ lat, lon, time }));
 
-  // Calculate and display synthesis
+  return trkpts.map((trkpt) => keepLatLonTime(trkpt));
+};
+
+// Calculate accuracy of the challenger following ref track
+const calculateAccuracy = (refPoints, missedSegments) => {
   const refDistance = calculateTotalDistance(refPoints);
-  const missedDistance = missedSegmentsOffTolerance
-    .reduce((acc, segment) => acc + calculateTotalDistance(segment), 0);
+  const missedDistance = calculateTotalDistance(missedSegments);
+  const onTrackRatio = 1 - (missedDistance / refDistance);
 
   return {
-    missedSegmentsOffTolerance,
     refDistance,
     missedDistance,
-    perf,
-    passageTimes,
+    onTrackRatio,
+  };
+};
+
+// Calculate Tourmagne Kpis
+const calculateKpis = (refPointsMissed) => {
+  const timeDistanceTable = calculateTimeDistanceTable(refPointsMissed);
+  const rollingDurationDistances = calculateRollingDurationDistances(timeDistanceTable);
+
+  const distances = rollingDurationDistances.map((el) => el.rollingDurationDistance);
+  const rollingDurationMinDistance = Math.min(...distances.filter((el) => el != null));
+
+  const startIndex = distances.indexOf(rollingDurationMinDistance);
+  const endIndex = rollingDurationDistances[startIndex]?.rollingDurationEndIndex;
+
+  const startElapsedTime = timeDistanceTable[startIndex]?.elapsedChallTime;
+  const endElapsedTime = timeDistanceTable[endIndex]?.elapsedChallTime;
+
+  const startDistance = timeDistanceTable[startIndex]?.cumulatedDistance;
+  const endDistance = timeDistanceTable[endIndex]?.cumulatedDistance;
+
+  const slowestSegmentStart = {
+    index: startIndex,
+    elapsedTime: startElapsedTime,
+    // Distance travelled by challenger on ref track (without missed segments):
+    distance: startDistance,
+  };
+
+  const slowestSegmentEnd = {
+    index: endIndex,
+    elapsedTime: endElapsedTime,
+    // Distance travelled by challenger on ref track (without missed segments):
+    distance: endDistance,
+  };
+
+  const meanSpeed = (slowestSegmentEnd.distance - slowestSegmentStart.distance)
+  / (endElapsedTime - startElapsedTime);
+
+  return {
+    slowestSegmentStart,
+    slowestSegmentEnd,
+    meanSpeed,
+  };
+};
+
+const compareGpx = async (inputs) => {
+  const {
+    refGpxStr,
+    challGpxStr,
+    options,
+  } = inputs;
+
+  // Parse GPX strings to JS objects
+  const refPoints = parseGpx(refGpxStr);
+  const challPoints = parseGpx(challGpxStr);
+
+  // Extend refPoints with missed segments
+  const refPointsPassBy = calculateClosest(refPoints, challPoints, options);
+  const refPointsMissed = calculateMissed(refPointsPassBy);
+
+  // Generate missed segments & accuracy
+  const missedSegments = generateMissedSegments(refPointsMissed);
+  const accuracy = calculateAccuracy(refPoints, missedSegments);
+
+  // Tourmagne Kpis
+  const kpi = calculateKpis(refPointsMissed);
+
+  return {
+    inputs,
+    missedSegments,
+    accuracy,
+    kpi,
   };
 };
 

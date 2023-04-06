@@ -1,3 +1,6 @@
+const fs = require('fs/promises');
+const path = require('path');
+
 const generateGpxStr = async (segments) => {
   let gpxStr = `<?xml version="1.0" encoding="UTF-8"?>
 <gpx
@@ -19,4 +22,18 @@ const generateGpxStr = async (segments) => {
   return gpxStr;
 };
 
-module.exports = generateGpxStr;
+const writeMissedSegmentsToGpxFile = async (results) => {
+  const {
+    missedSegments,
+    options,
+  } = results;
+
+  // Generate the file containing the missed segments
+  const gpxStr = await generateGpxStr(missedSegments);
+
+  // Write GPX file on disk
+  const outputFilePath = path.resolve(__dirname, `../data/generated_files/missed-${results.inputs.refPath}-${results.inputs.challPath}-${options.trigger}-${options.tolerance}-${options.maxDetour}.gpx`);
+  await fs.writeFile(outputFilePath, gpxStr);
+};
+
+module.exports = writeMissedSegmentsToGpxFile;
