@@ -43,11 +43,11 @@ Mocha.describe('compareGpx', () => {
 
     result.inputs.refPath.should.equal('/home/redcic/code/redcic75/tourmagne-gpx-comparator/data/gpx/orleans-loop-trace.gpx');
     result.inputs.challPath.should.equal('/home/redcic/code/redcic75/tourmagne-gpx-comparator/data/gpx/orleans-loop-real.gpx');
+    result.missedSegments.length.should.equal(8);
     result.accuracy.refDistance.should.equal(55677);
     result.accuracy.missedDistance.should.equal(17642);
-    result.kpi.rollingDurationMinDistance.should.equal(15726);
-    result.kpi.rollingDurationStartIndex.should.equal(110);
-    result.kpi.rollingDurationEndIndex.should.equal(314);
-    result.missedSegments.length.should.equal(8);
+    result.kpi.slowestSegmentStart.index.should.equal(110);
+    result.kpi.slowestSegmentEnd.index.should.equal(314);
+    result.kpi.slowestSegmentStart.distance.should.equal(15726);
   }).timeout(8000);
 });

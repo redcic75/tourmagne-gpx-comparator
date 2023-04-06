@@ -14,7 +14,6 @@ const { XMLParser } = require('fast-xml-parser');
 const calculateClosest = (refPoints, challPoints, options) => {
   const {
     trigger,
-    tolerance,
     maxDetour,
   } = options;
 
@@ -27,7 +26,6 @@ const calculateClosest = (refPoints, challPoints, options) => {
     let detour = 0;
     let minDistance;
     let distance;
-    let missed = 0;
 
     while (
       challLocalIndex + 1 < challPoints.length
@@ -47,17 +45,11 @@ const calculateClosest = (refPoints, challPoints, options) => {
       );
       challLocalIndex += 1;
     }
-    if (minDistance > tolerance) {
-      missed = 2;
-    } else if (minDistance > trigger) {
-      missed = 1;
-    }
     return {
       lat: refPoint.lat,
       lon: refPoint.lon,
       timeChall: challPoints[challLocalIndex].time,
       closestDistance: minDistance,
-      missed,
     };
   });
 };
@@ -66,20 +58,28 @@ const calculateClosest = (refPoints, challPoints, options) => {
 // -> [{latRef, lonRef, timeChall, missedSegmentNb}]
 // * missedSegmentNb: undefined if ref point reached by the challenger
 //   Integer representing the number of the missed segment starting at 0
-const calculateMissed = (refPointsPassBy) => {
+const calculateMissed = (refPointsPassBy, options) => {
+  const {
+    trigger,
+    tolerance,
+  } = options;
+
   const result = new Array(refPointsPassBy.length);
   let segmentNb = 0;
   let ind = 0;
   while (ind < refPointsPassBy.length) {
-    if (refPointsPassBy[ind].missed === 0) {
+    if (refPointsPassBy[ind].closestDistance < trigger) {
       result[ind] = null;
       ind += 1;
     } else {
       const startInd = ind;
       let localInd = ind;
       let missed = false;
-      while (localInd < refPointsPassBy.length && refPointsPassBy[localInd].missed !== 0) {
-        if (refPointsPassBy[localInd].missed === 2) missed = true;
+      while (
+        localInd < refPointsPassBy.length
+        && refPointsPassBy[localInd].closestDistance >= trigger
+      ) {
+        if (refPointsPassBy[localInd].closestDistance >= tolerance) missed = true;
         localInd += 1;
       }
       if (missed) {
@@ -114,7 +114,7 @@ const calculateRollingDurationDistances = () => {
 // * elapsedChallTime: time elapsed since challenger passed by its 1st ref point
 //   null if ref point missed
 // * cumulatedDistance: cumulated distance on ref track excluding segments missed by challenger
-const calculateTimeDistanceTable = () => {
+const calculateTimeDistanceTable = (refPointsMissed) => {
   // TODO
   const result = [];
   return result;
@@ -172,7 +172,8 @@ const parseGpx = (str) => {
 // Calculate accuracy of the challenger following ref track
 const calculateAccuracy = (refPoints, missedSegments) => {
   const refDistance = calculateTotalDistance(refPoints);
-  const missedDistance = calculateTotalDistance(missedSegments);
+  const missedDistance = missedSegments
+    .reduce((acc, segment) => acc + calculateTotalDistance(segment), 0);
   const onTrackRatio = 1 - (missedDistance / refDistance);
 
   return {
@@ -213,12 +214,13 @@ const calculateKpis = (refPointsMissed) => {
     distance: endDistance,
   };
 
-  const meanSpeed = (slowestSegmentEnd.distance - slowestSegmentStart.distance)
-  / (endElapsedTime - startElapsedTime);
+  const distance = slowestSegmentEnd.distance - slowestSegmentStart.distance;
+  const meanSpeed = distance / (endElapsedTime - startElapsedTime);
 
   return {
     slowestSegmentStart,
     slowestSegmentEnd,
+    distance,
     meanSpeed,
   };
 };
@@ -236,7 +238,7 @@ const compareGpx = async (inputs) => {
 
   // Extend refPoints with missed segments
   const refPointsPassBy = calculateClosest(refPoints, challPoints, options);
-  const refPointsMissed = calculateMissed(refPointsPassBy);
+  const refPointsMissed = calculateMissed(refPointsPassBy, options);
 
   // Generate missed segments & accuracy
   const missedSegments = generateMissedSegments(refPointsMissed);
