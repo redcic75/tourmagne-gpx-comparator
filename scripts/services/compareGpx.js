@@ -16,14 +16,14 @@ const calculateClosest = (refPoints, challPoints, options) => {
 
   // challIndex: index of the point of challenger track that was
   // at less than trigger distance from the last found ref point
-  const result = [];
   let challIndex = 0;
-  refPoints.forEach((refPoint) => {
+  return refPoints.map((refPoint) => {
     // challLocalIndex: running index on challenge track used to find closest point
     let challLocalIndex = challIndex;
     let detour = 0;
     let minDistance;
     let distance;
+
     while (
       challLocalIndex + 1 < challPoints.length
       && detour <= maxDetour
@@ -34,26 +34,21 @@ const calculateClosest = (refPoints, challPoints, options) => {
         challPoints[challLocalIndex],
         challPoints[challLocalIndex + 1],
       );
-      if (!minDistance || distance < minDistance) {
-        minDistance = distance;
-      }
-      if (minDistance < trigger) {
-        challIndex = challLocalIndex;
-      }
+      if (!minDistance || distance < minDistance) minDistance = distance;
+      if (minDistance < trigger) challIndex = challLocalIndex;
       detour += geolib.getDistance(
         challPoints[challLocalIndex],
         challPoints[challLocalIndex + 1],
       );
       challLocalIndex += 1;
     }
-    result.push({
+    return ({
       latRef: refPoint.lat,
       lonRef: refPoint.lon,
       timeChall: challPoints[challLocalIndex].time,
       closestDistance: minDistance,
     });
   });
-  return result;
 };
 
 // Calculate ref points the challenger missed
