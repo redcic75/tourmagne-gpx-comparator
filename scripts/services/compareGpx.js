@@ -8,9 +8,51 @@ const { XMLParser } = require('fast-xml-parser');
 // * timeChall: time when challenger passed the closest to ref point
 // * closestDist: distance between ref point & challenger
 //   when challenger was the closest (before maxDetour)
-const calculateClosest = () => {
-  // TODO
+const calculateClosest = (refPoints, challPoints, options) => {
+  const {
+    trigger,
+    maxDetour,
+  } = options;
+
+  // challIndex: index of the point of challenger track that was
+  // at less than trigger distance from the last found ref point
   const result = [];
+  let challIndex = 0;
+  refPoints.forEach((refPoint) => {
+    // challLocalIndex: running index on challenge track used to find closest point
+    let challLocalIndex = challIndex;
+    let detour = 0;
+    let minDistance;
+    let distance;
+    while (
+      challLocalIndex + 1 < challPoints.length
+      && detour <= maxDetour
+      && !(minDistance < trigger)
+    ) {
+      distance = geolib.getDistanceFromLine(
+        refPoint,
+        challPoints[challLocalIndex],
+        challPoints[challLocalIndex + 1],
+      );
+      if (!minDistance || distance < minDistance) {
+        minDistance = distance;
+      }
+      if (minDistance < trigger) {
+        challIndex = challLocalIndex;
+      }
+      detour += geolib.getDistance(
+        challPoints[challLocalIndex],
+        challPoints[challLocalIndex + 1],
+      );
+      challLocalIndex += 1;
+    }
+    result.push({
+      latRef: refPoint.lat,
+      lonRef: refPoint.lon,
+      timeChall: challPoints[challLocalIndex].time,
+      closestDistance: minDistance,
+    });
+  });
   return result;
 };
 
@@ -18,8 +60,7 @@ const calculateClosest = () => {
 // -> [{latRef, lonRef, timeChall, missedSegmentNb}]
 // * missedSegmentNb: undefined if ref point reached by the challenger
 //   Integer representing the number of the missed segment starting at 0
-const calculateMissed = () => {
-  // TODO
+const calculateMissed = (refPointsPassBy) => {
   const result = [];
   return result;
 };
