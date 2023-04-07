@@ -111,12 +111,32 @@ const calculateRollingDurationDistances = () => {
 
 // Calculate elapsed challenger time & cumulated distance (without missed segments)
 // -> [{elapsedChallTime, cumulatedDistance}]
-// * elapsedChallTime: time elapsed since challenger passed by its 1st ref point
+// * elapsedTime: time elapsed since challenger passed by its 1st ref point
 //   null if ref point missed
 // * cumulatedDistance: cumulated distance on ref track excluding segments missed by challenger
 const calculateTimeDistanceTable = (refPointsMissed) => {
-  // TODO
-  const result = [];
+  // TODO: with array.slice and array.map
+  const initialTime = refPointsMissed[0].challTime;
+
+  const result = [{
+    elspasedTime: 0,
+    cumulatedDistance: 0,
+  }];
+
+  for (let i = 1; i < refPointsMissed; i += 1) {
+    if (refPointsMissed[i].missedSegmentNb === null) {
+      result[i] = {
+        elapsedTime: refPointsMissed[i].timeChall - initialTime,
+        cumulatedDistance: geolib.getDistance(refPointsMissed[i], refPointsMissed[i - 1]),
+      };
+    } else {
+      result[i] = {
+        elspasedTime: null,
+        cumulatedDistance: null,
+      };
+    }
+  }
+
   return result;
 };
 
