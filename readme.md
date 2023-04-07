@@ -26,4 +26,5 @@ You can create test GPX files and view generated GPX files with https://gpx.stud
 - Get rid of global variables in indexWeb.js
 - Mapbox API key ?
 - Handle GPX with multiple tracks or multiple track segments + handle multiple GPX files (with auto sorting)
+- MBR: inclure la fusion des GPX réalisés pour le cas (général ?) où le challenger renvoie plusieurs fichiers GPX ?
 - Display waiting message while loading big files or while comparing big files

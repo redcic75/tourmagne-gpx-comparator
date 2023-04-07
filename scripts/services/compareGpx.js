@@ -2,20 +2,20 @@ const geolib = require('geolib');
 const { XMLParser } = require('fast-xml-parser');
 
 // Calculate challenger passage time at each ref point
-// -> [{latRef, lonRef, timeChall, closestDist}]
+// -> [{latRef, lonRef, time, closestDist}]
 // * latRef: ref point latitude
 // * lonRef: ref point longitude
-// * timeChall: time when challenger passed the closest to ref point
+// * time: time elapsed since challenger passed by its 1st ref point
+//   null if ref point missed
 // * closestDistance: distance between ref point & challenger
 //   when challenger was the closest (before maxDetour)
-// * missed: 0 if closestDistance < trigger
-//           1 if closestDistance between trigger & tolerance
-//           2 if closestDistance > tolerance
 const calculateClosest = (refPoints, challPoints, options) => {
   const {
     trigger,
     maxDetour,
   } = options;
+
+  const initialTime = new Date(challPoints[0].time).valueOf();
 
   // challIndex: index of the point of challenger track that was
   // at less than trigger distance from the last found ref point
@@ -25,20 +25,40 @@ const calculateClosest = (refPoints, challPoints, options) => {
     let challLocalIndex = challIndex;
     let detour = 0;
     let minDistance;
-    let distance;
+    let minDistanceIndex;
 
     while (
       challLocalIndex + 1 < challPoints.length
       && detour <= maxDetour
-      && !(minDistance < trigger)
     ) {
-      distance = geolib.getDistanceFromLine(
-        refPoint,
-        challPoints[challLocalIndex],
-        challPoints[challLocalIndex + 1],
-      );
-      if (!minDistance || distance < minDistance) minDistance = distance;
-      if (minDistance < trigger) challIndex = challLocalIndex;
+      let distance;
+      if (
+        (challPoints[challLocalIndex].lat === challPoints[challLocalIndex + 1].lat)
+        && (challPoints[challLocalIndex].lon === challPoints[challLocalIndex + 1].lon)
+      ) {
+        distance = geolib.getDistance(
+          refPoint,
+          challPoints[challLocalIndex],
+        );
+      } else {
+        distance = geolib.getDistanceFromLine(
+          refPoint,
+          challPoints[challLocalIndex],
+          challPoints[challLocalIndex + 1],
+        );
+      }
+      // If all points are too close together the getDistanceFromLine might return NaN =>
+      if (Number.isNaN(distance)) distance = 0;
+
+      if (!minDistance || distance < minDistance) {
+        minDistance = distance;
+        minDistanceIndex = challLocalIndex;
+      }
+
+      if (minDistance < trigger) {
+        challIndex = challLocalIndex;
+        break;
+      }
       detour += geolib.getDistance(
         challPoints[challLocalIndex],
         challPoints[challLocalIndex + 1],
@@ -48,14 +68,14 @@ const calculateClosest = (refPoints, challPoints, options) => {
     return {
       lat: refPoint.lat,
       lon: refPoint.lon,
-      timeChall: challPoints[challLocalIndex].time,
+      time: new Date(challPoints[minDistanceIndex].time).valueOf() - initialTime,
       closestDistance: minDistance,
     };
   });
 };
 
 // Calculate ref points the challenger missed
-// -> [{latRef, lonRef, timeChall, missedSegmentNb}]
+// -> [{latRef, lonRef, time, missedSegmentNb}]
 // * missedSegmentNb: undefined if ref point reached by the challenger
 //   Integer representing the number of the missed segment starting at 0
 const calculateMissed = (refPointsPassBy, options) => {
@@ -103,35 +123,58 @@ const calculateMissed = (refPointsPassBy, options) => {
 //   null for ref points of the last rollingDuration
 // * rollingDurationEndIndex: last index of refPoints included in rollingDurationDistance
 //   null for ref points of the last rollingDuration
-const calculateRollingDurationDistances = () => {
-  // TODO
-  const result = [];
-  return result;
+const calculateRollingDurationDistances = (timeDistanceTable, rollingDuration) => {
+  const rollingDurationMs = rollingDuration * 3600 * 1000; // in ms
+  let endInd = 0;
+  const todo = timeDistanceTable.map((point, startInd) => {
+    const endTime = point.elapsedTime + rollingDurationMs;
+    endInd = Math.max(startInd, endInd);
+    while (endInd < timeDistanceTable.length
+      && (timeDistanceTable[endInd].elapsedTime === null
+          || timeDistanceTable[endInd].elapsedTime < endTime)) {
+      endInd += 1;
+    }
+    if (endInd === timeDistanceTable.length) {
+      return ({
+        rollingDurationDistance: null,
+        rollingDurationEndIndex: null,
+      });
+    }
+    return ({
+      rollingDurationDistance: timeDistanceTable[endInd].cumulatedDistance
+                               - timeDistanceTable[startInd].cumulatedDistance,
+      rollingDurationEndIndex: endInd,
+    });
+  });
+  return todo;
 };
 
 // Calculate elapsed challenger time & cumulated distance (without missed segments)
-// -> [{elapsedChallTime, cumulatedDistance}]
+// -> [{elapsedTime, cumulatedDistance}]
 // * elapsedTime: time elapsed since challenger passed by its 1st ref point
 //   null if ref point missed
 // * cumulatedDistance: cumulated distance on ref track excluding segments missed by challenger
 const calculateTimeDistanceTable = (refPointsMissed) => {
   // TODO: with array.slice and array.map
-  const initialTime = refPointsMissed[0].challTime;
-
   const result = [{
-    elspasedTime: 0,
+    elapsedTime: 0,
     cumulatedDistance: 0,
   }];
 
-  for (let i = 1; i < refPointsMissed; i += 1) {
+  let lastNonNullCumulatedDistance = 0;
+
+  for (let i = 1; i < refPointsMissed.length; i += 1) {
     if (refPointsMissed[i].missedSegmentNb === null) {
+      const cumulatedDistance = geolib.getDistance(refPointsMissed[i], refPointsMissed[i - 1])
+        + lastNonNullCumulatedDistance;
       result[i] = {
-        elapsedTime: refPointsMissed[i].timeChall - initialTime,
-        cumulatedDistance: geolib.getDistance(refPointsMissed[i], refPointsMissed[i - 1]),
+        time: refPointsMissed[i].time,
+        cumulatedDistance,
       };
+      lastNonNullCumulatedDistance = cumulatedDistance;
     } else {
       result[i] = {
-        elspasedTime: null,
+        elapsedTime: null,
         cumulatedDistance: null,
       };
     }
@@ -157,6 +200,7 @@ const generateMissedSegments = (refPointsMissed) => {
   const missedSegments = [];
   let segmentNb = 0;
   let missedSegmentLeft = true;
+  // TODO: get rid of linter warning
   while (missedSegmentLeft) {
     const missedSegment = refPointsMissed.filter((point) => point.missedSegmentNb === segmentNb);
     if (missedSegment.length > 0) {
@@ -194,19 +238,25 @@ const calculateAccuracy = (refPoints, missedSegments) => {
   const refDistance = calculateTotalDistance(refPoints);
   const missedDistance = missedSegments
     .reduce((acc, segment) => acc + calculateTotalDistance(segment), 0);
-  const onTrackRatio = 1 - (missedDistance / refDistance);
+  const offTrackRatio = missedDistance / refDistance;
 
   return {
     refDistance,
     missedDistance,
-    onTrackRatio,
+    offTrackRatio,
   };
 };
 
 // Calculate Tourmagne Kpis
-const calculateKpis = (refPointsMissed) => {
+const calculateKpis = (refPointsMissed, options) => {
+  const {
+    rollingDuration,
+  } = options;
   const timeDistanceTable = calculateTimeDistanceTable(refPointsMissed);
-  const rollingDurationDistances = calculateRollingDurationDistances(timeDistanceTable);
+  const rollingDurationDistances = calculateRollingDurationDistances(
+    timeDistanceTable,
+    rollingDuration,
+  );
 
   const distances = rollingDurationDistances.map((el) => el.rollingDurationDistance);
   const rollingDurationMinDistance = Math.min(...distances.filter((el) => el != null));
@@ -214,8 +264,8 @@ const calculateKpis = (refPointsMissed) => {
   const startIndex = distances.indexOf(rollingDurationMinDistance);
   const endIndex = rollingDurationDistances[startIndex]?.rollingDurationEndIndex;
 
-  const startElapsedTime = timeDistanceTable[startIndex]?.elapsedChallTime;
-  const endElapsedTime = timeDistanceTable[endIndex]?.elapsedChallTime;
+  const startElapsedTime = timeDistanceTable[startIndex]?.elapsedTime;
+  const endElapsedTime = timeDistanceTable[endIndex]?.elapsedTime;
 
   const startDistance = timeDistanceTable[startIndex]?.cumulatedDistance;
   const endDistance = timeDistanceTable[endIndex]?.cumulatedDistance;
@@ -234,8 +284,8 @@ const calculateKpis = (refPointsMissed) => {
     distance: endDistance,
   };
 
-  const distance = slowestSegmentEnd.distance - slowestSegmentStart.distance;
-  const meanSpeed = distance / (endElapsedTime - startElapsedTime);
+  const distance = slowestSegmentEnd.distance - slowestSegmentStart.distance; // meters
+  const meanSpeed = (distance / 1000) / rollingDuration; // km/h
 
   return {
     slowestSegmentStart,
@@ -265,7 +315,7 @@ const compareGpx = async (inputs) => {
   const accuracy = calculateAccuracy(refPoints, missedSegments);
 
   // Tourmagne Kpis
-  const kpi = calculateKpis(refPointsMissed);
+  const kpi = calculateKpis(refPointsMissed, options);
 
   return {
     inputs,

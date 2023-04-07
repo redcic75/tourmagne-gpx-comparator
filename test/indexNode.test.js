@@ -19,7 +19,7 @@ Mocha.describe('compareGpx', () => {
     const challPath = `${prefix}/${challFile}.gpx`;
 
     const options = {
-      duration: 1, // in hours
+      rollingDuration: 1, // in hours
       trigger: 20, // in meters - trigger must be less than tolerance
       tolerance: 100, // in meters
       maxDetour: 20000, // in meters

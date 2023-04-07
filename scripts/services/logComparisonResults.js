@@ -14,10 +14,10 @@ const logComparisonResults = (results) => {
   Max detour: ${results.inputs.options.maxDetour}
 
   Missed distance of the reference path: ${results.accuracy.missedDistance} meters
-  Missed distance of the reference path: ${results.accuracy.onTrackRatio * 100} %
+  Missed distance of the reference path: ${results.accuracy.offTrackRatio * 100} %
   Worst ${results.inputs.options.rollingDuration} hours:
-   - Started after ${results.kpi.slowestSegmentStart.elapsedTime} hours at km ${results.kpi.slowestSegmentStart.distance} travelled on reference track
-   - Distance: ${results.kpi.distance} km
+   - Started after ${results.kpi.slowestSegmentStart.elapsedTime / (3600 * 1000)} hours at km ${results.kpi.slowestSegmentStart.distance / 1000} travelled on reference track
+   - Distance: ${results.kpi.distance / 1000} km
    - Mean speed during this period: ${results.kpi.meanSpeed} km/h
   `;
 

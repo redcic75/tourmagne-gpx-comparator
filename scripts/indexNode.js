@@ -32,10 +32,12 @@ const main = async (userInputs) => {
 // const refFile = 'ref';
 // const challFile = 'chall-autre-chemin-2-fois';
 
+// const refFile = 'Bordeaux_Paris_2022_real';
 // const refFile = 'Bordeaux-Paris_2022_trace';
 // const challFile = 'Bordeaux_Paris_2022_real';
 
-const refFile = 'orleans-loop-trace';
+// const refFile = 'orleans-loop-trace';
+const refFile = 'orleans-loop-real';
 const challFile = 'orleans-loop-real';
 
 // Params
