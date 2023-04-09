@@ -2,9 +2,9 @@ const geolib = require('geolib');
 const { XMLParser } = require('fast-xml-parser');
 
 // Calculate challenger passage time at each ref point
-// -> [{latRef, lonRef, time, closestDist}]
-// * latRef: ref point latitude
-// * lonRef: ref point longitude
+// -> [{lat, lon, time, closestDist}]
+// * lat: ref point latitude
+// * lon: ref point longitude
 // * time: time elapsed since challenger passed by its 1st ref point
 //   null if ref point missed
 // * closestDistance: distance between ref point & challenger
@@ -17,65 +17,66 @@ const calculateClosest = (refPoints, challPoints, options) => {
 
   const initialTime = new Date(challPoints[0].time).valueOf();
 
+  // geolib getDistanceFromLine wrapper to fix a bug from the library
+  // See https://github.com/manuelbieh/geolib/issues/227
+  const getDistanceFromLine = (point, lineStart, lineEnd, accuracy = 1) => {
+    const d1 = geolib.getDistance(lineStart, point, accuracy);
+    const d2 = geolib.getDistance(point, lineEnd, accuracy);
+    const d3 = geolib.getDistance(lineStart, lineEnd, accuracy);
+
+    if (d1 === 0 || d2 === 0) {
+      // point located at the exact same place as lineStart or lineEnd
+      return 0;
+    }
+    if (d3 === 0) {
+      return d1; // lineStart and lineEnd are the same - return point-to-point distance
+    }
+    return geolib.getDistanceFromLine(point, lineStart, lineEnd);
+  };
+
   // challIndex: index of the point of challenger track that was
   // at less than trigger distance from the last found ref point
   let challIndex = 0;
+
   return refPoints.map((refPoint) => {
     // challLocalIndex: running index on challenge track used to find closest point
     let challLocalIndex = challIndex;
     let detour = 0;
-    let minDistance;
-    let minDistanceIndex;
+    let closestDistanceIndex;
+    let closestDistance;
 
-    while (
-      challLocalIndex + 1 < challPoints.length
-      && detour <= maxDetour
-    ) {
-      let distance;
-      if (
-        (challPoints[challLocalIndex].lat === challPoints[challLocalIndex + 1].lat)
-        && (challPoints[challLocalIndex].lon === challPoints[challLocalIndex + 1].lon)
-      ) {
-        distance = geolib.getDistance(
-          refPoint,
-          challPoints[challLocalIndex],
-        );
-      } else {
-        distance = geolib.getDistanceFromLine(
-          refPoint,
-          challPoints[challLocalIndex],
-          challPoints[challLocalIndex + 1],
-        );
-      }
-      // If all points are too close together the getDistanceFromLine might return NaN =>
-      if (Number.isNaN(distance)) distance = 0;
-
-      if (!minDistance || distance < minDistance) {
-        minDistance = distance;
-        minDistanceIndex = challLocalIndex;
-      }
-
-      if (minDistance < trigger) {
-        challIndex = challLocalIndex;
-        break;
-      }
-      detour += geolib.getDistance(
+    while (challLocalIndex + 1 < challPoints.length && detour <= maxDetour) {
+      const distance = getDistanceFromLine(
+        refPoint,
         challPoints[challLocalIndex],
         challPoints[challLocalIndex + 1],
       );
+
+      if (!closestDistance || distance < closestDistance) {
+        closestDistance = distance;
+        closestDistanceIndex = challLocalIndex;
+      }
+
+      if (closestDistance < trigger) {
+        challIndex = challLocalIndex;
+        break;
+      }
+
+      detour += geolib.getDistance(challPoints[challLocalIndex], challPoints[challLocalIndex + 1]);
       challLocalIndex += 1;
     }
+
     return {
       lat: refPoint.lat,
       lon: refPoint.lon,
-      time: new Date(challPoints[minDistanceIndex].time).valueOf() - initialTime,
-      closestDistance: minDistance,
+      time: new Date(challPoints[closestDistanceIndex].time).valueOf() - initialTime,
+      closestDistance,
     };
   });
 };
 
 // Calculate ref points the challenger missed
-// -> [{latRef, lonRef, time, missedSegmentNb}]
+// -> [{lat, lon, time, missedSegmentNb}]
 // * missedSegmentNb: undefined if ref point reached by the challenger
 //   Integer representing the number of the missed segment starting at 0
 const calculateMissed = (refPointsPassBy, options) => {
@@ -87,6 +88,7 @@ const calculateMissed = (refPointsPassBy, options) => {
   const result = new Array(refPointsPassBy.length);
   let segmentNb = 0;
   let ind = 0;
+
   while (ind < refPointsPassBy.length) {
     if (refPointsPassBy[ind].closestDistance < trigger) {
       result[ind] = null;
@@ -126,27 +128,33 @@ const calculateMissed = (refPointsPassBy, options) => {
 const calculateRollingDurationDistances = (timeDistanceTable, rollingDuration) => {
   const rollingDurationMs = rollingDuration * 3600 * 1000; // in ms
   let endInd = 0;
-  const todo = timeDistanceTable.map((point, startInd) => {
+
+  return timeDistanceTable.map((point, startInd, table) => {
+    let rollingDurationDistance;
+    let rollingDurationEndIndex;
+
     const endTime = point.elapsedTime + rollingDurationMs;
-    endInd = Math.max(startInd, endInd);
-    while (endInd < timeDistanceTable.length
-      && (timeDistanceTable[endInd].elapsedTime === null
-          || timeDistanceTable[endInd].elapsedTime < endTime)) {
+
+    while (endInd < table.length) {
+      if (table[endInd].elapsedTime !== null && table[endInd].elapsedTime > endTime) {
+        break;
+      }
       endInd += 1;
     }
-    if (endInd === timeDistanceTable.length) {
-      return ({
-        rollingDurationDistance: null,
-        rollingDurationEndIndex: null,
-      });
+
+    if (endInd === table.length) {
+      rollingDurationDistance = null;
+      rollingDurationEndIndex = null;
+    } else {
+      rollingDurationDistance = table[endInd].cumulatedDistance - table[startInd].cumulatedDistance;
+      rollingDurationEndIndex = endInd;
     }
+
     return ({
-      rollingDurationDistance: timeDistanceTable[endInd].cumulatedDistance
-                               - timeDistanceTable[startInd].cumulatedDistance,
-      rollingDurationEndIndex: endInd,
+      rollingDurationDistance,
+      rollingDurationEndIndex,
     });
   });
-  return todo;
 };
 
 // Calculate elapsed challenger time & cumulated distance (without missed segments)
@@ -155,32 +163,29 @@ const calculateRollingDurationDistances = (timeDistanceTable, rollingDuration) =
 //   null if ref point missed
 // * cumulatedDistance: cumulated distance on ref track excluding segments missed by challenger
 const calculateTimeDistanceTable = (refPointsMissed) => {
-  // TODO: with array.slice and array.map
-  const result = [{
-    elapsedTime: 0,
-    cumulatedDistance: 0,
-  }];
-
   let lastNonNullCumulatedDistance = 0;
 
-  for (let i = 1; i < refPointsMissed.length; i += 1) {
-    if (refPointsMissed[i].missedSegmentNb === null) {
-      const cumulatedDistance = geolib.getDistance(refPointsMissed[i], refPointsMissed[i - 1])
-        + lastNonNullCumulatedDistance;
-      result[i] = {
-        time: refPointsMissed[i].time,
-        cumulatedDistance,
-      };
+  return refPointsMissed.map((point, ind, points) => {
+    let elapsedTime;
+    let cumulatedDistance;
+
+    if (ind === 0) {
+      elapsedTime = 0;
+      cumulatedDistance = 0;
+    } else if (point.missedSegmentNb === null) {
+      elapsedTime = point.time;
+      cumulatedDistance = geolib.getDistance(point, points[ind - 1]) + lastNonNullCumulatedDistance;
       lastNonNullCumulatedDistance = cumulatedDistance;
     } else {
-      result[i] = {
-        elapsedTime: null,
-        cumulatedDistance: null,
-      };
+      elapsedTime = null;
+      cumulatedDistance = null;
     }
-  }
 
-  return result;
+    return {
+      elapsedTime,
+      cumulatedDistance,
+    };
+  });
 };
 
 // Calculate total distance of a track segment (represented by an array of points)
@@ -193,22 +198,23 @@ const calculateTotalDistance = (points) => {
 };
 
 // Generate missed segments
-// -> [[{latRef, lonRef}]]
+// -> [[{lat, lon}]]
 // * Wrapping array is an array of segments
 // * Nested arrays are missed segments
 const generateMissedSegments = (refPointsMissed) => {
   const missedSegments = [];
-  let segmentNb = 0;
-  let missedSegmentLeft = true;
-  // TODO: get rid of linter warning
-  while (missedSegmentLeft) {
+  const numberOfMissedSegments = Math.max(...refPointsMissed
+    .map((point) => point.missedSegmentNb)
+    .filter((point) => point !== null));
+
+  for (let segmentNb = 0; segmentNb < numberOfMissedSegments; segmentNb += 1) {
     const missedSegment = refPointsMissed.filter((point) => point.missedSegmentNb === segmentNb);
-    if (missedSegment.length > 0) {
-      missedSegments.push(missedSegment);
-      segmentNb += 1;
-    } else {
-      missedSegmentLeft = false;
-    }
+    const missedSegmentCoordsOnly = missedSegment.map((point) => ({
+      lat: point.lat,
+      lon: point.lon,
+    }));
+
+    missedSegments.push(missedSegmentCoordsOnly);
   }
   return missedSegments;
 };
