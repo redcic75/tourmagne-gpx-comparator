@@ -9,8 +9,11 @@ const path = require('path');
 const compareGpx = require('../scripts/services/compareGpx');
 const getGpxStr = require('../scripts/services/getGpxStr');
 
-Mocha.describe('compareGpx', () => {
-  Mocha.it('should return full analysis', async () => {
+Mocha.describe('compareGpx', function desc() {
+  this.timeout(15000);
+  let result;
+
+  Mocha.before(async () => {
     const refFile = 'orleans-loop-trace';
     const challFile = 'orleans-loop-real';
 
@@ -39,15 +42,38 @@ Mocha.describe('compareGpx', () => {
       challGpxStr,
     };
 
-    const result = await compareGpx(inputs);
+    result = await compareGpx(inputs);
+  });
 
+  Mocha.it('should return ref file path', async () => {
     result.inputs.refPath.should.equal('/home/redcic/code/redcic75/tourmagne-gpx-comparator/data/gpx/orleans-loop-trace.gpx');
+  });
+
+  Mocha.it('should return challenger file path', async () => {
     result.inputs.challPath.should.equal('/home/redcic/code/redcic75/tourmagne-gpx-comparator/data/gpx/orleans-loop-real.gpx');
+  });
+
+  Mocha.it('should return number of missed segments', async () => {
     result.missedSegments.length.should.equal(8);
+  });
+
+  Mocha.it('should return ref path distance', async () => {
     result.accuracy.refDistance.should.equal(55677);
+  });
+
+  Mocha.it('should return missed segments total distance', async () => {
     result.accuracy.missedDistance.should.equal(17642);
+  });
+
+  Mocha.it('should return slowest segment start index', async () => {
     result.kpi.slowestSegmentStart.index.should.equal(110);
+  });
+
+  Mocha.it('should return slowest segment end index', async () => {
     result.kpi.slowestSegmentEnd.index.should.equal(314);
+  });
+
+  Mocha.it('should return slowest segment start distance', async () => {
     result.kpi.slowestSegmentStart.distance.should.equal(15726);
-  }).timeout(8000);
+  });
 });

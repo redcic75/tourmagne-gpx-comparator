@@ -78,7 +78,7 @@ const calculateClosest = (refPoints, challPoints, options) => {
 // Calculate ref points the challenger missed
 // -> [{lat, lon, time, missedSegmentNb}]
 // * missedSegmentNb: undefined if ref point reached by the challenger
-//   Integer representing the number of the missed segment starting at 0
+//   Integer representing the number of the missed segment starting at 1
 const calculateMissed = (refPointsPassBy, options) => {
   const {
     trigger,
@@ -86,7 +86,7 @@ const calculateMissed = (refPointsPassBy, options) => {
   } = options;
 
   const result = new Array(refPointsPassBy.length);
-  let segmentNb = 0;
+  let segmentNb = 1;
   let ind = 0;
 
   while (ind < refPointsPassBy.length) {
