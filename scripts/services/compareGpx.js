@@ -57,7 +57,7 @@ const calculateClosest = (refPoints, challPoints, options) => {
         closestDistanceIndex = challLocalIndex;
       }
 
-      if (closestDistance < trigger) {
+      if (closestDistance <= trigger) {
         challIndex = challLocalIndex;
         break;
       }
@@ -90,7 +90,7 @@ const calculateMissed = (refPointsPassBy, options) => {
   let ind = 0;
 
   while (ind < refPointsPassBy.length) {
-    if (refPointsPassBy[ind].closestDistance < trigger) {
+    if (refPointsPassBy[ind].closestDistance <= trigger) {
       result[ind] = null;
       ind += 1;
     } else {
@@ -99,9 +99,9 @@ const calculateMissed = (refPointsPassBy, options) => {
       let missed = false;
       while (
         localInd < refPointsPassBy.length
-        && refPointsPassBy[localInd].closestDistance >= trigger
+        && refPointsPassBy[localInd].closestDistance > trigger
       ) {
-        if (refPointsPassBy[localInd].closestDistance >= tolerance) missed = true;
+        if (refPointsPassBy[localInd].closestDistance > tolerance) missed = true;
         localInd += 1;
       }
       if (missed) {
@@ -146,6 +146,7 @@ const calculateRollingDurationDistances = (timeDistanceTable, rollingDuration) =
       rollingDurationDistance = null;
       rollingDurationEndIndex = null;
     } else {
+      // TODO: cumulatedDistance or cumulatedDistanceWithoutMissed
       rollingDurationDistance = table[endInd].cumulatedDistance - table[startInd].cumulatedDistance;
       rollingDurationEndIndex = endInd;
     }
@@ -157,33 +158,42 @@ const calculateRollingDurationDistances = (timeDistanceTable, rollingDuration) =
   });
 };
 
-// Calculate elapsed challenger time & cumulated distance (without missed segments)
-// -> [{elapsedTime, cumulatedDistance}]
+// Calculate elapsed challenger time & cumulated distance (with & without missed segments)
+// -> [{elapsedTime, elapsedTimeWithoutMissed, cumulatedDistance, cumulatedDistanceWithoutMissed}]
 // * elapsedTime: time elapsed since challenger passed by its 1st ref point
+// * elapsedTimeWithoutMissed: time elapsed since challenger passed by its 1st ref point
 //   null if ref point missed
-// * cumulatedDistance: cumulated distance on ref track excluding segments missed by challenger
+// * cumulatedDistance: cumulated distance on ref track
+// * cumulatedDistanceWithoutMissed: cumulated distance on ref track
+//   excluding segments missed by challenger
 const calculateTimeDistanceTable = (refPointsMissed) => {
-  let lastNonNullCumulatedDistance = 0;
+  let cumulatedDistance = 0;
+  let cumulatedDistanceWithoutMissed = 0;
 
   return refPointsMissed.map((point, ind, points) => {
     let elapsedTime;
-    let cumulatedDistance;
+    let elapsedTimeWithoutMissed;
 
     if (ind === 0) {
       elapsedTime = 0;
-      cumulatedDistance = 0;
-    } else if (point.missedSegmentNb === null) {
-      elapsedTime = point.time;
-      cumulatedDistance = geolib.getDistance(point, points[ind - 1]) + lastNonNullCumulatedDistance;
-      lastNonNullCumulatedDistance = cumulatedDistance;
+      elapsedTimeWithoutMissed = 0;
     } else {
-      elapsedTime = null;
-      cumulatedDistance = null;
+      const intervalDistance = geolib.getDistance(point, points[ind - 1]);
+      elapsedTime = point.time;
+      cumulatedDistance += intervalDistance;
+      if (point.missedSegmentNb === null) {
+        elapsedTimeWithoutMissed = elapsedTime;
+        cumulatedDistanceWithoutMissed += intervalDistance;
+      } else {
+        elapsedTimeWithoutMissed = null;
+        cumulatedDistanceWithoutMissed = null;
+      }
     }
-
     return {
       elapsedTime,
+      elapsedTimeWithoutMissed,
       cumulatedDistance,
+      cumulatedDistanceWithoutMissed,
     };
   });
 };
@@ -207,7 +217,7 @@ const generateMissedSegments = (refPointsMissed) => {
     .map((point) => point.missedSegmentNb)
     .filter((point) => point !== null));
 
-  for (let segmentNb = 0; segmentNb < numberOfMissedSegments; segmentNb += 1) {
+  for (let segmentNb = 1; segmentNb <= numberOfMissedSegments; segmentNb += 1) {
     const missedSegment = refPointsMissed.filter((point) => point.missedSegmentNb === segmentNb);
     const missedSegmentCoordsOnly = missedSegment.map((point) => ({
       lat: point.lat,
@@ -270,6 +280,7 @@ const calculateKpis = (refPointsMissed, options) => {
   const startIndex = distances.indexOf(rollingDurationMinDistance);
   const endIndex = rollingDurationDistances[startIndex]?.rollingDurationEndIndex;
 
+  // TODO: without missed ?
   const startElapsedTime = timeDistanceTable[startIndex]?.elapsedTime;
   const endElapsedTime = timeDistanceTable[endIndex]?.elapsedTime;
 
