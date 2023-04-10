@@ -66,14 +66,14 @@ Mocha.describe('compareGpx', function desc() {
   });
 
   Mocha.it('should return slowest segment start index', async () => {
-    result.kpi.slowestSegmentStart.index.should.equal(202);
+    result.kpi.slowestSegmentStart.index.should.equal(108);
   });
 
   Mocha.it('should return slowest segment end index', async () => {
-    result.kpi.slowestSegmentEnd.index.should.equal(386);
+    result.kpi.slowestSegmentEnd.index.should.equal(313);
   });
 
   Mocha.it('should return slowest segment distance', async () => {
-    result.kpi.distance.should.equal(15008);
+    result.kpi.distance.should.equal(15808);
   });
 });

@@ -121,8 +121,11 @@ const calculateMissed = (refPointsPassBy, options) => {
 
 // Calculate rolling duration distances (Tourmagne KPI)
 // -> [{rollingDurationDistance, rollingDurationEndIndex}]
-// * rollingDurationDistance: distance travelled by challenger during the next rolling duration
-//   null for ref points of the last rollingDuration
+// * rollingDurationDistance: distance on ref track travelled by the challenger
+//   during the next rolling duration. null for ref points of the last rollingDuration.
+// * rollingDurationDistanceWithoutMissed: distance travelled by the challenger
+//   during next rolling duration (not taking into account missed points).
+//   null for ref points of the last rollingDuration.
 // * rollingDurationEndIndex: last index of refPoints included in rollingDurationDistance
 //   null for ref points of the last rollingDuration
 const calculateRollingDurationDistances = (timeDistanceTable, rollingDuration) => {
@@ -131,6 +134,7 @@ const calculateRollingDurationDistances = (timeDistanceTable, rollingDuration) =
 
   return timeDistanceTable.map((point, startInd, table) => {
     let rollingDurationDistance;
+    let rollingDurationDistanceWithoutMissed;
     let rollingDurationEndIndex;
 
     const endTime = point.elapsedTime + rollingDurationMs;
@@ -144,15 +148,19 @@ const calculateRollingDurationDistances = (timeDistanceTable, rollingDuration) =
 
     if (endInd === table.length) {
       rollingDurationDistance = null;
+      rollingDurationDistanceWithoutMissed = null;
       rollingDurationEndIndex = null;
     } else {
       // TODO: cumulatedDistance or cumulatedDistanceWithoutMissed
       rollingDurationDistance = table[endInd].cumulatedDistance - table[startInd].cumulatedDistance;
+      rollingDurationDistanceWithoutMissed = table[endInd].cumulatedDistanceWithoutMissed
+        - table[startInd].cumulatedDistanceWithoutMissed;
       rollingDurationEndIndex = endInd;
     }
 
     return ({
       rollingDurationDistance,
+      rollingDurationDistanceWithoutMissed,
       rollingDurationEndIndex,
     });
   });
@@ -161,7 +169,6 @@ const calculateRollingDurationDistances = (timeDistanceTable, rollingDuration) =
 // Calculate elapsed challenger time & cumulated distance (with & without missed segments)
 // -> [{elapsedTime, elapsedTimeWithoutMissed, cumulatedDistance, cumulatedDistanceWithoutMissed}]
 // * elapsedTime: time elapsed since challenger passed by its 1st ref point
-// * elapsedTimeWithoutMissed: time elapsed since challenger passed by its 1st ref point
 //   null if ref point missed
 // * cumulatedDistance: cumulated distance on ref track
 // * cumulatedDistanceWithoutMissed: cumulated distance on ref track
@@ -172,26 +179,21 @@ const calculateTimeDistanceTable = (refPointsMissed) => {
 
   return refPointsMissed.map((point, ind, points) => {
     let elapsedTime;
-    let elapsedTimeWithoutMissed;
-
     if (ind === 0) {
       elapsedTime = 0;
-      elapsedTimeWithoutMissed = 0;
     } else {
       const intervalDistance = geolib.getDistance(point, points[ind - 1]);
-      elapsedTime = point.time;
       cumulatedDistance += intervalDistance;
       if (point.missedSegmentNb === null) {
-        elapsedTimeWithoutMissed = elapsedTime;
+        elapsedTime = point.time;
         cumulatedDistanceWithoutMissed += intervalDistance;
       } else {
-        elapsedTimeWithoutMissed = null;
+        elapsedTime = null;
         cumulatedDistanceWithoutMissed = null;
       }
     }
     return {
       elapsedTime,
-      elapsedTimeWithoutMissed,
       cumulatedDistance,
       cumulatedDistanceWithoutMissed,
     };
