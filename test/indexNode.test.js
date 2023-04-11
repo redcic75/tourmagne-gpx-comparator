@@ -13,67 +13,135 @@ Mocha.describe('compareGpx', function desc() {
   this.timeout(15000);
   let result;
 
-  Mocha.before(async () => {
-    const refFile = 'orleans-loop-trace';
-    const challFile = 'orleans-loop-real';
+  Mocha.describe('with Orleans loop', () => {
+    Mocha.before(async () => {
+      const refFile = 'orleans-loop-trace';
+      const challFile = 'orleans-loop-real';
 
-    const prefix = path.resolve(__dirname, '../data/gpx/');
-    const refPath = `${prefix}/${refFile}.gpx`;
-    const challPath = `${prefix}/${challFile}.gpx`;
+      const prefix = path.resolve(__dirname, '../data/gpx/');
+      const refPath = `${prefix}/${refFile}.gpx`;
+      const challPath = `${prefix}/${challFile}.gpx`;
 
-    const options = {
-      rollingDuration: 1, // in hours
-      trigger: 20, // in meters - trigger must be less than tolerance
-      tolerance: 100, // in meters
-      maxDetour: 20000, // in meters
-    };
+      const options = {
+        rollingDuration: 1, // in hours
+        trigger: 20, // in meters - trigger must be less than tolerance
+        tolerance: 100, // in meters
+        maxDetour: 20000, // in meters
+      };
 
-    const userInputs = {
-      refPath,
-      challPath,
-      options,
-    };
+      const userInputs = {
+        refPath,
+        challPath,
+        options,
+      };
 
-    const [refGpxStr, challGpxStr] = await getGpxStr(refPath, challPath);
+      const [refGpxStr, challGpxStr] = await getGpxStr(refPath, challPath);
 
-    const inputs = {
-      ...userInputs,
-      refGpxStr,
-      challGpxStr,
-    };
+      const inputs = {
+        ...userInputs,
+        refGpxStr,
+        challGpxStr,
+      };
 
-    result = await compareGpx(inputs);
+      result = await compareGpx(inputs);
+    });
+
+    Mocha.it('should return ref file path', async () => {
+      result.inputs.refPath.should.equal('/home/redcic/code/redcic75/tourmagne-gpx-comparator/data/gpx/orleans-loop-trace.gpx');
+    });
+
+    Mocha.it('should return challenger file path', async () => {
+      result.inputs.challPath.should.equal('/home/redcic/code/redcic75/tourmagne-gpx-comparator/data/gpx/orleans-loop-real.gpx');
+    });
+
+    Mocha.it('should return number of missed segments', async () => {
+      result.missedSegments.length.should.equal(8);
+    });
+
+    Mocha.it('should return ref path distance', async () => {
+      result.accuracy.refDistance.should.equal(55677);
+    });
+
+    Mocha.it('should return missed segments total distance', async () => {
+      result.accuracy.missedDistance.should.equal(17642);
+    });
+
+    Mocha.it('should return slowest segment start index', async () => {
+      result.kpi.slowestSegmentStart.index.should.equal(342);
+    });
+
+    Mocha.it('should return slowest segment end index', async () => {
+      result.kpi.slowestSegmentEnd.index.should.equal(683);
+    });
+
+    Mocha.it('should return slowest segment distance', async () => {
+      result.kpi.distance.should.equal(11118);
+    });
   });
 
-  Mocha.it('should return ref file path', async () => {
-    result.inputs.refPath.should.equal('/home/redcic/code/redcic75/tourmagne-gpx-comparator/data/gpx/orleans-loop-trace.gpx');
-  });
+ Mocha.describe('with Bordeaux - Paris', () => {
+    Mocha.before(async () => {
+      const refFile = 'Bordeaux_Paris_2022_trace';
+      const challFile = 'Bordeaux_Paris_2022_real';
 
-  Mocha.it('should return challenger file path', async () => {
-    result.inputs.challPath.should.equal('/home/redcic/code/redcic75/tourmagne-gpx-comparator/data/gpx/orleans-loop-real.gpx');
-  });
+      const prefix = path.resolve(__dirname, '../data/gpx/');
+      const refPath = `${prefix}/${refFile}.gpx`;
+      const challPath = `${prefix}/${challFile}.gpx`;
 
-  Mocha.it('should return number of missed segments', async () => {
-    result.missedSegments.length.should.equal(8);
-  });
+      const options = {
+        rollingDuration: 1, // in hours
+        trigger: 20, // in meters - trigger must be less than tolerance
+        tolerance: 100, // in meters
+        maxDetour: 20000, // in meters
+      };
 
-  Mocha.it('should return ref path distance', async () => {
-    result.accuracy.refDistance.should.equal(55677);
-  });
+      const userInputs = {
+        refPath,
+        challPath,
+        options,
+      };
 
-  Mocha.it('should return missed segments total distance', async () => {
-    result.accuracy.missedDistance.should.equal(17642);
-  });
+      const [refGpxStr, challGpxStr] = await getGpxStr(refPath, challPath);
 
-  Mocha.it('should return slowest segment start index', async () => {
-    result.kpi.slowestSegmentStart.index.should.equal(108);
-  });
+      const inputs = {
+        ...userInputs,
+        refGpxStr,
+        challGpxStr,
+      };
 
-  Mocha.it('should return slowest segment end index', async () => {
-    result.kpi.slowestSegmentEnd.index.should.equal(313);
-  });
+      result = await compareGpx(inputs);
+    });
 
-  Mocha.it('should return slowest segment distance', async () => {
-    result.kpi.distance.should.equal(15808);
+    Mocha.it('should return ref file path', async () => {
+      result.inputs.refPath.should.equal('/home/redcic/code/redcic75/tourmagne-gpx-comparator/data/gpx/Bordeaux_Paris_2022_trace.gpx');
+    });
+
+    Mocha.it('should return challenger file path', async () => {
+      result.inputs.challPath.should.equal('/home/redcic/code/redcic75/tourmagne-gpx-comparator/data/gpx/Bordeaux_Paris_2022_real.gpx');
+    });
+
+    Mocha.it('should return number of missed segments', async () => {
+      result.missedSegments.length.should.equal(3);
+    });
+
+    Mocha.it('should return ref path distance', async () => {
+      result.accuracy.refDistance.should.equal(659430);
+    });
+
+    Mocha.it('should return missed segments total distance', async () => {
+      result.accuracy.missedDistance.should.equal(5944);
+    });
+
+    Mocha.it('should return slowest segment start index', async () => {
+      result.kpi.slowestSegmentStart.index.should.equal(4115);
+    });
+
+    Mocha.it('should return slowest segment end index', async () => {
+      result.kpi.slowestSegmentEnd.index.should.equal(4210);
+    });
+
+    Mocha.it('should return slowest segment distance', async () => {
+      result.kpi.distance.should.equal(5553);
+    });
   });
 });
