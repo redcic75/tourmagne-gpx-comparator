@@ -1,6 +1,7 @@
 const path = require('path');
 
-const compareGpx = require('./services/compareGpx');
+const parseGpx = require('./services/parseGpx');
+const compareTracks = require('./services/compareTracks');
 const getGpxStr = require('./services/getGpxStr');
 const logComparisonResults = require('./services/logComparisonResults');
 const writeMissedSegmentsToGpxFile = require('./services/writeMissedSegmentsToGpxFile');
@@ -14,13 +15,17 @@ const main = async (userInputs) => {
 
   const [refGpxStr, challGpxStr] = await getGpxStr(refPath, challPath);
 
+  // Parse GPX strings to JS objects
+  const refPoints = parseGpx(refGpxStr);
+  const challPoints = parseGpx(challGpxStr);
+
   const inputs = {
     ...userInputs,
-    refGpxStr,
-    challGpxStr,
+    refPoints,
+    challPoints,
   };
 
-  const results = await compareGpx(inputs);
+  const results = await compareTracks(inputs);
 
   await writeMissedSegmentsToGpxFile(results);
 

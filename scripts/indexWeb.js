@@ -1,8 +1,9 @@
 const mapboxgl = require('mapbox-gl/dist/mapbox-gl');
 const FileSaver = require('file-saver');
 
+const parseGpx = require('./services/parseGpx');
 const generateGpxStr = require('./services/generateGpxStr');
-const compareGpx = require('./services/compareGpx');
+const compareTracks = require('./services/compareTracks');
 const displayTrack = require('./mapHelpers/displayTrack');
 const { updateBounds, fitBounds } = require('./mapHelpers/updateBounds');
 
@@ -54,7 +55,7 @@ const launchComparison = async (event) => {
     challGpxStr: challFileInputEl.gpxStr,
   };
 
-  const results = await compareGpx(inputs);
+  const results = await compareTracks(inputs);
 
   // Update DOM
   refParamEl.innerHTML = formEl.ref.value.split('\\').slice(-1);
@@ -118,9 +119,10 @@ const loadFile = async (event) => {
   const file = files[0];
 
   if (file) {
-    currentTarget.gpxStr = await file.text();
+    const str = await file.text();
+    currentTarget.points = parseGpx(str);
   } else {
-    currentTarget.gpxStr = '';
+    currentTarget.points = [];
 
     // Erase track
     if (map.getLayer(id)) {
@@ -158,7 +160,8 @@ const loadFile = async (event) => {
 
 // ------ MAIN ------//
 // Display empty map
-mapboxgl.accessToken = 'pk.eyJ1IjoicmVkY2ljIiwiYSI6ImNsZG41YzZzMjAweGYzbnEwMjYzOWxpMTYifQ.kEkg6g7sPVWFAf0vvAVzkA';
+// mapboxgl.accessToken = 'pk.eyJ1IjoicmVkY2ljIiwiYSI6ImNsZG41YzZzMjAweGYzbnEwMjYzOWxpMTYifQ.kEkg6g7sPVWFAf0vvAVzkA';
+mapboxgl.accessToken = 'pk.eyJ1IjoicmVkY2ljIiwiYSI6ImNsZG4zZ3UyMjA3NWIzdnM0bGFwNTM4ZDMifQ.eey31FAnZT3z2zxr-M_Ivw';
 const map = new mapboxgl.Map({
   container: 'map',
   style: 'mapbox://styles/mapbox/streets-v12',

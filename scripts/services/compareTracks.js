@@ -1,5 +1,4 @@
 const geolib = require('geolib');
-const { XMLParser } = require('fast-xml-parser');
 
 // Calculate challenger passage time at each ref point
 // -> [{lat, lon, time, closestDist}]
@@ -219,26 +218,6 @@ const generateMissedSegments = (refPointsMissed) => {
   return missedSegments;
 };
 
-// Parse gpx string
-// -> [{lat, lon, time}]
-const parseGpx = (str) => {
-  const parser = new XMLParser({
-    ignoreAttributes: false,
-    parseAttributeValue: true,
-    attributeNamePrefix: '',
-  });
-
-  const gpx = parser.parse(str);
-
-  // Create points array
-  const trkpts = gpx?.gpx?.trk?.trkseg?.trkpt;
-
-  // Only keep relevant properties (i.e. lat, lon & time)
-  const keepLatLonTime = (({ lat, lon, time }) => ({ lat, lon, time }));
-
-  return trkpts.map((trkpt) => keepLatLonTime(trkpt));
-};
-
 // Calculate accuracy of the challenger following ref track
 const calculateAccuracy = (refPoints, missedSegments) => {
   const refDistance = geolib.getPathLength(refPoints);
@@ -302,16 +281,12 @@ const calculateKpis = (refPointsMissed, options) => {
   };
 };
 
-const compareGpx = async (inputs) => {
+const compareTracks = async (inputs) => {
   const {
-    refGpxStr,
-    challGpxStr,
+    refPoints,
+    challPoints,
     options,
   } = inputs;
-
-  // Parse GPX strings to JS objects
-  const refPoints = parseGpx(refGpxStr);
-  const challPoints = parseGpx(challGpxStr);
 
   // Extend refPoints with missed segments
   const refPointsPassBy = calculateClosest(refPoints, challPoints, options);
@@ -332,4 +307,4 @@ const compareGpx = async (inputs) => {
   };
 };
 
-module.exports = compareGpx;
+module.exports = compareTracks;

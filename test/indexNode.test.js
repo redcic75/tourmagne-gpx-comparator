@@ -6,10 +6,11 @@ const should = require('chai').should();
 const fs = require('fs/promises');
 const path = require('path');
 
-const compareGpx = require('../scripts/services/compareGpx');
+const parseGpx = require('../scripts/services/parseGpx');
+const compareTracks = require('../scripts/services/compareTracks');
 const getGpxStr = require('../scripts/services/getGpxStr');
 
-Mocha.describe('compareGpx', function desc() {
+Mocha.describe('compareTracks', function desc() {
   this.timeout(15000);
   let result;
 
@@ -37,13 +38,17 @@ Mocha.describe('compareGpx', function desc() {
 
       const [refGpxStr, challGpxStr] = await getGpxStr(refPath, challPath);
 
+      // Parse GPX strings to JS objects
+      const refPoints = parseGpx(refGpxStr);
+      const challPoints = parseGpx(challGpxStr);
+
       const inputs = {
         ...userInputs,
-        refGpxStr,
-        challGpxStr,
+        refPoints,
+        challPoints,
       };
 
-      result = await compareGpx(inputs);
+      result = await compareTracks(inputs);
     });
 
     Mocha.it('should return ref file path', async () => {
@@ -79,7 +84,7 @@ Mocha.describe('compareGpx', function desc() {
     });
   });
 
- Mocha.describe('with Bordeaux - Paris', () => {
+  Mocha.describe('with Bordeaux - Paris', () => {
     Mocha.before(async () => {
       const refFile = 'Bordeaux_Paris_2022_trace';
       const challFile = 'Bordeaux_Paris_2022_real';
@@ -103,13 +108,17 @@ Mocha.describe('compareGpx', function desc() {
 
       const [refGpxStr, challGpxStr] = await getGpxStr(refPath, challPath);
 
+      // Parse GPX strings to JS objects
+      const refPoints = parseGpx(refGpxStr);
+      const challPoints = parseGpx(challGpxStr);
+
       const inputs = {
         ...userInputs,
-        refGpxStr,
-        challGpxStr,
+        refPoints,
+        challPoints,
       };
 
-      result = await compareGpx(inputs);
+      result = await compareTracks(inputs);
     });
 
     Mocha.it('should return ref file path', async () => {
