@@ -16,13 +16,6 @@ You can create test GPX files and view generated GPX files with https://gpx.stud
 # To do
 - Deal with case where challenger gpx does not have timestamps
 - Deal with case where parameters are not coherent (tolerance < trigger, duration > durée du parcours du challenger)
-- Performance indicator :
-  - when the challenger is out of the reference track, time of the refpoint
-  is taken from the closest point on the challenger track
-  => It can  can give an advantage to the challenger, to be fixed
-  => Only take into account km of the reference track where the challenger was on track.
-  - To be refactored
-  - Get rid of `break` and `continue` ?
 - Get rid of global variables in indexWeb.js
 - Mapbox API key ?
 - Handle GPX with multiple tracks or multiple track segments + handle multiple GPX files (with auto sorting)

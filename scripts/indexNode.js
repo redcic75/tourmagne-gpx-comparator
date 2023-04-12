@@ -22,7 +22,7 @@ const main = async (userInputs) => {
 
   const results = await compareGpx(inputs);
 
-  writeMissedSegmentsToGpxFile(results);
+  await writeMissedSegmentsToGpxFile(results);
 
   logComparisonResults(results);
 };

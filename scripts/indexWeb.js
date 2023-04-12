@@ -2,7 +2,7 @@ const mapboxgl = require('mapbox-gl/dist/mapbox-gl');
 const FileSaver = require('file-saver');
 
 const generateGpxStr = require('./services/generateGpxStr');
-const parseGpx = require('./services/parseGpx');
+const getGpxStr = require('./services/getGpxStr');
 const compareGpx = require('./services/compareGpx');
 const displayTrack = require('./mapHelpers/displayTrack');
 const { updateBounds, fitBounds } = require('./mapHelpers/updateBounds');
@@ -37,35 +37,40 @@ const launchComparison = async (event) => {
 
   // Get options from form inputs
   const options = {
-    duration: formEl.duration.value, // in seconds
+    rollingDuration: formEl.rollingDuration.value, // in seconds
     trigger: formEl.trigger.value, // in meters - trigger must be less than tolerance
     tolerance: formEl.tolerance.value, // in meters
     maxDetour: formEl.maxDetour.value * 1000, // in meters
   };
-  const {
-    missedSegmentsOffTolerance,
-    refDistance,
-    missedDistance,
-    perf,
-    passageTimes,
-  } = await compareGpx(
-    refFileInputEl.points,
-    challFileInputEl.points,
+
+  const userInputs = {
+    refPath: refFileInputEl.path,
+    challPath: challFileInputEl.path,
     options,
-  );
+  };
+
+  const [refGpxStr, challGpxStr] = await getGpxStr(refFileInputEl.path, challFileInputEl.path);
+
+  const inputs = {
+    ...userInputs,
+    refGpxStr,
+    challGpxStr,
+  };
+
+  const results = await compareGpx(inputs);
 
   // Update DOM
   refParamEl.innerHTML = formEl.ref.value.split('\\').slice(-1);
   challParamEl.innerHTML = formEl.chall.value.split('\\').slice(-1);
 
-  durationParamEl.innerHTML = `${formEl.duration.value} h`;
+  durationParamEl.innerHTML = `${formEl.rollingDuration.value} h`;
   triggerParamEl.innerHTML = `${formEl.trigger.value} m`;
   toleranceParamEl.innerHTML = `${formEl.tolerance.value} m`;
   detourMaxParamEl.innerHTML = `${formEl.trigger.value} km`;
-  missedDistanceEl.innerHTML = `${Math.round(missedDistance)} m`;
-  missedPercentEl.innerHTML = `${Math.round((missedDistance / refDistance) * 1000) / 10} %`;
-  perfKmEl.innerHTML = `Vitesse moyenne pendant les pires ${formEl.duration.value} h : ${Math.round(perf.speed) / 1000} km/h`;
-  perfWhenEl.innerHTML = `Période commencée après ${Math.round(passageTimes[perf.startRefIndex].duration / (3600 * 10)) / 100} h au km ${passageTimes[perf.startRefIndex].cumulatedDistance / 1000}`;
+  missedDistanceEl.innerHTML = `${Math.round(results.accuracy.missedDistance)} m`;
+  missedPercentEl.innerHTML = `${Math.round(results.accuracy.offTrackRatio * 1000) / 10} %`;
+  perfKmEl.innerHTML = `Vitesse moyenne pendant les pires ${formEl.rollingDuration.value} h : ${Math.round(results.kpi.meanSpeed) / 1000} km/h`;
+  perfWhenEl.innerHTML = `Période commencée après ${Math.round((results.kpi.slowestSegmentStart.elapsedTime / (3600 * 1000)) * 10) / 1000} h au km ${results.kpi.slowestSegmentStart.distance / 1000}`;
 
   // Update map
   const paintMissed = {
@@ -73,17 +78,20 @@ const launchComparison = async (event) => {
     'line-width': 6,
     'line-opacity': 0.7,
   };
-  displayTrack(map, 'missed', missedSegmentsOffTolerance, paintMissed);
+  displayTrack(map, 'missed', results.missedSegments, paintMissed);
 
   const paintSlowest = {
     'line-color': '#ffffff',
     'line-width': 2,
     'line-opacity': 1,
   };
-  displayTrack(map, 'slowest', [refPoints.slice(perf.startRefIndex, perf.endRefIndex + 1)], paintSlowest);
+  displayTrack(map, 'slowest', [refPoints.slice(
+    results.kpi.slowestSegmentStart.index,
+    results.kpi.slowestSegmentEnd.index + 1,
+  )], paintSlowest);
 
   // Generate the file containing the missed segments
-  gpxStr = await generateGpxStr(missedSegmentsOffTolerance, options);
+  gpxStr = await generateGpxStr(results.missedSegments);
   downloadGpxEl.classList.remove('disabled');
 };
 
@@ -109,11 +117,12 @@ const loadFile = async (event) => {
     },
   } = event;
 
+  // TODO: add multiple files here
   const file = files[0];
 
   if (file) {
     const str = await file.text();
-    currentTarget.points = parseGpx(str);
+    currentTarget.points = getGpxStr(str);
   } else {
     currentTarget.points = [];
 
