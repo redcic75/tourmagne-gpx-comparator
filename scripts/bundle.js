@@ -297,7 +297,7 @@ exports.validate = function (xmlData, options) {
     // check for byte order mark (BOM)
     xmlData = xmlData.substr(1);
   }
-
+  
   for (let i = 0; i < xmlData.length; i++) {
 
     if (xmlData[i] === '<' && xmlData[i+1] === '?') {
@@ -309,7 +309,7 @@ exports.validate = function (xmlData, options) {
       //read until you reach to '>' avoiding any '>' in attribute value
       let tagStartPos = i;
       i++;
-
+      
       if (xmlData[i] === '!') {
         i = readCommentAndCDATA(xmlData, i);
         continue;
@@ -865,7 +865,7 @@ function processTextOrObjNode (object, key, level) {
 function buildObjectNode(val, key, attrStr, level) {
   let tagEndExp = '</' + key + this.tagEndChar;
   let piClosingChar = "";
-
+  
   if(key[0] === "?") {
     piClosingChar = "?";
     tagEndExp = "";
@@ -900,7 +900,7 @@ function buildTextValNode(val, key, attrStr, level) {
   }else{
     let textValue = this.options.tagValueProcessor(key, val);
     textValue = this.replaceEntitiesValue(textValue);
-
+  
     if( textValue === '' && this.options.unpairedTags.indexOf(key) !== -1){ //unpaired
       if(this.options.suppressUnpairedNode){
         return this.indentate(level) + '<' + key + this.tagEndChar;
@@ -960,10 +960,10 @@ module.exports = Builder;
 const EOL = "\n";
 
 /**
- *
- * @param {array} jArray
- * @param {any} options
- * @returns
+ * 
+ * @param {array} jArray 
+ * @param {any} options 
+ * @returns 
  */
 function toXml(jArray, options) {
     let indentation = "";
@@ -1092,7 +1092,7 @@ module.exports = toXml;
 },{}],7:[function(require,module,exports){
 //TODO: handle comments
 function readDocType(xmlData, i){
-
+    
     const entities = {};
     if( xmlData[i + 3] === 'O' &&
          xmlData[i + 4] === 'C' &&
@@ -1100,14 +1100,14 @@ function readDocType(xmlData, i){
          xmlData[i + 6] === 'Y' &&
          xmlData[i + 7] === 'P' &&
          xmlData[i + 8] === 'E')
-    {
+    {    
         i = i+9;
         let angleBracketsCount = 1;
         let hasBody = false, entity = false, comment = false;
         let exp = "";
         for(;i<xmlData.length;i++){
             if (xmlData[i] === '<') {
-                if( hasBody &&
+                if( hasBody && 
                      xmlData[i+1] === '!' &&
                      xmlData[i+2] === 'E' &&
                      xmlData[i+3] === 'N' &&
@@ -1118,7 +1118,7 @@ function readDocType(xmlData, i){
                 ){
                     i += 7;
                     entity = true;
-                }else if( hasBody &&
+                }else if( hasBody && 
                     xmlData[i+1] === '!' &&
                      xmlData[i+2] === 'E' &&
                      xmlData[i+3] === 'L' &&
@@ -1130,7 +1130,7 @@ function readDocType(xmlData, i){
                 ){
                     //Not supported
                     i += 8;
-                }else if( hasBody &&
+                }else if( hasBody && 
                     xmlData[i+1] === '!' &&
                     xmlData[i+2] === 'A' &&
                     xmlData[i+3] === 'T' &&
@@ -1142,7 +1142,7 @@ function readDocType(xmlData, i){
                 ){
                     //Not supported
                     i += 8;
-                }else if( hasBody &&
+                }else if( hasBody && 
                     xmlData[i+1] === '!' &&
                     xmlData[i+2] === 'N' &&
                     xmlData[i+3] === 'O' &&
@@ -1245,7 +1245,7 @@ const defaultOptions = {
     transformTagName: false,
     transformAttributeName: false,
 };
-
+   
 const buildOptions = function(options) {
     return Object.assign({}, defaultOptions, options);
 };
@@ -1336,7 +1336,7 @@ function parseTextData(val, tagName, jPath, dontTrim, hasAttributes, isLeafNode,
     }
     if(val.length > 0){
       if(!escapeEntities) val = this.replaceEntitiesValue(val);
-
+      
       const newval = this.options.tagValueProcessor(tagName, val, jPath, hasAttributes, isLeafNode);
       if(newval === null || newval === undefined){
         //don't parse
@@ -1460,7 +1460,7 @@ const parseXml = function(xmlData) {
         }
 
         jPath = jPath.substr(0, jPath.lastIndexOf("."));
-
+        
         currentNode = this.tagsNodeStack.pop();//avoid recurssion, set the parent tag scope
         textData = "";
         i = closeIndex;
@@ -1473,10 +1473,10 @@ const parseXml = function(xmlData) {
         if( (this.options.ignoreDeclaration && tagData.tagName === "?xml") || this.options.ignorePiTags){
 
         }else{
-
+  
           const childNode = new xmlNode(tagData.tagName);
           childNode.add(this.options.textNodeName, "");
-
+          
           if(tagData.tagName !== tagData.tagExp && tagData.attrExpPresent){
             childNode[":@"] = this.buildAttributesMap(tagData.tagExp, jPath);
           }
@@ -1516,7 +1516,7 @@ const parseXml = function(xmlData) {
           if(val == undefined) val = "";
           currentNode.add(this.options.textNodeName, val);
         }
-
+        
         i = closeIndex + 2;
       }else {//Opening tag
         let result = readTagExp(xmlData,i, this.options.removeNSPrefix);
@@ -1528,7 +1528,7 @@ const parseXml = function(xmlData) {
         if (this.options.transformTagName) {
           tagName = this.options.transformTagName(tagName);
         }
-
+        
         //save text as child node
         if (currentNode && textData) {
           if(currentNode.tagname !== '!xml'){
@@ -1573,10 +1573,10 @@ const parseXml = function(xmlData) {
           if(tagContent) {
             tagContent = this.parseTextData(tagContent, tagName, jPath, true, attrExpPresent, true, true);
           }
-
+          
           jPath = jPath.substr(0, jPath.lastIndexOf("."));
           childNode.add(this.options.textNodeName, tagContent);
-
+          
           currentNode.addChild(childNode);
         }else{
   //selfClosing tag
@@ -1587,7 +1587,7 @@ const parseXml = function(xmlData) {
             }else{
               tagExp = tagExp.substr(0, tagExp.length - 1);
             }
-
+            
             if(this.options.transformTagName) {
               tagName = this.options.transformTagName(tagName);
             }
@@ -1603,7 +1603,7 @@ const parseXml = function(xmlData) {
           else{
             const childNode = new xmlNode( tagName);
             this.tagsNodeStack.push(currentNode);
-
+            
             if(tagName !== tagExp && attrExpPresent){
               childNode[":@"] = this.buildAttributesMap(tagExp, jPath);
             }
@@ -1645,7 +1645,7 @@ const replaceEntitiesValue = function(val){
 function saveTextToParentTag(textData, currentNode, jPath, isLeafNode) {
   if (textData) { //store previously collected data as textNode
     if(isLeafNode === undefined) isLeafNode = Object.keys(currentNode.child).length === 0
-
+    
     textData = this.parseTextData(textData,
       currentNode.tagname,
       jPath,
@@ -1662,10 +1662,10 @@ function saveTextToParentTag(textData, currentNode, jPath, isLeafNode) {
 
 //TODO: use jPath to simplify the logic
 /**
- *
- * @param {string[]} stopNodes
+ * 
+ * @param {string[]} stopNodes 
  * @param {string} jPath
- * @param {string} currentTagName
+ * @param {string} currentTagName 
  */
 function isItStopNode(stopNodes, jPath, currentTagName){
   const allNodesExp = "*." + currentTagName;
@@ -1678,9 +1678,9 @@ function isItStopNode(stopNodes, jPath, currentTagName){
 
 /**
  * Returns the tag Expression and where it is ending handling single-dobule quotes situation
- * @param {string} xmlData
+ * @param {string} xmlData 
  * @param {number} i starting index
- * @returns
+ * @returns 
  */
 function tagExpWithClosingIndex(xmlData, i, closingChar = ">"){
   let attrBoundary;
@@ -1751,9 +1751,9 @@ function readTagExp(xmlData,i, removeNSPrefix, closingChar = ">"){
 }
 /**
  * find paired tag for a stop node
- * @param {string} xmlData
- * @param {string} tagName
- * @param {number} i
+ * @param {string} xmlData 
+ * @param {string} tagName 
+ * @param {number} i 
  */
 function readStopNodeData(xmlData, tagName, i){
   const startIndex = i;
@@ -1761,7 +1761,7 @@ function readStopNodeData(xmlData, tagName, i){
   let openTagCount = 1;
 
   for (; i < xmlData.length; i++) {
-    if( xmlData[i] === "<"){
+    if( xmlData[i] === "<"){ 
       if (xmlData[i+1] === "/") {//close tag
           const closeIndex = findClosingIndex(xmlData, ">", i, `${tagName} is not closed`);
           let closeTagName = xmlData.substring(i+2,closeIndex).trim();
@@ -1775,13 +1775,13 @@ function readStopNodeData(xmlData, tagName, i){
             }
           }
           i=closeIndex;
-        } else if(xmlData[i+1] === '?') {
+        } else if(xmlData[i+1] === '?') { 
           const closeIndex = findClosingIndex(xmlData, "?>", i+1, "StopNode is not closed.")
           i=closeIndex;
-        } else if(xmlData.substr(i + 1, 3) === '!--') {
+        } else if(xmlData.substr(i + 1, 3) === '!--') { 
           const closeIndex = findClosingIndex(xmlData, "-->", i+3, "StopNode is not closed.")
           i=closeIndex;
-        } else if(xmlData.substr(i + 1, 2) === '![') {
+        } else if(xmlData.substr(i + 1, 2) === '![') { 
           const closeIndex = findClosingIndex(xmlData, "]]>", i, "StopNode is not closed.") - 2;
           i=closeIndex;
         } else {
@@ -1825,16 +1825,16 @@ const { prettify} = require("./node2json");
 const validator = require('../validator');
 
 class XMLParser{
-
+    
     constructor(options){
         this.externalEntities = {};
         this.options = buildOptions(options);
-
+        
     }
     /**
-     * Parse XML dats to JS object
-     * @param {string|Buffer} xmlData
-     * @param {boolean|Object} validationOption
+     * Parse XML dats to JS object 
+     * @param {string|Buffer} xmlData 
+     * @param {boolean|Object} validationOption 
      */
     parse(xmlData,validationOption){
         if(typeof xmlData === "string"){
@@ -1845,7 +1845,7 @@ class XMLParser{
         }
         if( validationOption){
             if(validationOption === true) validationOption = {}; //validate with default options
-
+            
             const result = validator.validate(xmlData, validationOption);
             if (result !== true) {
               throw Error( `${result.err.msg}:${result.err.line}:${result.err.col}` )
@@ -1860,8 +1860,8 @@ class XMLParser{
 
     /**
      * Add Entity which is not by default supported by this library
-     * @param {string} key
-     * @param {string} value
+     * @param {string} key 
+     * @param {string} value 
      */
     addEntity(key, value){
         if(value.indexOf("&") !== -1){
@@ -1881,20 +1881,20 @@ module.exports = XMLParser;
 'use strict';
 
 /**
- *
- * @param {array} node
- * @param {any} options
- * @returns
+ * 
+ * @param {array} node 
+ * @param {any} options 
+ * @returns 
  */
 function prettify(node, options){
   return compress( node, options);
 }
 
 /**
- *
- * @param {array} arr
- * @param {object} options
- * @param {string} jPath
+ * 
+ * @param {array} arr 
+ * @param {object} options 
+ * @param {string} jPath 
  * @returns object
  */
 function compress(arr, options, jPath){
@@ -1913,7 +1913,7 @@ function compress(arr, options, jPath){
     }else if(property === undefined){
       continue;
     }else if(tagObj[property]){
-
+      
       let val = compress(tagObj[property], options, newJpath);
       const isLeaf = isLeafTag(val, options);
 
@@ -1941,7 +1941,7 @@ function compress(arr, options, jPath){
         }
       }
     }
-
+    
   }
   // if(text && text.length > 0) compressedObj[options.textNodeName] = text;
   if(typeof text === "string"){
@@ -2076,7 +2076,7 @@ if (!Number.parseFloat && window.parseFloat) {
     Number.parseFloat = window.parseFloat;
 }
 
-
+  
 const consider = {
     hex :  true,
     leadingZeros: true,
@@ -2095,7 +2095,7 @@ function toNumber(str, options = {}){
 
     options = Object.assign({}, consider, options );
     if(!str || typeof str !== "string" ) return str;
-
+    
     let trimmedStr  = str.trim();
     // if(trimmedStr === "0.0") return 0;
     // else if(trimmedStr === "+0.0") return 0;
@@ -2116,7 +2116,7 @@ function toNumber(str, options = {}){
             const leadingZeros = match[2];
             let numTrimmedByZeros = trimZeros(match[3]); //complete num without leading zeros
             //trim ending zeros for floating number
-
+            
             const eNotation = match[4] || match[6];
             if(!options.leadingZeros && leadingZeros.length > 0 && sign && trimmedStr[2] !== ".") return str; //-0123
             else if(!options.leadingZeros && leadingZeros.length > 0 && !sign && trimmedStr[1] !== ".") return str; //0123
@@ -2133,7 +2133,7 @@ function toNumber(str, options = {}){
                     // const decimalPart = match[5].substr(1);
                     // const intPart = trimmedStr.substr(0,trimmedStr.indexOf("."));
 
-
+                    
                     // const p = numStr.indexOf(".");
                     // const givenIntPart = numStr.substr(0,p);
                     // const givenDecPart = numStr.substr(p+1);
@@ -2142,7 +2142,7 @@ function toNumber(str, options = {}){
                     else if( sign && numStr === "-"+numTrimmedByZeros) return num;
                     else return str;
                 }
-
+                
                 if(leadingZeros){
                     // if(numTrimmedByZeros === numStr){
                     //     if(options.leadingZeros) return num;
@@ -2163,7 +2163,7 @@ function toNumber(str, options = {}){
                 return str;
             }
             // else if(!eNotation && trimmedStr && trimmedStr !== Number(trimmedStr) ) return str;
-
+            
         }else{ //non-numeric string
             return str;
         }
@@ -2171,9 +2171,9 @@ function toNumber(str, options = {}){
 }
 
 /**
- *
+ * 
  * @param {string} numStr without leading zeros
- * @returns
+ * @returns 
  */
 function trimZeros(numStr){
     if(numStr && numStr.indexOf(".") !== -1){//float
@@ -2192,10 +2192,9 @@ const mapboxgl = require('mapbox-gl/dist/mapbox-gl');
 const FileSaver = require('file-saver');
 
 const generateGpxStr = require('./services/generateGpxStr');
-const parseGpx = require('./services/parseGpx');
 const compareGpx = require('./services/compareGpx');
-const displayTrack = require('./services/displayTrack');
-const { updateBounds, fitBounds } = require('./services/updateBounds');
+const displayTrack = require('./mapHelpers/displayTrack');
+const { updateBounds, fitBounds } = require('./mapHelpers/updateBounds');
 
 // Links with HTML file
 const refFileInputEl = document.querySelector('#ref');
@@ -2227,35 +2226,38 @@ const launchComparison = async (event) => {
 
   // Get options from form inputs
   const options = {
-    duration: formEl.duration.value, // in seconds
+    rollingDuration: formEl.rollingDuration.value, // in seconds
     trigger: formEl.trigger.value, // in meters - trigger must be less than tolerance
     tolerance: formEl.tolerance.value, // in meters
     maxDetour: formEl.maxDetour.value * 1000, // in meters
   };
-  const {
-    missedSegmentsOffTolerance,
-    refDistance,
-    missedDistance,
-    perf,
-    passageTimes,
-  } = await compareGpx(
-    refFileInputEl.points,
-    challFileInputEl.points,
+
+  const userInputs = {
+    refPath: refFileInputEl.path,
+    challPath: challFileInputEl.path,
     options,
-  );
+  };
+
+  const inputs = {
+    ...userInputs,
+    refGpxStr: refFileInputEl.gpxStr,
+    challGpxStr: challFileInputEl.gpxStr,
+  };
+
+  const results = await compareGpx(inputs);
 
   // Update DOM
   refParamEl.innerHTML = formEl.ref.value.split('\\').slice(-1);
   challParamEl.innerHTML = formEl.chall.value.split('\\').slice(-1);
 
-  durationParamEl.innerHTML = `${formEl.duration.value} h`;
+  durationParamEl.innerHTML = `${formEl.rollingDuration.value} h`;
   triggerParamEl.innerHTML = `${formEl.trigger.value} m`;
   toleranceParamEl.innerHTML = `${formEl.tolerance.value} m`;
   detourMaxParamEl.innerHTML = `${formEl.trigger.value} km`;
-  missedDistanceEl.innerHTML = `${Math.round(missedDistance)} m`;
-  missedPercentEl.innerHTML = `${Math.round((missedDistance / refDistance) * 1000) / 10} %`;
-  perfKmEl.innerHTML = `Vitesse moyenne pendant les pires ${formEl.duration.value} h : ${Math.round(perf.speed) / 1000} km/h`;
-  perfWhenEl.innerHTML = `Période commencée après ${Math.round(passageTimes[perf.startRefIndex].duration / (3600 * 10)) / 100} h au km ${passageTimes[perf.startRefIndex].cumulatedDistance / 1000}`;
+  missedDistanceEl.innerHTML = `${Math.round(results.accuracy.missedDistance)} m`;
+  missedPercentEl.innerHTML = `${Math.round(results.accuracy.offTrackRatio * 1000) / 10} %`;
+  perfKmEl.innerHTML = `Vitesse moyenne pendant les pires ${formEl.rollingDuration.value} h : ${Math.round(results.kpi.meanSpeed) / 1000} km/h`;
+  perfWhenEl.innerHTML = `Période commencée après ${Math.round((results.kpi.slowestSegmentStart.elapsedTime / (3600 * 1000)) * 10) / 1000} h au km ${results.kpi.slowestSegmentStart.distance / 1000}`;
 
   // Update map
   const paintMissed = {
@@ -2263,17 +2265,20 @@ const launchComparison = async (event) => {
     'line-width': 6,
     'line-opacity': 0.7,
   };
-  displayTrack(map, 'missed', missedSegmentsOffTolerance, paintMissed);
+  displayTrack(map, 'missed', results.missedSegments, paintMissed);
 
   const paintSlowest = {
     'line-color': '#ffffff',
     'line-width': 2,
     'line-opacity': 1,
   };
-  displayTrack(map, 'slowest', [refPoints.slice(perf.startRefIndex, perf.endRefIndex + 1)], paintSlowest);
+  displayTrack(map, 'slowest', [refPoints.slice(
+    results.kpi.slowestSegmentStart.index,
+    results.kpi.slowestSegmentEnd.index + 1,
+  )], paintSlowest);
 
   // Generate the file containing the missed segments
-  gpxStr = await generateGpxStr(missedSegmentsOffTolerance, options);
+  gpxStr = await generateGpxStr(results.missedSegments);
   downloadGpxEl.classList.remove('disabled');
 };
 
@@ -2299,13 +2304,13 @@ const loadFile = async (event) => {
     },
   } = event;
 
+  // TODO: add multiple files here
   const file = files[0];
 
   if (file) {
-    const str = await file.text();
-    currentTarget.points = parseGpx(str);
+    currentTarget.gpxStr = await file.text();
   } else {
-    currentTarget.points = [];
+    currentTarget.gpxStr = '';
 
     // Erase track
     if (map.getLayer(id)) {
@@ -2375,182 +2380,7 @@ map.on('load', () => {
   downloadGpxEl.addEventListener('click', downloadFile);
 });
 
-},{"./services/compareGpx":18,"./services/displayTrack":19,"./services/generateGpxStr":20,"./services/helpers/parseGpx":21,"./services/updateBounds":22,"file-saver":13,"mapbox-gl/dist/mapbox-gl":15}],18:[function(require,module,exports){
-/* eslint-disable no-extra-label */
-/* eslint-disable no-continue */
-/* eslint-disable no-restricted-syntax */
-/* eslint-disable no-labels */
-
-const geolib = require('geolib');
-
-// Calculate total distance of a track segment (represented by an array of points)
-const calculateTotalDistance = (points) => {
-  let distance = 0;
-  for (let i = 1; i < points.length; i += 1) {
-    distance += geolib.getDistance(points[i - 1], points[i]);
-  }
-  return distance;
-};
-
-const compareGpx = async (refPoints, challPoints, options) => {
-  const {
-    duration,
-    trigger,
-    tolerance,
-    maxDetour,
-  } = options;
-
-  // passageTimes is an array containing cumulative distances from refPoints start
-  // This array will then be extended with challenger passage time
-  let passageTimes = [{
-    refIndex: 0,
-    cumulatedDistance: 0,
-  }];
-  for (let refIndex = 1; refIndex < refPoints.length; refIndex += 1) {
-    const cumulatedDistance = passageTimes[refIndex - 1].cumulatedDistance
-      + geolib.getDistance(refPoints[refIndex - 1], refPoints[refIndex]);
-    passageTimes.push({
-      refIndex,
-      cumulatedDistance,
-    });
-  }
-
-  // Initialize the missedSegments array
-  // This array will contain segment arrays
-  // Each segment array will contain consecutive missed trackpoints
-  const missedSegments = [[]];
-
-  let challIndex = 0;
-
-  // Loop through all reference track points
-  refIndexLoop:
-  for (let refIndex = 0; refIndex < refPoints.length; refIndex += 1) {
-    const refPoint = refPoints[refIndex];
-
-    // Log progress
-    // eslint-disable-next-line no-console
-    // console.log(Math.floor((refIndex / refPoints.length) * 1000) / 10);
-
-    let challDetour = 0;
-    // minimum distance between current refPoint and chall track
-    // taking into account only challPoints not further than maxDetour
-    let minDist;
-    challIndexLoop:
-    for (
-      let challLocalIndex = challIndex;
-      challLocalIndex < challPoints.length - 1;
-      challLocalIndex += 1) {
-      const dist = geolib.getDistanceFromLine(
-        refPoint,
-        challPoints[challLocalIndex],
-        challPoints[challLocalIndex + 1],
-      );
-
-      if (!minDist || dist < minDist) {
-        minDist = dist;
-        // Add timestamp of the moment the challenger passed the closest to each point
-        // (or the first moment when dist <= trigger) of the reference track to passageTimes
-        passageTimes[refIndex].time = new Date(challPoints[challIndex].time).valueOf();
-        passageTimes[refIndex].minDist = minDist;
-      }
-
-      if (dist <= trigger) {
-        challIndex = challLocalIndex;
-        continue refIndexLoop;
-      }
-
-      challDetour += geolib.getDistance(
-        challPoints[challLocalIndex],
-        challPoints[challLocalIndex + 1],
-      );
-
-      // Only look for waypoint in challFile in the next maxDetour meters from the last waypoint
-      if (challDetour > maxDetour) {
-        break challIndexLoop;
-      }
-    }
-
-    // Passing here only when challenger track
-    // didn't pass close enough (i.e. d > trigger)
-    // from the reference track.
-    // In this case, add the missed refPoint to the missedSegments array
-    refPoint.index = refIndex;
-    refPoint.dist = minDist; // store min distance from reference to challenger track
-    const lastMissedSegment = missedSegments[missedSegments.length - 1];
-
-    // Append to lastMissedSegment only if current missing trackpoint from reference
-    // immediatly follows the last one added.
-    // If not create a new segment in missedSegments.
-    if (lastMissedSegment.length === 0
-      || lastMissedSegment[lastMissedSegment.length - 1].index === refIndex - 1) {
-      lastMissedSegment.push(refPoint);
-    } else {
-      missedSegments.push([refPoint]);
-    }
-  }
-
-  // Append duration spent from the beginning of the reference track to passageTimes
-  const initialTime = passageTimes[0].time;
-  // eslint-disable-next-line arrow-body-style
-  passageTimes = passageTimes.map((passageTime) => {
-    return {
-      ...passageTime,
-      duration: passageTime.time - initialTime,
-    };
-  });
-
-  // Filter out missedSegment where max of minDist is < tolerance
-  const missedSegmentsOffTolerance = missedSegments.filter(
-    (segment) => segment.some(
-      (point) => point.dist > tolerance,
-    ),
-  );
-
-  // Find worst period
-  for (let iEnd = 0; iEnd < passageTimes.length; iEnd += 1) {
-    const endTime = passageTimes[iEnd].duration;
-    const startTime = Math.max(0, endTime - duration * 3600 * 1000);
-    let iStart = 0;
-    while (passageTimes[iStart].duration < startTime) {
-      iStart += 1;
-    }
-    passageTimes[iEnd].lastIntervalDistance = passageTimes[iEnd].cumulatedDistance
-      - passageTimes[iStart].cumulatedDistance;
-    passageTimes[iEnd].startRefIndex = passageTimes[iStart].refIndex;
-  }
-
-  let perf;
-  for (let i = 0; i < passageTimes.length; i += 1) {
-    if (passageTimes[i].duration > duration * 3600 * 1000
-      && (!perf || passageTimes[i].lastIntervalDistance < perf.distance)) {
-      perf = {
-        distance: passageTimes[i].lastIntervalDistance,
-        startRefIndex: passageTimes[i].startRefIndex,
-        endRefIndex: passageTimes[i].refIndex,
-      };
-    }
-  }
-  perf.speed = (perf.distance
-    / (passageTimes[perf.endRefIndex].duration - passageTimes[perf.startRefIndex].duration))
-    * 3600 * 1000;
-
-  // Calculate and display synthesis
-  const refDistance = calculateTotalDistance(refPoints);
-  const missedDistance = missedSegmentsOffTolerance
-    .reduce((acc, segment) => acc + calculateTotalDistance(segment), 0);
-
-  return {
-    missedSegmentsOffTolerance,
-    refDistance,
-    missedDistance,
-    perf,
-    passageTimes,
-  };
-};
-
-module.exports = compareGpx;
-
-},{"geolib":14}],19:[function(require,module,exports){
+},{"./mapHelpers/displayTrack":18,"./mapHelpers/updateBounds":19,"./services/compareGpx":20,"./services/generateGpxStr":21,"file-saver":13,"mapbox-gl/dist/mapbox-gl":15}],18:[function(require,module,exports){
 // Display a track
 const displayTrack = (map, id, segments, paint) => {
   const features = [];
@@ -2602,55 +2432,7 @@ const displayTrack = (map, id, segments, paint) => {
 
 module.exports = displayTrack;
 
-},{}],20:[function(require,module,exports){
-const generateGpxStr = async (segments) => {
-  let gpxStr = `<?xml version="1.0" encoding="UTF-8"?>
-<gpx
-  version="1.0"
-  creator="GPX comparator"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xmlns="http://www.topografix.com/GPX/1/0"
-  xsi:schemaLocation="http://www.topografix.com/GPX/1/0 http://www.topografix.com/GPX/1/0/gpx.xsd">
-  <trk>`;
-  segments.forEach((seg) => {
-    gpxStr += '\n    <trkseg>';
-    seg.forEach((point) => {
-      gpxStr += `\n      <trkpt lat="${point.lat}" lon="${point.lon}"></trkpt>`;
-    });
-    gpxStr += '\n    </trkseg>';
-  });
-  gpxStr += '\n  </trk>\n</gpx>';
-
-  return gpxStr;
-};
-
-module.exports = generateGpxStr;
-
-},{}],21:[function(require,module,exports){
-const { XMLParser } = require('fast-xml-parser');
-
-// Parses gpx string -> [{lat, lon, time}]
-const parseGpx = (str) => {
-  const parser = new XMLParser({
-    ignoreAttributes: false,
-    parseAttributeValue: true,
-    attributeNamePrefix: '',
-  });
-
-  const gpx = parser.parse(str);
-
-  // Create points array
-  const trkpts = gpx?.gpx?.trk?.trkseg?.trkpt;
-
-  // Only keep relevant properties (i.e. lat, lon & time)
-  const keepLatLonTime = (({ lat, lon, time }) => ({ lat, lon, time }));
-
-  return trkpts.map((trkpt) => keepLatLonTime(trkpt));
-};
-
-module.exports = parseGpx;
-
-},{"fast-xml-parser":2}],22:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 const geolib = require('geolib');
 
 // Helper functions
@@ -2698,4 +2480,365 @@ module.exports = {
   fitBounds,
 };
 
-},{"geolib":14}]},{},[17]);
+},{"geolib":14}],20:[function(require,module,exports){
+const geolib = require('geolib');
+const { XMLParser } = require('fast-xml-parser');
+
+// Calculate challenger passage time at each ref point
+// -> [{lat, lon, time, closestDist}]
+// * lat: ref point latitude
+// * lon: ref point longitude
+// * time: time elapsed since challenger passed by its 1st ref point
+//   null if ref point missed
+// * closestDistance: distance between ref point & challenger
+//   when challenger was the closest (before maxDetour)
+const calculateClosest = (refPoints, challPoints, options) => {
+  const {
+    trigger,
+    maxDetour,
+  } = options;
+
+  const initialTime = new Date(challPoints[0].time).valueOf();
+
+  // geolib getDistanceFromLine wrapper to fix a bug from the library
+  // See https://github.com/manuelbieh/geolib/issues/227
+  const getDistanceFromLine = (point, lineStart, lineEnd, accuracy = 1) => {
+    const d1 = geolib.getDistance(lineStart, point, accuracy);
+    const d2 = geolib.getDistance(point, lineEnd, accuracy);
+    const d3 = geolib.getDistance(lineStart, lineEnd, accuracy);
+
+    if (d1 === 0 || d2 === 0) {
+      // point located at the exact same place as lineStart or lineEnd
+      return 0;
+    }
+    if (d3 === 0) {
+      return d1; // lineStart and lineEnd are the same - return point-to-point distance
+    }
+    return geolib.getDistanceFromLine(point, lineStart, lineEnd);
+  };
+
+  // challIndex: index of the point of challenger track that was
+  // at less than trigger distance from the last found ref point
+  let challIndex = 0;
+
+  return refPoints.map((refPoint) => {
+    // challLocalIndex: running index on challenge track used to find closest point
+    let challLocalIndex = challIndex;
+    let detour = 0;
+    let closestDistanceIndex;
+    let closestDistance;
+
+    while (challLocalIndex + 1 < challPoints.length && detour <= maxDetour) {
+      const distance = getDistanceFromLine(
+        refPoint,
+        challPoints[challLocalIndex],
+        challPoints[challLocalIndex + 1],
+      );
+
+      if (!closestDistance || distance < closestDistance) {
+        closestDistance = distance;
+        closestDistanceIndex = challLocalIndex;
+      }
+
+      if (closestDistance <= trigger) {
+        challIndex = challLocalIndex;
+        break;
+      }
+
+      detour += geolib.getDistance(challPoints[challLocalIndex], challPoints[challLocalIndex + 1]);
+      challLocalIndex += 1;
+    }
+
+    return {
+      lat: refPoint.lat,
+      lon: refPoint.lon,
+      time: new Date(challPoints[closestDistanceIndex].time).valueOf() - initialTime,
+      closestDistance,
+    };
+  });
+};
+
+// Calculate ref points the challenger missed
+// -> [{lat, lon, time, missedSegmentNb}]
+// * missedSegmentNb: undefined if ref point reached by the challenger
+//   Integer representing the number of the missed segment starting at 1
+const calculateMissed = (refPointsPassBy, options) => {
+  const {
+    trigger,
+    tolerance,
+  } = options;
+
+  const result = new Array(refPointsPassBy.length);
+  let segmentNb = 1;
+  let ind = 0;
+
+  while (ind < refPointsPassBy.length) {
+    if (refPointsPassBy[ind].closestDistance <= trigger) {
+      result[ind] = null;
+      ind += 1;
+    } else {
+      const startInd = ind;
+      let localInd = ind;
+      let missed = false;
+      while (
+        localInd < refPointsPassBy.length
+        && refPointsPassBy[localInd].closestDistance > trigger
+      ) {
+        if (refPointsPassBy[localInd].closestDistance > tolerance) missed = true;
+        localInd += 1;
+      }
+      if (missed) {
+        result.fill(segmentNb, startInd, localInd);
+        segmentNb += 1;
+      } else {
+        result.fill(null, startInd, localInd);
+      }
+      ind = localInd;
+    }
+  }
+  return refPointsPassBy.map((el, index) => ({
+    ...el,
+    missedSegmentNb: result[index],
+  }));
+};
+
+// Calculate rolling duration distances (Tourmagne KPI)
+// -> [{rollingDurationDistance, rollingDurationEndIndex}]
+// * rollingDurationDistance: distance travelled by the challenger
+//   during next rolling duration (not taking into account missed points).
+//   null for ref points of the last rollingDuration.
+// * rollingDurationEndIndex: last index of refPoints included in rollingDurationDistance
+//   null for ref points of the last rollingDuration
+const calculateRollingDurationDistances = (timeDistanceTable, rollingDuration) => {
+  const rollingDurationMs = rollingDuration * 3600 * 1000; // in ms
+  let endInd = 0;
+
+  return timeDistanceTable.map((point, startInd, table) => {
+    let rollingDurationDistance;
+    let rollingDurationEndIndex;
+
+    if (point.elapsedTime === null) {
+      return ({
+        rollingDurationDistance: null,
+        rollingDurationEndIndex: null,
+      });
+    }
+
+    const endTime = point.elapsedTime + rollingDurationMs;
+
+    while (endInd < table.length) {
+      if (table[endInd].elapsedTime !== null && table[endInd].elapsedTime > endTime) {
+        break;
+      }
+      endInd += 1;
+    }
+
+    if (endInd === table.length) {
+      rollingDurationDistance = null;
+      rollingDurationEndIndex = null;
+    } else {
+      rollingDurationDistance = table[endInd].cumulatedDistance - table[startInd].cumulatedDistance;
+      rollingDurationEndIndex = endInd;
+    }
+
+    return ({
+      rollingDurationDistance,
+      rollingDurationEndIndex,
+    });
+  });
+};
+
+// Calculate elapsed challenger time & cumulated distance (with & without missed segments)
+// -> [{elapsedTime, elapsedTimeWithoutMissed, cumulatedDistance, cumulatedDistanceWithoutMissed}]
+// * elapsedTime: time elapsed since challenger passed by its 1st ref point
+//   null if ref point missed
+// * cumulatedDistance: cumulated distance on ref track
+//   excluding segments missed by challenger
+const calculateTimeDistanceTable = (refPointsMissed) => {
+  let cumulatedDistance = 0;
+  let lastNonNullRollingDurationDistance = 0;
+
+  return refPointsMissed.map((point, ind, points) => {
+    let elapsedTime;
+    if (ind === 0) {
+      elapsedTime = 0;
+    } else {
+      const intervalDistance = geolib.getDistance(point, points[ind - 1]);
+      if (point.missedSegmentNb === null && points[ind - 1].missedSegmentNb === null) {
+        elapsedTime = point.time;
+        cumulatedDistance = lastNonNullRollingDurationDistance + intervalDistance;
+        lastNonNullRollingDurationDistance = cumulatedDistance;
+      } else {
+        elapsedTime = null;
+        cumulatedDistance = null;
+      }
+    }
+    return {
+      elapsedTime,
+      cumulatedDistance,
+    };
+  });
+};
+
+// Generate missed segments
+// -> [[{lat, lon}]]
+// * Wrapping array is an array of segments
+// * Nested arrays are missed segments
+const generateMissedSegments = (refPointsMissed) => {
+  const missedSegments = [];
+  const numberOfMissedSegments = Math.max(...refPointsMissed
+    .map((point) => point.missedSegmentNb)
+    .filter((point) => point !== null));
+
+  for (let segmentNb = 1; segmentNb <= numberOfMissedSegments; segmentNb += 1) {
+    const missedSegment = refPointsMissed.filter((point) => point.missedSegmentNb === segmentNb);
+    const missedSegmentCoordsOnly = missedSegment.map((point) => ({
+      lat: point.lat,
+      lon: point.lon,
+    }));
+
+    missedSegments.push(missedSegmentCoordsOnly);
+  }
+  return missedSegments;
+};
+
+// Parse gpx string
+// -> [{lat, lon, time}]
+const parseGpx = (str) => {
+  const parser = new XMLParser({
+    ignoreAttributes: false,
+    parseAttributeValue: true,
+    attributeNamePrefix: '',
+  });
+
+  const gpx = parser.parse(str);
+
+  // Create points array
+  const trkpts = gpx?.gpx?.trk?.trkseg?.trkpt;
+
+  // Only keep relevant properties (i.e. lat, lon & time)
+  const keepLatLonTime = (({ lat, lon, time }) => ({ lat, lon, time }));
+
+  return trkpts.map((trkpt) => keepLatLonTime(trkpt));
+};
+
+// Calculate accuracy of the challenger following ref track
+const calculateAccuracy = (refPoints, missedSegments) => {
+  const refDistance = geolib.getPathLength(refPoints);
+  const missedDistance = missedSegments
+    .reduce((acc, segment) => acc + geolib.getPathLength(segment), 0);
+  const offTrackRatio = missedDistance / refDistance;
+
+  return {
+    refDistance,
+    missedDistance,
+    offTrackRatio,
+  };
+};
+
+// Calculate Tourmagne Kpis
+const calculateKpis = (refPointsMissed, options) => {
+  const {
+    rollingDuration,
+  } = options;
+  const timeDistanceTable = calculateTimeDistanceTable(refPointsMissed);
+  const rollingDurationDistances = calculateRollingDurationDistances(
+    timeDistanceTable,
+    rollingDuration,
+  );
+
+  const distances = rollingDurationDistances.map((el) => el.rollingDurationDistance);
+  const rollingDurationMinDistance = Math.min(...distances.filter((el) => el != null));
+
+  const startIndex = distances.indexOf(rollingDurationMinDistance);
+  const endIndex = rollingDurationDistances[startIndex]?.rollingDurationEndIndex;
+
+  // TODO: without missed ?
+  const startElapsedTime = timeDistanceTable[startIndex]?.elapsedTime;
+  const endElapsedTime = timeDistanceTable[endIndex]?.elapsedTime;
+
+  const startDistance = timeDistanceTable[startIndex]?.cumulatedDistance;
+  const endDistance = timeDistanceTable[endIndex]?.cumulatedDistance;
+
+  const slowestSegmentStart = {
+    index: startIndex,
+    elapsedTime: startElapsedTime,
+    // Distance travelled by challenger on ref track (without missed segments):
+    distance: startDistance,
+  };
+
+  const slowestSegmentEnd = {
+    index: endIndex,
+    elapsedTime: endElapsedTime,
+    // Distance travelled by challenger on ref track (without missed segments):
+    distance: endDistance,
+  };
+
+  const distance = slowestSegmentEnd.distance - slowestSegmentStart.distance; // meters
+  const meanSpeed = (distance / 1000) / rollingDuration; // km/h
+
+  return {
+    slowestSegmentStart,
+    slowestSegmentEnd,
+    distance,
+    meanSpeed,
+  };
+};
+
+const compareGpx = async (inputs) => {
+  const {
+    refGpxStr,
+    challGpxStr,
+    options,
+  } = inputs;
+
+  // Parse GPX strings to JS objects
+  const refPoints = parseGpx(refGpxStr);
+  const challPoints = parseGpx(challGpxStr);
+
+  // Extend refPoints with missed segments
+  const refPointsPassBy = calculateClosest(refPoints, challPoints, options);
+  const refPointsMissed = calculateMissed(refPointsPassBy, options);
+
+  // Generate missed segments & accuracy
+  const missedSegments = generateMissedSegments(refPointsMissed);
+  const accuracy = calculateAccuracy(refPoints, missedSegments);
+
+  // Tourmagne Kpis
+  const kpi = calculateKpis(refPointsMissed, options);
+
+  return {
+    inputs,
+    missedSegments,
+    accuracy,
+    kpi,
+  };
+};
+
+module.exports = compareGpx;
+
+},{"fast-xml-parser":2,"geolib":14}],21:[function(require,module,exports){
+const generateGpxStr = async (segments) => {
+  let gpxStr = `<?xml version="1.0" encoding="UTF-8"?>
+<gpx
+  version="1.0"
+  creator="GPX comparator"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="http://www.topografix.com/GPX/1/0"
+  xsi:schemaLocation="http://www.topografix.com/GPX/1/0 http://www.topografix.com/GPX/1/0/gpx.xsd">
+  <trk>`;
+  segments.forEach((seg) => {
+    gpxStr += '\n    <trkseg>';
+    seg.forEach((point) => {
+      gpxStr += `\n      <trkpt lat="${point.lat}" lon="${point.lon}"></trkpt>`;
+    });
+    gpxStr += '\n    </trkseg>';
+  });
+  gpxStr += '\n  </trk>\n</gpx>';
+
+  return gpxStr;
+};
+
+module.exports = generateGpxStr;
+
+},{}]},{},[17]);

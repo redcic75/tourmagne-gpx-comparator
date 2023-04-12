@@ -2,7 +2,6 @@ const mapboxgl = require('mapbox-gl/dist/mapbox-gl');
 const FileSaver = require('file-saver');
 
 const generateGpxStr = require('./services/generateGpxStr');
-const getGpxStr = require('./services/getGpxStr');
 const compareGpx = require('./services/compareGpx');
 const displayTrack = require('./mapHelpers/displayTrack');
 const { updateBounds, fitBounds } = require('./mapHelpers/updateBounds');
@@ -49,12 +48,10 @@ const launchComparison = async (event) => {
     options,
   };
 
-  const [refGpxStr, challGpxStr] = await getGpxStr(refFileInputEl.path, challFileInputEl.path);
-
   const inputs = {
     ...userInputs,
-    refGpxStr,
-    challGpxStr,
+    refGpxStr: refFileInputEl.gpxStr,
+    challGpxStr: challFileInputEl.gpxStr,
   };
 
   const results = await compareGpx(inputs);
@@ -121,10 +118,9 @@ const loadFile = async (event) => {
   const file = files[0];
 
   if (file) {
-    const str = await file.text();
-    currentTarget.points = getGpxStr(str);
+    currentTarget.gpxStr = await file.text();
   } else {
-    currentTarget.points = [];
+    currentTarget.gpxStr = '';
 
     // Erase track
     if (map.getLayer(id)) {
