@@ -2233,19 +2233,11 @@ const launchComparison = async (event) => {
     maxDetour: formEl.maxDetour.value * 1000, // in meters
   };
 
-  const userInputs = {
-    refPath: refFileInputEl.path,
-    challPath: challFileInputEl.path,
+  const results = await compareTracks(
+    refFileInputEl.points,
+    challFileInputEl.points,
     options,
-  };
-
-  const inputs = {
-    ...userInputs,
-    refGpxStr: refFileInputEl.gpxStr,
-    challGpxStr: challFileInputEl.gpxStr,
-  };
-
-  const results = await compareTracks(inputs);
+  );
 
   // Update DOM
   refParamEl.innerHTML = formEl.ref.value.split('\\').slice(-1);
@@ -2257,8 +2249,8 @@ const launchComparison = async (event) => {
   detourMaxParamEl.innerHTML = `${formEl.trigger.value} km`;
   missedDistanceEl.innerHTML = `${Math.round(results.accuracy.missedDistance)} m`;
   missedPercentEl.innerHTML = `${Math.round(results.accuracy.offTrackRatio * 1000) / 10} %`;
-  perfKmEl.innerHTML = `Vitesse moyenne pendant les pires ${formEl.rollingDuration.value} h : ${Math.round(results.kpi.meanSpeed) / 1000} km/h`;
-  perfWhenEl.innerHTML = `Période commencée après ${Math.round((results.kpi.slowestSegmentStart.elapsedTime / (3600 * 1000)) * 10) / 1000} h au km ${results.kpi.slowestSegmentStart.distance / 1000}`;
+  perfKmEl.innerHTML = `Vitesse moyenne pendant les pires ${formEl.rollingDuration.value} h : ${results.kpi.meanSpeed} km/h`;
+  perfWhenEl.innerHTML = `Période commencée après ${Math.round(results.kpi.slowestSegmentStart.elapsedTime / 3600) / 1000} h au km ${results.kpi.slowestSegmentStart.distance / 1000}`;
 
   // Update map
   const paintMissed = {
@@ -2500,8 +2492,6 @@ const calculateClosest = (refPoints, challPoints, options) => {
     maxDetour,
   } = options;
 
-  console.log(challPoints);
-  console.log(challPoints[0].time);
   const initialTime = new Date(challPoints[0].time).valueOf();
 
   // geolib getDistanceFromLine wrapper to fix a bug from the library
@@ -2769,13 +2759,7 @@ const calculateKpis = (refPointsMissed, options) => {
   };
 };
 
-const compareTracks = async (inputs) => {
-  const {
-    refPoints,
-    challPoints,
-    options,
-  } = inputs;
-
+const compareTracks = async (refPoints, challPoints, options) => {
   // Extend refPoints with missed segments
   const refPointsPassBy = calculateClosest(refPoints, challPoints, options);
   const refPointsMissed = calculateMissed(refPointsPassBy, options);
@@ -2788,7 +2772,6 @@ const compareTracks = async (inputs) => {
   const kpi = calculateKpis(refPointsMissed, options);
 
   return {
-    inputs,
     missedSegments,
     accuracy,
     kpi,
