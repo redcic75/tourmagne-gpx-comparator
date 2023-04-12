@@ -197,15 +197,6 @@ const calculateTimeDistanceTable = (refPointsMissed) => {
   });
 };
 
-// Calculate total distance of a track segment (represented by an array of points)
-const calculateTotalDistance = (points) => {
-  let distance = 0;
-  for (let i = 1; i < points.length; i += 1) {
-    distance += geolib.getDistance(points[i - 1], points[i]);
-  }
-  return distance;
-};
-
 // Generate missed segments
 // -> [[{lat, lon}]]
 // * Wrapping array is an array of segments
@@ -250,9 +241,9 @@ const parseGpx = (str) => {
 
 // Calculate accuracy of the challenger following ref track
 const calculateAccuracy = (refPoints, missedSegments) => {
-  const refDistance = calculateTotalDistance(refPoints);
+  const refDistance = geolib.getPathLength(refPoints);
   const missedDistance = missedSegments
-    .reduce((acc, segment) => acc + calculateTotalDistance(segment), 0);
+    .reduce((acc, segment) => acc + geolib.getPathLength(segment), 0);
   const offTrackRatio = missedDistance / refDistance;
 
   return {
