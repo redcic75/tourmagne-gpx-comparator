@@ -13,11 +13,16 @@
 
 ## Good to know
 You can create test GPX files and view generated GPX files with https://gpx.studio/l/fr/.
+
 # To do
-- Deal with case where challenger gpx does not have timestamps
-- Deal with case where parameters are not coherent (tolerance < trigger, duration > durée du parcours du challenger)
-- Get rid of global variables in indexWeb.js
+- Check inputs:
+  - challenger gpx does not have timestamps
+  - Parameters coherence (tolerance < trigger, duration > durée du parcours du challenger)
+- Handle multiple GPX files:
+  - Auto sorting
+  - Merge files ?
+- Handle GPX with multiple tracks or multiple track segments
+
+- Get rid of global variables in indexWeb.js ?
 - Mapbox API key ?
-- Handle GPX with multiple tracks or multiple track segments + handle multiple GPX files (with auto sorting)
-- MBR: inclure la fusion des GPX réalisés pour le cas (général ?) où le challenger renvoie plusieurs fichiers GPX ?
 - Display waiting message while loading big files or while comparing big files
