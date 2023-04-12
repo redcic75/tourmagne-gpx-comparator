@@ -10,6 +10,23 @@ const parseGpx = require('../scripts/services/parseGpx');
 const compareTracks = require('../scripts/services/compareTracks');
 const getGpxStr = require('../scripts/services/getGpxStr');
 
+const fileToPoints = async (refFile, challFile) => {
+  const prefix = path.resolve(__dirname, '../data/gpx/');
+  const refPath = `${prefix}/${refFile}.gpx`;
+  const challPath = `${prefix}/${challFile}.gpx`;
+
+  const [refGpxStr, challGpxStr] = await getGpxStr(refPath, challPath);
+
+  // Parse GPX strings to JS objects
+  const refPoints = parseGpx(refGpxStr);
+  const challPoints = parseGpx(challGpxStr);
+
+  return {
+    refPoints,
+    challPoints,
+  };
+};
+
 Mocha.describe('compareTracks', function desc() {
   this.timeout(15000);
   let result;
@@ -19,10 +36,6 @@ Mocha.describe('compareTracks', function desc() {
       const refFile = 'orleans-loop-trace';
       const challFile = 'orleans-loop-real';
 
-      const prefix = path.resolve(__dirname, '../data/gpx/');
-      const refPath = `${prefix}/${refFile}.gpx`;
-      const challPath = `${prefix}/${challFile}.gpx`;
-
       const options = {
         rollingDuration: 1, // in hours
         trigger: 20, // in meters - trigger must be less than tolerance
@@ -30,33 +43,12 @@ Mocha.describe('compareTracks', function desc() {
         maxDetour: 20000, // in meters
       };
 
-      const userInputs = {
-        refPath,
-        challPath,
-        options,
-      };
-
-      const [refGpxStr, challGpxStr] = await getGpxStr(refPath, challPath);
-
-      // Parse GPX strings to JS objects
-      const refPoints = parseGpx(refGpxStr);
-      const challPoints = parseGpx(challGpxStr);
-
-      const inputs = {
-        ...userInputs,
+      const {
         refPoints,
         challPoints,
-      };
+      } = await fileToPoints(refFile, challFile);
 
-      result = await compareTracks(inputs);
-    });
-
-    Mocha.it('should return ref file path', async () => {
-      result.inputs.refPath.should.equal('/home/redcic/code/redcic75/tourmagne-gpx-comparator/data/gpx/orleans-loop-trace.gpx');
-    });
-
-    Mocha.it('should return challenger file path', async () => {
-      result.inputs.challPath.should.equal('/home/redcic/code/redcic75/tourmagne-gpx-comparator/data/gpx/orleans-loop-real.gpx');
+      result = await compareTracks(refPoints, challPoints, options);
     });
 
     Mocha.it('should return number of missed segments', async () => {
@@ -89,10 +81,6 @@ Mocha.describe('compareTracks', function desc() {
       const refFile = 'Bordeaux_Paris_2022_trace';
       const challFile = 'Bordeaux_Paris_2022_real';
 
-      const prefix = path.resolve(__dirname, '../data/gpx/');
-      const refPath = `${prefix}/${refFile}.gpx`;
-      const challPath = `${prefix}/${challFile}.gpx`;
-
       const options = {
         rollingDuration: 1, // in hours
         trigger: 20, // in meters - trigger must be less than tolerance
@@ -100,33 +88,12 @@ Mocha.describe('compareTracks', function desc() {
         maxDetour: 20000, // in meters
       };
 
-      const userInputs = {
-        refPath,
-        challPath,
-        options,
-      };
-
-      const [refGpxStr, challGpxStr] = await getGpxStr(refPath, challPath);
-
-      // Parse GPX strings to JS objects
-      const refPoints = parseGpx(refGpxStr);
-      const challPoints = parseGpx(challGpxStr);
-
-      const inputs = {
-        ...userInputs,
+      const {
         refPoints,
         challPoints,
-      };
+      } = await fileToPoints(refFile, challFile);
 
-      result = await compareTracks(inputs);
-    });
-
-    Mocha.it('should return ref file path', async () => {
-      result.inputs.refPath.should.equal('/home/redcic/code/redcic75/tourmagne-gpx-comparator/data/gpx/Bordeaux_Paris_2022_trace.gpx');
-    });
-
-    Mocha.it('should return challenger file path', async () => {
-      result.inputs.challPath.should.equal('/home/redcic/code/redcic75/tourmagne-gpx-comparator/data/gpx/Bordeaux_Paris_2022_real.gpx');
+      result = await compareTracks(refPoints, challPoints, options);
     });
 
     Mocha.it('should return number of missed segments', async () => {

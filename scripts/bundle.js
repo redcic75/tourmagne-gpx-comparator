@@ -2191,8 +2191,9 @@ module.exports = toNumber
 const mapboxgl = require('mapbox-gl/dist/mapbox-gl');
 const FileSaver = require('file-saver');
 
+const parseGpx = require('./services/parseGpx');
 const generateGpxStr = require('./services/generateGpxStr');
-const compareGpx = require('./services/compareGpx');
+const compareTracks = require('./services/compareTracks');
 const displayTrack = require('./mapHelpers/displayTrack');
 const { updateBounds, fitBounds } = require('./mapHelpers/updateBounds');
 
@@ -2244,9 +2245,7 @@ const launchComparison = async (event) => {
     challGpxStr: challFileInputEl.gpxStr,
   };
 
-  console.log(inputs);
-  
-  const results = await compareGpx(inputs);
+  const results = await compareTracks(inputs);
 
   // Update DOM
   refParamEl.innerHTML = formEl.ref.value.split('\\').slice(-1);
@@ -2310,9 +2309,10 @@ const loadFile = async (event) => {
   const file = files[0];
 
   if (file) {
-    currentTarget.gpxStr = await file.text();
+    const str = await file.text();
+    currentTarget.points = parseGpx(str);
   } else {
-    currentTarget.gpxStr = '';
+    currentTarget.points = [];
 
     // Erase track
     if (map.getLayer(id)) {
@@ -2383,7 +2383,7 @@ map.on('load', () => {
   downloadGpxEl.addEventListener('click', downloadFile);
 });
 
-},{"./mapHelpers/displayTrack":18,"./mapHelpers/updateBounds":19,"./services/compareGpx":20,"./services/generateGpxStr":21,"file-saver":13,"mapbox-gl/dist/mapbox-gl":15}],18:[function(require,module,exports){
+},{"./mapHelpers/displayTrack":18,"./mapHelpers/updateBounds":19,"./services/compareTracks":20,"./services/generateGpxStr":21,"./services/parseGpx":22,"file-saver":13,"mapbox-gl/dist/mapbox-gl":15}],18:[function(require,module,exports){
 // Display a track
 const displayTrack = (map, id, segments, paint) => {
   const features = [];
@@ -2485,7 +2485,6 @@ module.exports = {
 
 },{"geolib":14}],20:[function(require,module,exports){
 const geolib = require('geolib');
-const { XMLParser } = require('fast-xml-parser');
 
 // Calculate challenger passage time at each ref point
 // -> [{lat, lon, time, closestDist}]
@@ -2501,6 +2500,8 @@ const calculateClosest = (refPoints, challPoints, options) => {
     maxDetour,
   } = options;
 
+  console.log(challPoints);
+  console.log(challPoints[0].time);
   const initialTime = new Date(challPoints[0].time).valueOf();
 
   // geolib getDistanceFromLine wrapper to fix a bug from the library
@@ -2705,26 +2706,6 @@ const generateMissedSegments = (refPointsMissed) => {
   return missedSegments;
 };
 
-// Parse gpx string
-// -> [{lat, lon, time}]
-const parseGpx = (str) => {
-  const parser = new XMLParser({
-    ignoreAttributes: false,
-    parseAttributeValue: true,
-    attributeNamePrefix: '',
-  });
-
-  const gpx = parser.parse(str);
-
-  // Create points array
-  const trkpts = gpx?.gpx?.trk?.trkseg?.trkpt;
-
-  // Only keep relevant properties (i.e. lat, lon & time)
-  const keepLatLonTime = (({ lat, lon, time }) => ({ lat, lon, time }));
-
-  return trkpts.map((trkpt) => keepLatLonTime(trkpt));
-};
-
 // Calculate accuracy of the challenger following ref track
 const calculateAccuracy = (refPoints, missedSegments) => {
   const refDistance = geolib.getPathLength(refPoints);
@@ -2788,16 +2769,12 @@ const calculateKpis = (refPointsMissed, options) => {
   };
 };
 
-const compareGpx = async (inputs) => {
+const compareTracks = async (inputs) => {
   const {
-    refGpxStr,
-    challGpxStr,
+    refPoints,
+    challPoints,
     options,
   } = inputs;
-
-  // Parse GPX strings to JS objects
-  const refPoints = parseGpx(refGpxStr);
-  const challPoints = parseGpx(challGpxStr);
 
   // Extend refPoints with missed segments
   const refPointsPassBy = calculateClosest(refPoints, challPoints, options);
@@ -2818,9 +2795,9 @@ const compareGpx = async (inputs) => {
   };
 };
 
-module.exports = compareGpx;
+module.exports = compareTracks;
 
-},{"fast-xml-parser":2,"geolib":14}],21:[function(require,module,exports){
+},{"geolib":14}],21:[function(require,module,exports){
 const generateGpxStr = async (segments) => {
   let gpxStr = `<?xml version="1.0" encoding="UTF-8"?>
 <gpx
@@ -2844,4 +2821,29 @@ const generateGpxStr = async (segments) => {
 
 module.exports = generateGpxStr;
 
-},{}]},{},[17]);
+},{}],22:[function(require,module,exports){
+const { XMLParser } = require('fast-xml-parser');
+
+// Parse gpx string
+// -> [{lat, lon, time}]
+const parseGpx = (str) => {
+  const parser = new XMLParser({
+    ignoreAttributes: false,
+    parseAttributeValue: true,
+    attributeNamePrefix: '',
+  });
+
+  const gpx = parser.parse(str);
+
+  // Create points array
+  const trkpts = gpx?.gpx?.trk?.trkseg?.trkpt;
+
+  // Only keep relevant properties (i.e. lat, lon & time)
+  const keepLatLonTime = (({ lat, lon, time }) => ({ lat, lon, time }));
+
+  return trkpts.map((trkpt) => keepLatLonTime(trkpt));
+};
+
+module.exports = parseGpx;
+
+},{"fast-xml-parser":2}]},{},[17]);

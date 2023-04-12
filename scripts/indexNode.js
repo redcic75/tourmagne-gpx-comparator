@@ -7,29 +7,28 @@ const logComparisonResults = require('./services/logComparisonResults');
 const writeMissedSegmentsToGpxFile = require('./services/writeMissedSegmentsToGpxFile');
 
 // Launches console script
-const main = async (userInputs) => {
-  const {
-    refPath,
-    challPath,
-  } = userInputs;
-
+const main = async (refPath, challPath, options) => {
   const [refGpxStr, challGpxStr] = await getGpxStr(refPath, challPath);
 
   // Parse GPX strings to JS objects
   const refPoints = parseGpx(refGpxStr);
   const challPoints = parseGpx(challGpxStr);
 
-  const inputs = {
-    ...userInputs,
+  const results = await compareTracks(
     refPoints,
     challPoints,
+    options,
+  );
+
+  const inputParams = {
+    refPath,
+    challPath,
+    options,
   };
 
-  const results = await compareTracks(inputs);
+  await writeMissedSegmentsToGpxFile(inputParams, results);
 
-  await writeMissedSegmentsToGpxFile(results);
-
-  logComparisonResults(results);
+  logComparisonResults(inputParams, results);
 };
 
 // ------ USER DATA ------//
@@ -57,11 +56,5 @@ const prefix = path.resolve(__dirname, '../data/gpx/');
 const refPath = `${prefix}/${refFile}.gpx`;
 const challPath = `${prefix}/${challFile}.gpx`;
 
-const userInputs = {
-  refPath,
-  challPath,
-  options,
-};
-
 // Launches main
-main(userInputs);
+main(refPath, challPath, options);

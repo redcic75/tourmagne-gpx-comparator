@@ -281,13 +281,7 @@ const calculateKpis = (refPointsMissed, options) => {
   };
 };
 
-const compareTracks = async (inputs) => {
-  const {
-    refPoints,
-    challPoints,
-    options,
-  } = inputs;
-
+const compareTracks = async (refPoints, challPoints, options) => {
   // Extend refPoints with missed segments
   const refPointsPassBy = calculateClosest(refPoints, challPoints, options);
   const refPointsMissed = calculateMissed(refPointsPassBy, options);
@@ -300,7 +294,6 @@ const compareTracks = async (inputs) => {
   const kpi = calculateKpis(refPointsMissed, options);
 
   return {
-    inputs,
     missedSegments,
     accuracy,
     kpi,
