@@ -17,11 +17,12 @@
       <h2>Données à saisir</h2>
       <form id="form">
         <div class="form-group">
-          <label for="ref">Trace GPS de référence au format GPX (<span class="blue">en bleu sur la carte</span>)</label>
-          <input type="file" id="ref" class="form-control" accept=".gpx" multiple="true" required/>
+          <!-- Multiple files not authorized because can't be ordered since they are not timestamped -->
+          <label for="ref">Trace GPS de référence au format GPX - 1 fichier GPX (<span class="blue">en bleu sur la carte</span>)</label>
+          <input type="file" id="ref" class="form-control" accept=".gpx" required/>
         </div>
         <div class="form-group">
-          <label for="chall">Trace GPS réalisée au format GPX (<span class="green">en vert sur la carte</span>)</label>
+          <label for="chall">Trace GPS réalisée au format GPX - 1 ou plusieurs fichiers GPX (<span class="green">en vert sur la carte</span>)</label>
           <input type="file" id="chall" class="form-control" accept=".gpx" multiple="true" required/>
         </div>
         <div class="form-group">

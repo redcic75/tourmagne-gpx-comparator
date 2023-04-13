@@ -96,7 +96,7 @@ const downloadFile = () => {
 };
 
 // load files
-const loadFile = async (event) => {
+const loadFiles = async (event) => {
   const {
     currentTarget,
     currentTarget: {
@@ -107,12 +107,10 @@ const loadFile = async (event) => {
     },
   } = event;
 
-  // TODO: add multiple files here
-  const file = files[0];
-
-  if (file) {
-    const str = await file.text();
-    currentTarget.points = parseGpx(str);
+  if (files.length > 0) {
+    const promises = Array.from(files).map((file) => file.text());
+    const strs = await Promise.all(promises);
+    currentTarget.points = parseGpx(strs);
   } else {
     currentTarget.points = [];
 
@@ -174,8 +172,8 @@ map.on('load', () => {
   challFileInputEl.map = map;
   challFileInputEl.geolibBounds = geolibBounds;
 
-  refFileInputEl.addEventListener('change', loadFile);
-  challFileInputEl.addEventListener('change', loadFile);
+  refFileInputEl.addEventListener('change', loadFiles);
+  challFileInputEl.addEventListener('change', loadFiles);
 
   // Event listener for comparison launch
   formEl.map = map;

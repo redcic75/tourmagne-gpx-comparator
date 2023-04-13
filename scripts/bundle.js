@@ -2286,7 +2286,7 @@ const downloadFile = () => {
 };
 
 // load files
-const loadFile = async (event) => {
+const loadFiles = async (event) => {
   const {
     currentTarget,
     currentTarget: {
@@ -2297,12 +2297,10 @@ const loadFile = async (event) => {
     },
   } = event;
 
-  // TODO: add multiple files here
-  const file = files[0];
-
-  if (file) {
-    const str = await file.text();
-    currentTarget.points = parseGpx(str);
+  if (files.length > 0) {
+    const promises = Array.from(files).map((file) => file.text());
+    const strs = await Promise.all(promises);
+    currentTarget.points = parseGpx(strs);
   } else {
     currentTarget.points = [];
 
@@ -2364,8 +2362,8 @@ map.on('load', () => {
   challFileInputEl.map = map;
   challFileInputEl.geolibBounds = geolibBounds;
 
-  refFileInputEl.addEventListener('change', loadFile);
-  challFileInputEl.addEventListener('change', loadFile);
+  refFileInputEl.addEventListener('change', loadFiles);
+  challFileInputEl.addEventListener('change', loadFiles);
 
   // Event listener for comparison launch
   formEl.map = map;
@@ -2809,17 +2807,35 @@ const { XMLParser } = require('fast-xml-parser');
 
 // Parse gpx string
 // -> [{lat, lon, time}]
-const parseGpx = (str) => {
+const parseGpx = (strs) => {
   const parser = new XMLParser({
     ignoreAttributes: false,
     parseAttributeValue: true,
     attributeNamePrefix: '',
   });
 
-  const gpx = parser.parse(str);
+  const trkptsArr = strs.map((str) => {
+    const gpx = parser.parse(str);
 
-  // Create points array
-  const trkpts = gpx?.gpx?.trk?.trkseg?.trkpt;
+    // Create points array
+    const trkseg = gpx?.gpx?.trk?.trkseg;
+
+    // Merge <trkseg> if there are many in stringified gpx file
+    let trkpts;
+    if (Array.isArray(trkseg)) {
+      trkpts = [];
+      trkseg.forEach((seg) => {
+        trkpts.push(...seg.trkpt);
+      });
+    } else {
+      trkpts = trkseg?.trkpt;
+    }
+    return trkpts;
+  });
+
+  const trkpts = trkptsArr
+    .sort((a, b) => new Date(a[0].time.valueOf()) - new Date(b[0].time.valueOf()))
+    .flat();
 
   // Only keep relevant properties (i.e. lat, lon & time)
   const keepLatLonTime = (({ lat, lon, time }) => ({ lat, lon, time }));
