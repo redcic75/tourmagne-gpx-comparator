@@ -76,6 +76,51 @@ Mocha.describe('compareTracks', function desc() {
     });
   });
 
+  Mocha.describe('with Orleans loop containing 3 <trkseg>', () => {
+    Mocha.before(async () => {
+      const refFile = 'orleans-loop-trace';
+      const challFile = 'orleans-loop-real-3-trkseg';
+
+      const options = {
+        rollingDuration: 1, // in hours
+        trigger: 20, // in meters - trigger must be less than tolerance
+        tolerance: 100, // in meters
+        maxDetour: 20000, // in meters
+      };
+
+      const {
+        refPoints,
+        challPoints,
+      } = await fileToPoints(refFile, challFile);
+
+      result = await compareTracks(refPoints, challPoints, options);
+    });
+
+    Mocha.it('should return number of missed segments', async () => {
+      result.missedSegments.length.should.equal(8);
+    });
+
+    Mocha.it('should return ref path distance', async () => {
+      result.accuracy.refDistance.should.equal(55677);
+    });
+
+    Mocha.it('should return missed segments total distance', async () => {
+      result.accuracy.missedDistance.should.equal(17642);
+    });
+
+    Mocha.it('should return slowest segment start index', async () => {
+      result.kpi.slowestSegmentStart.index.should.equal(342);
+    });
+
+    Mocha.it('should return slowest segment end index', async () => {
+      result.kpi.slowestSegmentEnd.index.should.equal(683);
+    });
+
+    Mocha.it('should return slowest segment distance', async () => {
+      result.kpi.distance.should.equal(11118);
+    });
+  });
+
   Mocha.describe('with Bordeaux - Paris', () => {
     Mocha.before(async () => {
       const refFile = 'Bordeaux_Paris_2022_trace';

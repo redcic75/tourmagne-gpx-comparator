@@ -12,7 +12,18 @@ const parseGpx = (str) => {
   const gpx = parser.parse(str);
 
   // Create points array
-  const trkpts = gpx?.gpx?.trk?.trkseg?.trkpt;
+  const trkseg = gpx?.gpx?.trk?.trkseg;
+
+  // Merge <trkseg> if there are many in stringified gpx file
+  let trkpts;
+  if (Array.isArray(trkseg)) {
+    trkpts = [];
+    trkseg.forEach((seg) => {
+      trkpts.push(...seg.trkpt);
+    });
+  } else {
+    trkpts = trkseg?.trkpt;
+  }
 
   // Only keep relevant properties (i.e. lat, lon & time)
   const keepLatLonTime = (({ lat, lon, time }) => ({ lat, lon, time }));

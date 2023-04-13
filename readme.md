@@ -21,7 +21,6 @@ You can create test GPX files and view generated GPX files with https://gpx.stud
 - Handle multiple GPX files:
   - Auto sorting
   - Merge files ?
-- Handle GPX with multiple tracks or multiple track segments
 
 - Get rid of global variables in indexWeb.js ?
 - Mapbox API key ?
