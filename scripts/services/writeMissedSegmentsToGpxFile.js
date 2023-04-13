@@ -10,7 +10,7 @@ const writeMissedSegmentsToGpxFile = async (inputParams, results) => {
   const gpxStr = await generateGpxStr(missedSegments);
 
   // Write GPX file on disk
-  const outputFilePath = path.resolve(__dirname, `../../data/generated_files/missed-${path.basename(inputParams.refPath, '.gpx')}-${path.basename(inputParams.challPath, '.gpx')}-${inputParams.options.trigger}-${inputParams.options.tolerance}-${inputParams.options.maxDetour}.gpx`);
+  const outputFilePath = path.resolve(__dirname, `../../data/generated_files/missed-${path.basename(inputParams.refPaths[0], '.gpx')}-${path.basename(inputParams.challPaths[0], '.gpx')}-${inputParams.options.trigger}-${inputParams.options.tolerance}-${inputParams.options.maxDetour}.gpx`);
   await fs.writeFile(outputFilePath, gpxStr);
 };
 

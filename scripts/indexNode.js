@@ -2,17 +2,18 @@ const path = require('path');
 
 const parseGpx = require('./services/parseGpx');
 const compareTracks = require('./services/compareTracks');
-const getGpxStr = require('./services/getGpxStr');
+const getGpxStrs = require('./services/getGpxStrs');
 const logComparisonResults = require('./services/logComparisonResults');
 const writeMissedSegmentsToGpxFile = require('./services/writeMissedSegmentsToGpxFile');
 
 // Launches console script
-const main = async (refPath, challPath, options) => {
-  const [refGpxStr, challGpxStr] = await getGpxStr(refPath, challPath);
+const main = async (refPaths, challPaths, options) => {
+  const refGpxStrs = await getGpxStrs(refPaths);
+  const challGpxStrs = await getGpxStrs(challPaths);
 
   // Parse GPX strings to JS objects
-  const refPoints = parseGpx(refGpxStr);
-  const challPoints = parseGpx(challGpxStr);
+  const refPoints = parseGpx(refGpxStrs);
+  const challPoints = parseGpx(challGpxStrs);
 
   const results = await compareTracks(
     refPoints,
@@ -21,8 +22,8 @@ const main = async (refPath, challPath, options) => {
   );
 
   const inputParams = {
-    refPath,
-    challPath,
+    refPaths,
+    challPaths,
     options,
   };
 
@@ -33,15 +34,14 @@ const main = async (refPath, challPath, options) => {
 
 // ------ USER DATA ------//
 // Path to GPX files to read
-// const refFile = 'ref';
-// const challFile = 'chall-autre-chemin-2-fois';
 
-// const refFile = 'Bordeaux_Paris_2022_real';
-// const refFile = 'Bordeaux_Paris_2022_trace';
-// const challFile = 'Bordeaux_Paris_2022_real';
+// const refFiles = ['Bordeaux_Paris_2022_real'];
+// const refFiles = ['Bordeaux_Paris_2022_trace'];
+// const challFiles = ['Bordeaux_Paris_2022_real'];
 
-const refFile = 'orleans-loop-trace';
-const challFile = 'orleans-loop-real-3-trkseg';
+const refFiles = ['orleans-loop-trace'];
+const challFiles = ['orleans-loop-real-seg-1', 'orleans-loop-real-seg-3', 'orleans-loop-real-seg-2'];
+// const challFiles = ['orleans-loop-real-3-trkseg'];
 
 // Params
 const options = {
@@ -52,8 +52,8 @@ const options = {
 };
 
 const prefix = path.resolve(__dirname, '../data/gpx/');
-const refPath = `${prefix}/${refFile}.gpx`;
-const challPath = `${prefix}/${challFile}.gpx`;
+const refPaths = refFiles.map((refFile) => `${prefix}/${refFile}.gpx`);
+const challPaths = challFiles.map((challFile) => `${prefix}/${challFile}.gpx`);
 
 // Launches main
-main(refPath, challPath, options);
+main(refPaths, challPaths, options);
