@@ -16,13 +16,12 @@ const fileToPoints = async (refFiles, challFiles) => {
   const refPaths = refFiles.map((refFile) => `${prefix}/${refFile}.gpx`);
   const challPaths = challFiles.map((challFile) => `${prefix}/${challFile}.gpx`);
 
-
   const refGpxStrs = await getGpxStrs(refPaths);
   const challGpxStrs = await getGpxStrs(challPaths);
 
   // Parse GPX strings to JS objects
-  const refPoints = parseGpx(refGpxStrs);
-  const challPoints = parseGpx(challGpxStrs);
+  const refPoints = parseGpx(refGpxStrs).flat();
+  const challPoints = parseGpx(challGpxStrs).flat();
 
   return {
     refPoints,

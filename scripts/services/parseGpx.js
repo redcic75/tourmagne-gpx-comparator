@@ -9,33 +9,32 @@ const parseGpx = (strs) => {
     attributeNamePrefix: '',
   });
 
+  // trkptsArr is an array with 3 levels
+  // 1st level represents the file
+  // 2nd level reprensents <trkseg>
+  // 3rd level represent <trkpt>
   const trkptsArr = strs.map((str) => {
     const gpx = parser.parse(str);
+    const trksegs = gpx?.gpx?.trk?.trkseg;
 
-    // Create points array
-    const trkseg = gpx?.gpx?.trk?.trkseg;
-
-    // Merge <trkseg> if there are many in stringified gpx file
-    let trkpts;
-    if (Array.isArray(trkseg)) {
-      trkpts = [];
-      trkseg.forEach((seg) => {
-        trkpts.push(...seg.trkpt);
-      });
-    } else {
-      trkpts = trkseg?.trkpt;
+    // Deal with case with multiple <trkseg> in stringified gpx file
+    if (Array.isArray(trksegs)) {
+      return trksegs.map((trkseg) => trkseg.trkpt);
     }
-    return trkpts;
+    return [trksegs?.trkpt];
   });
 
-  const trkpts = trkptsArr
-    .sort((a, b) => new Date(a[0].time.valueOf()) - new Date(b[0].time.valueOf()))
-    .flat();
+  trkptsArr.sort((a, b) => new Date(a[0][0].time.valueOf()) - new Date(b[0][0].time.valueOf()));
+
+  // trkptsLines is an array with 2 levels
+  // 1st level represents the lines to display (each line could be a file or a <trkseg>)
+  // 2nd level reprensents <trkpt>
+  const trkptsLines = trkptsArr.flat();
 
   // Only keep relevant properties (i.e. lat, lon & time)
   const keepLatLonTime = (({ lat, lon, time }) => ({ lat, lon, time }));
 
-  return trkpts.map((trkpt) => keepLatLonTime(trkpt));
+  return trkptsLines.map((line) => line.map((trkpt) => keepLatLonTime(trkpt)));
 };
 
 module.exports = parseGpx;

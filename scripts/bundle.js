@@ -2234,8 +2234,8 @@ const launchComparison = async (event) => {
   };
 
   const results = await compareTracks(
-    refFileInputEl.points,
-    challFileInputEl.points,
+    refFileInputEl.points.flat(),
+    challFileInputEl.points.flat(),
     options,
   );
 
@@ -2249,7 +2249,7 @@ const launchComparison = async (event) => {
   detourMaxParamEl.innerHTML = `${formEl.trigger.value} km`;
   missedDistanceEl.innerHTML = `${Math.round(results.accuracy.missedDistance)} m`;
   missedPercentEl.innerHTML = `${Math.round(results.accuracy.offTrackRatio * 1000) / 10} %`;
-  perfKmEl.innerHTML = `Vitesse moyenne pendant les pires ${formEl.rollingDuration.value} h : ${results.kpi.meanSpeed} km/h`;
+  perfKmEl.innerHTML = `Vitesse moyenne pendant les pires ${formEl.rollingDuration.value} h : ${Math.round(results.kpi.meanSpeed * 1000) / 1000} km/h`;
   perfWhenEl.innerHTML = `Période commencée après ${Math.round(results.kpi.slowestSegmentStart.elapsedTime / 3600) / 1000} h au km ${results.kpi.slowestSegmentStart.distance / 1000}`;
 
   // Update map
@@ -2329,18 +2329,19 @@ const loadFiles = async (event) => {
     'line-width': 4,
     'line-opacity': 0.7,
   };
-  displayTrack(map, id, [currentTarget.points], paint);
-  geolibBounds[id] = updateBounds(map, geolibBounds, [currentTarget.points]);
+  displayTrack(map, id, currentTarget.points, paint);
+  geolibBounds[id] = updateBounds(map, geolibBounds, currentTarget.points);
   fitBounds(map, geolibBounds);
 
   if (id === 'ref') {
-    refPoints = [...currentTarget.points];
+    refPoints = [...currentTarget.points.flat()];
   }
 };
 
 // ------ MAIN ------//
 // Display empty map
-// mapboxgl.accessToken = 'pk.eyJ1IjoicmVkY2ljIiwiYSI6ImNsZG41YzZzMjAweGYzbnEwMjYzOWxpMTYifQ.kEkg6g7sPVWFAf0vvAVzkA';
+// mapboxgl.accessToken =
+// 'pk.eyJ1IjoicmVkY2ljIiwiYSI6ImNsZG41YzZzMjAweGYzbnEwMjYzOWxpMTYifQ.kEkg6g7sPVWFAf0vvAVzkA';
 mapboxgl.accessToken = 'pk.eyJ1IjoicmVkY2ljIiwiYSI6ImNsZG4zZ3UyMjA3NWIzdnM0bGFwNTM4ZDMifQ.eey31FAnZT3z2zxr-M_Ivw';
 const map = new mapboxgl.Map({
   container: 'map',
@@ -2814,33 +2815,32 @@ const parseGpx = (strs) => {
     attributeNamePrefix: '',
   });
 
+  // trkptsArr is an array with 3 levels
+  // 1st level represents the file
+  // 2nd level reprensents <trkseg>
+  // 3rd level represent <trkpt>
   const trkptsArr = strs.map((str) => {
     const gpx = parser.parse(str);
+    const trksegs = gpx?.gpx?.trk?.trkseg;
 
-    // Create points array
-    const trkseg = gpx?.gpx?.trk?.trkseg;
-
-    // Merge <trkseg> if there are many in stringified gpx file
-    let trkpts;
-    if (Array.isArray(trkseg)) {
-      trkpts = [];
-      trkseg.forEach((seg) => {
-        trkpts.push(...seg.trkpt);
-      });
-    } else {
-      trkpts = trkseg?.trkpt;
+    // Deal with case with multiple <trkseg> in stringified gpx file
+    if (Array.isArray(trksegs)) {
+      return trksegs.map((trkseg) => trkseg.trkpt);
     }
-    return trkpts;
+    return [trksegs?.trkpt];
   });
 
-  const trkpts = trkptsArr
-    .sort((a, b) => new Date(a[0].time.valueOf()) - new Date(b[0].time.valueOf()))
-    .flat();
+  trkptsArr.sort((a, b) => new Date(a[0][0].time.valueOf()) - new Date(b[0][0].time.valueOf()));
+
+  // trkptsLines is an array with 2 levels
+  // 1st level represents the lines to display (each line could be a file or a <trkseg>)
+  // 2nd level reprensents <trkpt>
+  const trkptsLines = trkptsArr.flat();
 
   // Only keep relevant properties (i.e. lat, lon & time)
   const keepLatLonTime = (({ lat, lon, time }) => ({ lat, lon, time }));
 
-  return trkpts.map((trkpt) => keepLatLonTime(trkpt));
+  return trkptsLines.map((line) => line.map((trkpt) => keepLatLonTime(trkpt)));
 };
 
 module.exports = parseGpx;

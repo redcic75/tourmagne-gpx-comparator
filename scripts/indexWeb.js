@@ -44,8 +44,8 @@ const launchComparison = async (event) => {
   };
 
   const results = await compareTracks(
-    refFileInputEl.points,
-    challFileInputEl.points,
+    refFileInputEl.points.flat(),
+    challFileInputEl.points.flat(),
     options,
   );
 
@@ -59,7 +59,7 @@ const launchComparison = async (event) => {
   detourMaxParamEl.innerHTML = `${formEl.trigger.value} km`;
   missedDistanceEl.innerHTML = `${Math.round(results.accuracy.missedDistance)} m`;
   missedPercentEl.innerHTML = `${Math.round(results.accuracy.offTrackRatio * 1000) / 10} %`;
-  perfKmEl.innerHTML = `Vitesse moyenne pendant les pires ${formEl.rollingDuration.value} h : ${results.kpi.meanSpeed} km/h`;
+  perfKmEl.innerHTML = `Vitesse moyenne pendant les pires ${formEl.rollingDuration.value} h : ${Math.round(results.kpi.meanSpeed * 1000) / 1000} km/h`;
   perfWhenEl.innerHTML = `Période commencée après ${Math.round(results.kpi.slowestSegmentStart.elapsedTime / 3600) / 1000} h au km ${results.kpi.slowestSegmentStart.distance / 1000}`;
 
   // Update map
@@ -139,18 +139,19 @@ const loadFiles = async (event) => {
     'line-width': 4,
     'line-opacity': 0.7,
   };
-  displayTrack(map, id, [currentTarget.points], paint);
-  geolibBounds[id] = updateBounds(map, geolibBounds, [currentTarget.points]);
+  displayTrack(map, id, currentTarget.points, paint);
+  geolibBounds[id] = updateBounds(map, geolibBounds, currentTarget.points);
   fitBounds(map, geolibBounds);
 
   if (id === 'ref') {
-    refPoints = [...currentTarget.points];
+    refPoints = [...currentTarget.points.flat()];
   }
 };
 
 // ------ MAIN ------//
 // Display empty map
-// mapboxgl.accessToken = 'pk.eyJ1IjoicmVkY2ljIiwiYSI6ImNsZG41YzZzMjAweGYzbnEwMjYzOWxpMTYifQ.kEkg6g7sPVWFAf0vvAVzkA';
+// mapboxgl.accessToken =
+// 'pk.eyJ1IjoicmVkY2ljIiwiYSI6ImNsZG41YzZzMjAweGYzbnEwMjYzOWxpMTYifQ.kEkg6g7sPVWFAf0vvAVzkA';
 mapboxgl.accessToken = 'pk.eyJ1IjoicmVkY2ljIiwiYSI6ImNsZG4zZ3UyMjA3NWIzdnM0bGFwNTM4ZDMifQ.eey31FAnZT3z2zxr-M_Ivw';
 const map = new mapboxgl.Map({
   container: 'map',
