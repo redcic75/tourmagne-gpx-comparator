@@ -2197,6 +2197,7 @@ const compareTracks = require('./services/compareTracks');
 const displayTrack = require('./mapHelpers/displayTrack');
 const { updateBounds, fitBounds } = require('./mapHelpers/updateBounds');
 
+// ------ GLOBAL VARIABLES ------//
 // Links with HTML file
 const refFileInputEl = document.querySelector('#ref');
 const challFileInputEl = document.querySelector('#chall');
@@ -2217,7 +2218,22 @@ let gpxStr = '';
 const geolibBounds = {};
 let refPoints;
 
-// ------ FUNCTIONS ------//
+// ------ HELPERS ------//
+const updateDom = (results) => {
+  refParamEl.innerHTML = formEl.ref.value.split('\\').slice(-1);
+  challParamEl.innerHTML = formEl.chall.value.split('\\').slice(-1);
+
+  durationParamEl.innerHTML = `${formEl.rollingDuration.value} h`;
+  triggerParamEl.innerHTML = `${formEl.trigger.value} m`;
+  toleranceParamEl.innerHTML = `${formEl.tolerance.value} m`;
+  detourMaxParamEl.innerHTML = `${formEl.trigger.value} km`;
+  missedDistanceEl.innerHTML = `${Math.round(results.accuracy.missedDistance)} m`;
+  missedPercentEl.innerHTML = `${Math.round(results.accuracy.offTrackRatio * 1000) / 10} %`;
+  perfKmEl.innerHTML = `Vitesse moyenne pendant les pires ${formEl.rollingDuration.value} h : ${Math.round(results.kpi.meanSpeed * 1000) / 1000} km/h`;
+  perfWhenEl.innerHTML = `Période commencée après ${Math.round(results.kpi.slowestSegmentStart.elapsedTime / 3600) / 1000} h au km ${results.kpi.slowestSegmentStart.distance / 1000}`;
+};
+
+// ------ EVENT LISTENERS ------//
 const launchComparison = async (event) => {
   event.preventDefault();
 
@@ -2240,17 +2256,7 @@ const launchComparison = async (event) => {
   );
 
   // Update DOM
-  refParamEl.innerHTML = formEl.ref.value.split('\\').slice(-1);
-  challParamEl.innerHTML = formEl.chall.value.split('\\').slice(-1);
-
-  durationParamEl.innerHTML = `${formEl.rollingDuration.value} h`;
-  triggerParamEl.innerHTML = `${formEl.trigger.value} m`;
-  toleranceParamEl.innerHTML = `${formEl.tolerance.value} m`;
-  detourMaxParamEl.innerHTML = `${formEl.trigger.value} km`;
-  missedDistanceEl.innerHTML = `${Math.round(results.accuracy.missedDistance)} m`;
-  missedPercentEl.innerHTML = `${Math.round(results.accuracy.offTrackRatio * 1000) / 10} %`;
-  perfKmEl.innerHTML = `Vitesse moyenne pendant les pires ${formEl.rollingDuration.value} h : ${Math.round(results.kpi.meanSpeed * 1000) / 1000} km/h`;
-  perfWhenEl.innerHTML = `Période commencée après ${Math.round(results.kpi.slowestSegmentStart.elapsedTime / 3600) / 1000} h au km ${results.kpi.slowestSegmentStart.distance / 1000}`;
+  updateDom(results);
 
   // Update map
   const paintMissed = {

@@ -19,6 +19,6 @@ You can create test GPX files and view generated GPX files with https://gpx.stud
   - challenger gpx does not have timestamps
   - Parameters coherence (tolerance < trigger, duration > durée du parcours du challenger)
 
+- Mapbox API key
 - Get rid of global variables in indexWeb.js ?
-- Mapbox API key ?
 - Display waiting message while loading big files or while comparing big files
