@@ -2220,8 +2220,8 @@ let refPoints;
 
 // ------ HELPERS ------//
 const updateDom = (results) => {
-  refParamEl.innerHTML = formEl.ref.value.split('\\').slice(-1);
-  challParamEl.innerHTML = formEl.chall.value.split('\\').slice(-1);
+  refParamEl.innerHTML = refFileInputEl.files[0].name;
+  challParamEl.innerHTML = Array.from(challFileInputEl.files).reduce((acc, file) => `${acc}${file.name}, `, '').slice(0, -2);
 
   durationParamEl.innerHTML = `${formEl.rollingDuration.value} h`;
   triggerParamEl.innerHTML = `${formEl.trigger.value} m`;
@@ -2243,17 +2243,23 @@ const launchComparison = async (event) => {
 
   // Get options from form inputs
   const options = {
-    rollingDuration: formEl.rollingDuration.value, // in seconds
-    trigger: formEl.trigger.value, // in meters - trigger must be less than tolerance
-    tolerance: formEl.tolerance.value, // in meters
-    maxDetour: formEl.maxDetour.value * 1000, // in meters
+    rollingDuration: parseInt(formEl.rollingDuration.value, 10), // in seconds
+    trigger: parseInt(formEl.trigger.value, 10), // in meters - trigger must be less than tolerance
+    tolerance: parseInt(formEl.tolerance.value, 10), // in meters
+    maxDetour: parseInt(formEl.maxDetour.value, 10) * 1000, // in meters
   };
 
-  const results = await compareTracks(
-    refFileInputEl.points.flat(),
-    challFileInputEl.points.flat(),
-    options,
-  );
+  let results;
+  try {
+    results = await compareTracks(
+      refFileInputEl.points.flat(),
+      challFileInputEl.points.flat(),
+      options,
+    );
+  } catch (err) {
+    alert(err.message);
+    return;
+  }
 
   // Update DOM
   updateDom(results);
@@ -2732,7 +2738,6 @@ const calculateKpis = (refPointsMissed, options) => {
   const startIndex = distances.indexOf(rollingDurationMinDistance);
   const endIndex = rollingDurationDistances[startIndex]?.rollingDurationEndIndex;
 
-  // TODO: without missed ?
   const startElapsedTime = timeDistanceTable[startIndex]?.elapsedTime;
   const endElapsedTime = timeDistanceTable[endIndex]?.elapsedTime;
 
@@ -2764,7 +2769,21 @@ const calculateKpis = (refPointsMissed, options) => {
   };
 };
 
+const validateOptions = (options) => {
+  // TODO: check rollingDuration < chall track duration
+  const {
+    tolerance,
+    trigger,
+  } = options;
+
+  if (tolerance < trigger) {
+    throw new Error("La tolérance d'écart doit être supérieure ou égale au seuil de déclenchement.");
+  }
+};
+
 const compareTracks = async (refPoints, challPoints, options) => {
+  validateOptions(options);
+
   // Extend refPoints with missed segments
   const refPointsPassBy = calculateClosest(refPoints, challPoints, options);
   const refPointsMissed = calculateMissed(refPointsPassBy, options);
@@ -2837,12 +2856,14 @@ const parseGpx = (strs) => {
   });
 
   trkptsArr.sort((a, b) => new Date(a[0][0].time.valueOf()) - new Date(b[0][0].time.valueOf()));
+  // TODO: check that last point of one file is before 1st point of next file
 
   // trkptsLines is an array with 2 levels
   // 1st level represents the lines to display (each line could be a file or a <trkseg>)
   // 2nd level reprensents <trkpt>
   const trkptsLines = trkptsArr.flat();
 
+  // TODO: check presence of timestamps if challenger track
   // Only keep relevant properties (i.e. lat, lon & time)
   const keepLatLonTime = (({ lat, lon, time }) => ({ lat, lon, time }));
 

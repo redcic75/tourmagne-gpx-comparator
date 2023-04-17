@@ -30,8 +30,8 @@ let refPoints;
 
 // ------ HELPERS ------//
 const updateDom = (results) => {
-  refParamEl.innerHTML = formEl.ref.value.split('\\').slice(-1);
-  challParamEl.innerHTML = formEl.chall.value.split('\\').slice(-1);
+  refParamEl.innerHTML = refFileInputEl.files[0].name;
+  challParamEl.innerHTML = Array.from(challFileInputEl.files).reduce((acc, file) => `${acc}${file.name}, `, '').slice(0, -2);
 
   durationParamEl.innerHTML = `${formEl.rollingDuration.value} h`;
   triggerParamEl.innerHTML = `${formEl.trigger.value} m`;
@@ -53,17 +53,23 @@ const launchComparison = async (event) => {
 
   // Get options from form inputs
   const options = {
-    rollingDuration: formEl.rollingDuration.value, // in seconds
-    trigger: formEl.trigger.value, // in meters - trigger must be less than tolerance
-    tolerance: formEl.tolerance.value, // in meters
-    maxDetour: formEl.maxDetour.value * 1000, // in meters
+    rollingDuration: parseInt(formEl.rollingDuration.value, 10), // in seconds
+    trigger: parseInt(formEl.trigger.value, 10), // in meters - trigger must be less than tolerance
+    tolerance: parseInt(formEl.tolerance.value, 10), // in meters
+    maxDetour: parseInt(formEl.maxDetour.value, 10) * 1000, // in meters
   };
 
-  const results = await compareTracks(
-    refFileInputEl.points.flat(),
-    challFileInputEl.points.flat(),
-    options,
-  );
+  let results;
+  try {
+    results = await compareTracks(
+      refFileInputEl.points.flat(),
+      challFileInputEl.points.flat(),
+      options,
+    );
+  } catch (err) {
+    alert(err.message);
+    return;
+  }
 
   // Update DOM
   updateDom(results);

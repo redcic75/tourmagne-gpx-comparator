@@ -15,10 +15,12 @@
 You can create test GPX files and view generated GPX files with https://gpx.studio/l/fr/.
 
 # To do
-- Check inputs:
-  - challenger gpx does not have timestamps
-  - Parameters coherence (tolerance < trigger, duration > durée du parcours du challenger)
-
+- Check inputs / error management
+- Do not take into account segments between files or between <trkseg> in calculateClosest
+- Performance: 2 long methods (Orleans / Bdx-Paris examples):
+  - parseGpx chall : 350 ms / 2300 ms
+  - calculate closest: 7000 ms / 5000 ms
+  - => Comes from external libs fast-xml-parser & calculateClosest (while loop executed 1_000_000 times)
 - Mapbox API key
 - Get rid of global variables in indexWeb.js ?
 - Display waiting message while loading big files or while comparing big files

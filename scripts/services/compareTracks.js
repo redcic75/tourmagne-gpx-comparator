@@ -249,7 +249,6 @@ const calculateKpis = (refPointsMissed, options) => {
   const startIndex = distances.indexOf(rollingDurationMinDistance);
   const endIndex = rollingDurationDistances[startIndex]?.rollingDurationEndIndex;
 
-  // TODO: without missed ?
   const startElapsedTime = timeDistanceTable[startIndex]?.elapsedTime;
   const endElapsedTime = timeDistanceTable[endIndex]?.elapsedTime;
 
@@ -281,7 +280,21 @@ const calculateKpis = (refPointsMissed, options) => {
   };
 };
 
+const validateOptions = (options) => {
+  // TODO: check rollingDuration < chall track duration
+  const {
+    tolerance,
+    trigger,
+  } = options;
+
+  if (tolerance < trigger) {
+    throw new Error("La tolérance d'écart doit être supérieure ou égale au seuil de déclenchement.");
+  }
+};
+
 const compareTracks = async (refPoints, challPoints, options) => {
+  validateOptions(options);
+
   // Extend refPoints with missed segments
   const refPointsPassBy = calculateClosest(refPoints, challPoints, options);
   const refPointsMissed = calculateMissed(refPointsPassBy, options);

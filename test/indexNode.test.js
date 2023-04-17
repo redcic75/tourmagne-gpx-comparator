@@ -2,6 +2,7 @@
 
 const Mocha = require('mocha');
 const should = require('chai').should();
+const expect = require('chai').expect;
 
 const fs = require('fs/promises');
 const path = require('path');
@@ -210,6 +211,35 @@ Mocha.describe('compareTracks', function desc() {
 
     Mocha.it('should return slowest segment distance', async () => {
       result.kpi.distance.should.equal(5553);
+    });
+  });
+
+  Mocha.describe('with incorrect options', () => {
+    let options;
+    let refPoints;
+    let challPoints;
+
+    Mocha.before(async () => {
+      const refFiles = ['orleans-loop-trace'];
+      const challFiles = ['orleans-loop-real'];
+
+      options = {
+        rollingDuration: 1, // in hours
+        trigger: 20, // in meters - trigger must be less than tolerance
+        tolerance: 10, // in meters
+        maxDetour: 20000, // in meters
+      };
+
+      ({
+        refPoints,
+        challPoints,
+      } = await fileToPoints(refFiles, challFiles));
+    });
+
+    Mocha.it.only('should throw when trigger > tolerance', async () => {
+      expect(async () => {
+        await compareTracks(refPoints, challPoints, options);
+      }).to.throw(Error);
     });
   });
 });

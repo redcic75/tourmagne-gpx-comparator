@@ -15,11 +15,17 @@ const main = async (refPaths, challPaths, options) => {
   const refPoints = parseGpx(refGpxStrs).flat();
   const challPoints = parseGpx(challGpxStrs).flat();
 
-  const results = await compareTracks(
-    refPoints,
-    challPoints,
-    options,
-  );
+  let results;
+  try {
+    results = await compareTracks(
+      refPoints,
+      challPoints,
+      options,
+    );
+  } catch (err) {
+    console.log(`ERREUR: ${err.message}`);
+    return;
+  }
 
   const inputParams = {
     refPaths,
