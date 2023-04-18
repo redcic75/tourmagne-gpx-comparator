@@ -17,7 +17,9 @@ You can create test GPX files and view generated GPX files with https://gpx.stud
 # To do
 - Check inputs / error management
 - Do not take into account segments between files or between <trkseg> in calculateClosest
-- Increase detourMax for 1st point.
+- Increase detourMax for 1st point
+- Create personalized Error classes
+- Separate frontend & backend
 - Performance: 2 long methods (Orleans / Bdx-Paris examples):
   - parseGpx chall : 350 ms / 2300 ms
   - calculate closest: 7000 ms / 5000 ms
