@@ -122,7 +122,13 @@ const loadFiles = async (event) => {
   if (files.length > 0) {
     const promises = Array.from(files).map((file) => file.text());
     const strs = await Promise.all(promises);
-    currentTarget.points = parseGpx(strs);
+
+    try {
+      currentTarget.points = parseGpx(strs);
+    } catch (err) {
+      alert(err.message);
+      return;
+    }
   } else {
     currentTarget.points = [];
 

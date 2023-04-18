@@ -24,15 +24,20 @@ const parseGpx = (strs) => {
     return [trksegs?.trkpt];
   });
 
-  trkptsArr.sort((a, b) => new Date(a[0][0].time.valueOf()) - new Date(b[0][0].time.valueOf()));
-  // TODO: check that last point of one file is before 1st point of next file
+  // If multiple gpx files strings where inputed, sort them chronollogically
+  if (strs.length > 1) {
+    if (trkptsArr.some((trkptsFile) => typeof trkptsFile[0][0].time === 'undefined')) {
+      throw Error("Lors de l'import de plusieurs fichiers GPX, ceux ci doivent impérativement contenir des données temporelles pour pouvoir être classés par ordre chronologique");
+    }
+    trkptsArr.sort((a, b) => new Date(a[0][0].time.valueOf()) - new Date(b[0][0].time.valueOf()));
+    // TODO: check that last point of one file is before 1st point of next file
+  }
 
   // trkptsLines is an array with 2 levels
   // 1st level represents the lines to display (each line could be a file or a <trkseg>)
   // 2nd level reprensents <trkpt>
   const trkptsLines = trkptsArr.flat();
 
-  // TODO: check presence of timestamps if challenger track
   // Only keep relevant properties (i.e. lat, lon & time)
   const keepLatLonTime = (({ lat, lon, time }) => ({ lat, lon, time }));
 

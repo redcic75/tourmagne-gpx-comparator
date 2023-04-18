@@ -281,7 +281,6 @@ const calculateKpis = (refPointsMissed, options) => {
 };
 
 const validateOptions = (options) => {
-  // TODO: check rollingDuration < chall track duration
   const {
     tolerance,
     trigger,

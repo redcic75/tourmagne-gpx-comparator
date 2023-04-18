@@ -12,8 +12,14 @@ const main = async (refPaths, challPaths, options) => {
   const challGpxStrs = await getGpxStrs(challPaths);
 
   // Parse GPX strings to JS objects
-  const refPoints = parseGpx(refGpxStrs).flat();
-  const challPoints = parseGpx(challGpxStrs).flat();
+  let refPoints;
+  let challPoints;
+  try {
+    refPoints = parseGpx(refGpxStrs).flat();
+    challPoints = parseGpx(challGpxStrs).flat();
+  } catch (err) {
+    console.log(`ERREUR: ${err.message}`);
+  }
 
   let results;
   try {
