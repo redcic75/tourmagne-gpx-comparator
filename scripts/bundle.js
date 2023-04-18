@@ -2533,6 +2533,7 @@ const calculateClosest = (refPoints, challPoints, options) => {
   // challIndex: index of the point of challenger track that was
   // at less than trigger distance from the last found ref point
   let challIndex = 0;
+  let is1stPointFound = false;
 
   return refPoints.map((refPoint) => {
     // challLocalIndex: running index on challenge track used to find closest point
@@ -2541,7 +2542,16 @@ const calculateClosest = (refPoints, challPoints, options) => {
     let closestDistanceIndex;
     let closestDistance;
 
-    while (challLocalIndex + 1 < challPoints.length && detour <= maxDetour) {
+    // To allow challenger track to start long before start of ref track
+    // we use maxDetour === Infinity until one point of ref track has been found on chall track.
+    let maxDetourUsed;
+    if (is1stPointFound) {
+      maxDetourUsed = maxDetour;
+    } else {
+      maxDetourUsed = Infinity;
+    }
+
+    while (challLocalIndex + 1 < challPoints.length && detour <= maxDetourUsed) {
       let distance;
       if (geolib.getDistance(
         challPoints[challLocalIndex],
@@ -2553,11 +2563,9 @@ const calculateClosest = (refPoints, challPoints, options) => {
           challPoints[challLocalIndex + 1],
         );
       } else {
-        distance = Math.min(
-          geolib.getDistance(refPoint, challPoints[challLocalIndex]),
-          geolib.getDistance(refPoint, challPoints[challLocalIndex + 1]),
-        );
+        distance = geolib.getDistance(refPoint, challPoints[challLocalIndex]);
       }
+
       if (!closestDistance || distance < closestDistance) {
         closestDistance = distance;
         closestDistanceIndex = challLocalIndex;
@@ -2565,6 +2573,7 @@ const calculateClosest = (refPoints, challPoints, options) => {
 
       if (closestDistance <= trigger) {
         challIndex = challLocalIndex;
+        is1stPointFound = true;
         break;
       }
 

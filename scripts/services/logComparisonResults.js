@@ -15,7 +15,7 @@ const logComparisonResults = (inputParams, results) => {
   Max challenger segment length: ${inputParams.options.maxSegLength}
 
   Missed distance of the reference path: ${results.accuracy.missedDistance} meters
-  Missed distance of the reference path: ${results.accuracy.offTrackRatio * 100} %
+  Missed distance of the reference path: ${Math.round(results.accuracy.offTrackRatio * 10000) / 100} %
   Worst ${inputParams.options.rollingDuration} hours:
    - Started after ${Math.round((results.kpi.slowestSegmentStart.elapsedTime / (3600 * 1000)) * 100) / 100} hours at km ${results.kpi.slowestSegmentStart.distance / 1000} travelled on reference track
    - Distance: ${results.kpi.distance / 1000} km

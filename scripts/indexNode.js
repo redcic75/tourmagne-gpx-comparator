@@ -51,9 +51,15 @@ const main = async (refPaths, challPaths, options) => {
 // const refFiles = ['Bordeaux_Paris_2022_trace'];
 // const challFiles = ['Bordeaux_Paris_2022_real'];
 
-const refFiles = ['orleans-loop-trace'];
-const challFiles = ['orleans-loop-real-seg-1', 'orleans-loop-real-seg-3', 'orleans-loop-real-seg-2'];
+// const refFiles = ['orleans-loop-trace'];
+// const challFiles = [
+//   'orleans-loop-real-seg-1',
+//   'orleans-loop-real-seg-3',
+//   'orleans-loop-real-seg-2'];
 // const challFiles = ['orleans-loop-real-3-trkseg'];
+
+const refFiles = ['tourmagne-ref'];
+const challFiles = ['tourmagne-francois'];
 
 // Params
 const options = {
