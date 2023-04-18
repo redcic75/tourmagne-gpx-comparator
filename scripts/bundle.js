@@ -2247,6 +2247,7 @@ const launchComparison = async (event) => {
     trigger: parseInt(formEl.trigger.value, 10), // in meters - trigger must be less than tolerance
     tolerance: parseInt(formEl.tolerance.value, 10), // in meters
     maxDetour: parseInt(formEl.maxDetour.value, 10) * 1000, // in meters
+    maxSegLength: parseInt(formEl.maxSegLength.value, 10), // in meters
   };
 
   let results;
@@ -2507,6 +2508,7 @@ const calculateClosest = (refPoints, challPoints, options) => {
   const {
     trigger,
     maxDetour,
+    maxSegLength,
   } = options;
 
   const initialTime = new Date(challPoints[0].time).valueOf();
@@ -2540,12 +2542,22 @@ const calculateClosest = (refPoints, challPoints, options) => {
     let closestDistance;
 
     while (challLocalIndex + 1 < challPoints.length && detour <= maxDetour) {
-      const distance = getDistanceFromLine(
-        refPoint,
+      let distance;
+      if (geolib.getDistance(
         challPoints[challLocalIndex],
         challPoints[challLocalIndex + 1],
-      );
-
+      ) < maxSegLength) {
+        distance = getDistanceFromLine(
+          refPoint,
+          challPoints[challLocalIndex],
+          challPoints[challLocalIndex + 1],
+        );
+      } else {
+        distance = Math.min(
+          geolib.getDistance(refPoint, challPoints[challLocalIndex]),
+          geolib.getDistance(refPoint, challPoints[challLocalIndex + 1]),
+        );
+      }
       if (!closestDistance || distance < closestDistance) {
         closestDistance = distance;
         closestDistanceIndex = challLocalIndex;

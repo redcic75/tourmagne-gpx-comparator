@@ -12,6 +12,7 @@ const logComparisonResults = (inputParams, results) => {
   Trigger distance: ${inputParams.options.trigger}
   Tolerance distance: ${inputParams.options.tolerance}
   Max detour: ${inputParams.options.maxDetour}
+  Max challenger segment length: ${inputParams.options.maxSegLength}
 
   Missed distance of the reference path: ${results.accuracy.missedDistance} meters
   Missed distance of the reference path: ${results.accuracy.offTrackRatio * 100} %

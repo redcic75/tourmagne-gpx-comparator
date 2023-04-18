@@ -42,6 +42,7 @@ describe('compareTracks', function desc() {
         trigger: 20, // in meters - trigger must be less than tolerance
         tolerance: 100, // in meters
         maxDetour: 20000, // in meters
+        maxSegLength: 200, // in meters
       };
 
       const {
@@ -87,6 +88,7 @@ describe('compareTracks', function desc() {
         trigger: 20, // in meters - trigger must be less than tolerance
         tolerance: 100, // in meters
         maxDetour: 20000, // in meters
+        maxSegLength: 200, // in meters
       };
 
       const {
@@ -132,6 +134,7 @@ describe('compareTracks', function desc() {
         trigger: 20, // in meters - trigger must be less than tolerance
         tolerance: 100, // in meters
         maxDetour: 20000, // in meters
+        maxSegLength: 200, // in meters
       };
 
       const {
@@ -177,6 +180,53 @@ describe('compareTracks', function desc() {
         trigger: 20, // in meters - trigger must be less than tolerance
         tolerance: 100, // in meters
         maxDetour: 20000, // in meters
+        maxSegLength: 200, // in meters
+      };
+
+      const {
+        refPoints,
+        challPoints,
+      } = await fileToPoints(refFiles, challFiles);
+
+      result = await compareTracks(refPoints, challPoints, options);
+    });
+
+    it('should return number of missed segments', async () => {
+      expect(result.missedSegments.length).to.equal(4);
+    });
+
+    it('should return ref path distance', async () => {
+      expect(result.accuracy.refDistance).to.equal(659430);
+    });
+
+    it('should return missed segments total distance', async () => {
+      expect(result.accuracy.missedDistance).to.equal(6451);
+    });
+
+    it('should return slowest segment start index', async () => {
+      expect(result.kpi.slowestSegmentStart.index).to.equal(4115);
+    });
+
+    it('should return slowest segment end index', async () => {
+      expect(result.kpi.slowestSegmentEnd.index).to.equal(4210);
+    });
+
+    it('should return slowest segment distance', async () => {
+      expect(result.kpi.distance).to.equal(5553);
+    });
+  });
+
+  context('with Bordeaux - Paris with high maxSegLength (to fall back on old behaviour)', () => {
+    before(async () => {
+      const refFiles = ['Bordeaux_Paris_2022_trace'];
+      const challFiles = ['Bordeaux_Paris_2022_real'];
+
+      const options = {
+        rollingDuration: 1, // in hours
+        trigger: 20, // in meters - trigger must be less than tolerance
+        tolerance: 100, // in meters
+        maxDetour: 20000, // in meters
+        maxSegLength: 2000, // in meters
       };
 
       const {
@@ -226,6 +276,7 @@ describe('compareTracks', function desc() {
         trigger: 20, // in meters - trigger must be less than tolerance
         tolerance: 10, // in meters
         maxDetour: 20000, // in meters
+        maxSegLength: 200, // in meters
       };
 
       ({

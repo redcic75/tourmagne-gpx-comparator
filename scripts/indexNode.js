@@ -61,6 +61,7 @@ const options = {
   trigger: 20, // in meters - trigger must be less than tolerance
   tolerance: 100, // in meters
   maxDetour: 20000, // in meters
+  maxSegLength: 200, // in meters
 };
 
 const prefix = path.resolve(__dirname, '../data/gpx/');

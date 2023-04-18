@@ -15,9 +15,9 @@
 You can create test GPX files and view generated GPX files with https://gpx.studio/l/fr/.
 
 # To do
-- Check inputs / error management
-- Do not take into account segments between files or between <trkseg> in calculateClosest
 - Increase detourMax for 1st point
+- Do not take into account segments between files or between <trkseg> in calculateClosest
+- Check timestamps presence before calculating kpis
 - Create personalized Error classes
 - Separate frontend & backend
 - Performance: 2 long methods (Orleans / Bdx-Paris examples):

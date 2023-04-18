@@ -57,6 +57,7 @@ const launchComparison = async (event) => {
     trigger: parseInt(formEl.trigger.value, 10), // in meters - trigger must be less than tolerance
     tolerance: parseInt(formEl.tolerance.value, 10), // in meters
     maxDetour: parseInt(formEl.maxDetour.value, 10) * 1000, // in meters
+    maxSegLength: parseInt(formEl.maxSegLength.value, 10), // in meters
   };
 
   let results;
