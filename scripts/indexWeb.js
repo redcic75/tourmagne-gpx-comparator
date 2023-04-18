@@ -128,6 +128,7 @@ const loadFiles = async (event) => {
       currentTarget.points = parseGpx(strs);
     } catch (err) {
       alert(err.message);
+      currentTarget.value = '';
       return;
     }
   } else {
@@ -169,9 +170,8 @@ const loadFiles = async (event) => {
 
 // ------ MAIN ------//
 // Display empty map
-// mapboxgl.accessToken =
-// 'pk.eyJ1IjoicmVkY2ljIiwiYSI6ImNsZG41YzZzMjAweGYzbnEwMjYzOWxpMTYifQ.kEkg6g7sPVWFAf0vvAVzkA';
-mapboxgl.accessToken = 'pk.eyJ1IjoicmVkY2ljIiwiYSI6ImNsZG4zZ3UyMjA3NWIzdnM0bGFwNTM4ZDMifQ.eey31FAnZT3z2zxr-M_Ivw';
+mapboxgl.accessToken = 'pk.eyJ1IjoicmVkY2ljIiwiYSI6ImNsZG41YzZzMjAweGYzbnEwMjYzOWxpMTYifQ.kEkg6g7sPVWFAf0vvAVzkA';
+
 const map = new mapboxgl.Map({
   container: 'map',
   style: 'mapbox://styles/mapbox/streets-v12',
