@@ -1,7 +1,6 @@
 const chai = require('chai');
 
 const { expect } = chai;
-chai.use(require('chai-as-promised'));
 
 const path = require('path');
 
@@ -50,11 +49,11 @@ describe('compareTracks', function desc() {
         challPoints,
       } = await fileToPoints(refFiles, challFiles);
 
-      result = await compareTracks(refPoints, challPoints, options);
+      result = compareTracks(refPoints, challPoints, options);
     });
 
     it('should return number of missed segments', async () => {
-      expect(result.missedSegments.length).to.equal(8);
+      expect(result.tracks.missedSegments.length).to.equal(8);
     });
 
     it('should return ref path distance', async () => {
@@ -96,11 +95,11 @@ describe('compareTracks', function desc() {
         challPoints,
       } = await fileToPoints(refFiles, challFiles);
 
-      result = await compareTracks(refPoints, challPoints, options);
+      result = compareTracks(refPoints, challPoints, options);
     });
 
     it('should return number of missed segments', async () => {
-      expect(result.missedSegments.length).to.equal(8);
+      expect(result.tracks.missedSegments.length).to.equal(8);
     });
 
     it('should return ref path distance', async () => {
@@ -142,11 +141,11 @@ describe('compareTracks', function desc() {
         challPoints,
       } = await fileToPoints(refFiles, challFiles);
 
-      result = await compareTracks(refPoints, challPoints, options);
+      result = compareTracks(refPoints, challPoints, options);
     });
 
     it('should return number of missed segments', async () => {
-      expect(result.missedSegments.length).to.equal(8);
+      expect(result.tracks.missedSegments.length).to.equal(8);
     });
 
     it('should return ref path distance', async () => {
@@ -188,11 +187,11 @@ describe('compareTracks', function desc() {
         challPoints,
       } = await fileToPoints(refFiles, challFiles);
 
-      result = await compareTracks(refPoints, challPoints, options);
+      result = compareTracks(refPoints, challPoints, options);
     });
 
     it('should return number of missed segments', async () => {
-      expect(result.missedSegments.length).to.equal(4);
+      expect(result.tracks.missedSegments.length).to.equal(4);
     });
 
     it('should return ref path distance', async () => {
@@ -234,11 +233,11 @@ describe('compareTracks', function desc() {
         challPoints,
       } = await fileToPoints(refFiles, challFiles);
 
-      result = await compareTracks(refPoints, challPoints, options);
+      result = compareTracks(refPoints, challPoints, options);
     });
 
     it('should return number of missed segments', async () => {
-      expect(result.missedSegments.length).to.equal(3);
+      expect(result.tracks.missedSegments.length).to.equal(3);
     });
 
     it('should return ref path distance', async () => {
@@ -285,8 +284,8 @@ describe('compareTracks', function desc() {
       } = await fileToPoints(refFiles, challFiles));
     });
 
-    it('should throw when trigger > tolerance', async () => {
-      await expect(compareTracks(refPoints, challPoints, options)).to.be.rejectedWith(Error, "tolérance d'écart");
+    it('should throw when trigger > tolerance', () => {
+      expect(() => compareTracks(refPoints, challPoints, options)).to.throw(Error, "tolérance d'écart");
     });
   });
 });

@@ -311,7 +311,7 @@ const validateOptions = (options) => {
   }
 };
 
-const compareTracks = async (refPoints, challPoints, options) => {
+const compareTracks = (refPoints, challPoints, options) => {
   validateOptions(options);
 
   // Extend refPoints with missed segments
@@ -324,9 +324,18 @@ const compareTracks = async (refPoints, challPoints, options) => {
 
   // Tourmagne Kpis
   const kpi = calculateKpis(refPointsMissed, options);
+  const worstPoints = refPoints.slice(
+    kpi.slowestSegmentStart.index,
+    kpi.slowestSegmentEnd.index + 1,
+  );
 
   return {
-    missedSegments,
+    tracks: {
+      missedSegments,
+      ref: [refPoints],
+      chall: [challPoints],
+      worst: [worstPoints],
+    },
     accuracy,
     kpi,
   };

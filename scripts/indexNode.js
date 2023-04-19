@@ -23,7 +23,7 @@ const main = async (refPaths, challPaths, options) => {
 
   let results;
   try {
-    results = await compareTracks(
+    results = compareTracks(
       refPoints,
       challPoints,
       options,
