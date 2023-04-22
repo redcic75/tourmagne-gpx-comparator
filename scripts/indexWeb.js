@@ -101,7 +101,7 @@ const downloadFile = () => {
     { type: 'text/plain;charset=utf-8' },
   );
 
-  FileSaver.saveAs(blob, 'analysis.gpx');
+  FileSaver.saveAs(blob, 'tourmagne-analysis.gpx');
 };
 
 // load files

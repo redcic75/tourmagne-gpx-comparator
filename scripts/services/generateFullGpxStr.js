@@ -49,12 +49,12 @@ const generateFullGpxStr = (results) => {
   });
 
   gpxStr += generateTrk(chall, {
-    name: `Réalisé - ${Math.round(results.accuracy.offTrackRatio * 10000) / 100} % de la trace de référence non parcourus`,
+    name: `Réalisé - ${100 - Math.round(results.accuracy.offTrackRatio * 10000) / 100} % de la trace de référence parcourus`,
     color: 'Green',
   });
 
   gpxStr += generateTrk(missedSegments, {
-    name: `Ecarts - ${Math.round(results.accuracy.missedDistance / 100) / 10} km de la trace de référence non parcourus`,
+    name: `Ecarts - ${Math.round(results.accuracy.missedDistance / 100) / 10} km de la trace de référence non parcourus (soit ${Math.round(results.accuracy.offTrackRatio * 10000) / 100} %)`,
     color: 'Red',
   });
 
