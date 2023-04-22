@@ -16,8 +16,8 @@ const logComparisonResults = (inputParams, results) => {
 
   Missed distance of the reference path: ${results.accuracy.missedDistance} meters
   Missed distance of the reference path: ${Math.round(results.accuracy.offTrackRatio * 10000) / 100} %
-  Worst ${inputParams.options.rollingDuration} hours:
-   - Started after ${Math.round((results.kpi.slowestSegmentStart.elapsedTime / (3600 * 1000)) * 100) / 100} hours at km ${results.kpi.slowestSegmentStart.distance / 1000} travelled on reference track
+  Worst ${results.kpi.rollingDuration} hours:
+   - Started at ${new Date(results.kpi.slowestSegmentStart.elapsedTime).toISOString().substring(11, 16).replace(':', 'h')} at km ${results.kpi.slowestSegmentStart.distance / 1000} on reference track
    - Distance: ${results.kpi.distance / 1000} km
    - Mean speed during this period: ${results.kpi.meanSpeed} km/h
   `;

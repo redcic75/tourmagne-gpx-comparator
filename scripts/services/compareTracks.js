@@ -293,6 +293,7 @@ const calculateKpis = (refPointsMissed, options) => {
   const meanSpeed = (distance / 1000) / rollingDuration; // km/h
 
   return {
+    rollingDuration,
     slowestSegmentStart,
     slowestSegmentEnd,
     distance,

@@ -39,8 +39,8 @@ const updateDom = (results) => {
   detourMaxParamEl.innerHTML = `${formEl.trigger.value} km`;
   missedDistanceEl.innerHTML = `${Math.round(results.accuracy.missedDistance)} m`;
   missedPercentEl.innerHTML = `${Math.round(results.accuracy.offTrackRatio * 1000) / 10} %`;
-  perfKmEl.innerHTML = `Vitesse moyenne pendant les pires ${formEl.rollingDuration.value} h : ${Math.round(results.kpi.meanSpeed * 1000) / 1000} km/h (soit une distance de ${results.kpi.distance / 1000} km)`;
-  perfWhenEl.innerHTML = `Période commencée après ${Math.round(results.kpi.slowestSegmentStart.elapsedTime / 3600) / 1000} h au km ${results.kpi.slowestSegmentStart.distance / 1000}`;
+  perfKmEl.innerHTML = `Vitesse moyenne pendant les pires ${results.kpi.rollingDuration} h : ${Math.round(results.kpi.meanSpeed * 1000) / 1000} km/h (soit une distance de ${results.kpi.distance / 1000} km)`;
+  perfWhenEl.innerHTML = `Période commencée après ${new Date(results.kpi.slowestSegmentStart.elapsedTime).toISOString().substring(11, 16).replace(':', 'h')} au km ${results.kpi.slowestSegmentStart.distance / 1000} de la trace de référence`;
 };
 
 // ------ EVENT LISTENERS ------//

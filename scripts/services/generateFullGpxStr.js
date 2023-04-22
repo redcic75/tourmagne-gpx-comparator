@@ -49,17 +49,17 @@ const generateFullGpxStr = (results) => {
   });
 
   gpxStr += generateTrk(chall, {
-    name: 'Réalisé',
+    name: `Réalisé - ${Math.round(results.accuracy.offTrackRatio * 10000) / 100} % de la trace de référence non parcourus`,
     color: 'Green',
   });
 
   gpxStr += generateTrk(missedSegments, {
-    name: 'Ecarts',
+    name: `Ecarts - ${Math.round(results.accuracy.missedDistance / 100) / 10} km de la trace de référence non parcourus`,
     color: 'Red',
   });
 
   gpxStr += generateTrk(worst, {
-    name: 'Pire période',
+    name: `Pire période de ${results.kpi.rollingDuration} h: ${Math.round(results.kpi.meanSpeed * 1000) / 1000} km/h soit une distance de ${results.kpi.distance / 1000} km (période commencée après ${new Date(results.kpi.slowestSegmentStart.elapsedTime).toISOString().substring(11, 16).replace(':', 'h')} au km ${results.kpi.slowestSegmentStart.distance / 1000} de la trace de référence)`,
     color: 'White',
   });
 
