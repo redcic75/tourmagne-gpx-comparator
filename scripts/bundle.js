@@ -2188,6 +2188,15 @@ function trimZeros(numStr){
 module.exports = toNumber
 
 },{}],17:[function(require,module,exports){
+const msToHHMM = (ms) => {
+  const h = Math.floor(ms / 3600000);
+  const m = Math.floor((ms - h * 3600000) / 60000);
+  return `${h}h${m.toString().padStart(2, '0')}`;
+};
+
+module.exports = msToHHMM;
+
+},{}],18:[function(require,module,exports){
 const mapboxgl = require('mapbox-gl/dist/mapbox-gl');
 const FileSaver = require('file-saver');
 
@@ -2195,6 +2204,7 @@ const parseGpx = require('./services/parseGpx');
 const generateFullGpxStr = require('./services/generateFullGpxStr');
 const compareTracks = require('./services/compareTracks');
 const displayTrack = require('./mapHelpers/displayTrack');
+const msToHHMM = require('./helper/msToHHMM');
 const { updateBounds, fitBounds } = require('./mapHelpers/updateBounds');
 
 // ------ GLOBAL VARIABLES ------//
@@ -2230,7 +2240,7 @@ const updateDom = (results) => {
   missedDistanceEl.innerHTML = `${Math.round(results.accuracy.missedDistance)} m`;
   missedPercentEl.innerHTML = `${Math.round(results.accuracy.offTrackRatio * 1000) / 10} %`;
   perfKmEl.innerHTML = `Vitesse moyenne pendant les pires ${results.kpi.rollingDuration} h : ${Math.round(results.kpi.meanSpeed * 1000) / 1000} km/h (soit une distance de ${results.kpi.distance / 1000} km)`;
-  perfWhenEl.innerHTML = `Période commencée après ${new Date(results.kpi.slowestSegmentStart.elapsedTime).toISOString().substring(11, 16).replace(':', 'h')} au km ${results.kpi.slowestSegmentStart.distance / 1000} de la trace de référence`;
+  perfWhenEl.innerHTML = `Période commencée après ${msToHHMM(results.kpi.slowestSegmentStart.elapsedTime)} au km ${results.kpi.slowestSegmentStart.distance / 1000} de la trace de référence`;
 };
 
 // ------ EVENT LISTENERS ------//
@@ -2389,7 +2399,7 @@ map.on('load', () => {
   downloadGpxEl.addEventListener('click', downloadFile);
 });
 
-},{"./mapHelpers/displayTrack":18,"./mapHelpers/updateBounds":19,"./services/compareTracks":20,"./services/generateFullGpxStr":21,"./services/parseGpx":22,"file-saver":13,"mapbox-gl/dist/mapbox-gl":15}],18:[function(require,module,exports){
+},{"./helper/msToHHMM":17,"./mapHelpers/displayTrack":19,"./mapHelpers/updateBounds":20,"./services/compareTracks":21,"./services/generateFullGpxStr":22,"./services/parseGpx":23,"file-saver":13,"mapbox-gl/dist/mapbox-gl":15}],19:[function(require,module,exports){
 // Display a track
 const displayTrack = (map, id, segments, paint) => {
   const features = [];
@@ -2441,7 +2451,7 @@ const displayTrack = (map, id, segments, paint) => {
 
 module.exports = displayTrack;
 
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 const geolib = require('geolib');
 
 // Helper functions
@@ -2489,7 +2499,7 @@ module.exports = {
   fitBounds,
 };
 
-},{"geolib":14}],20:[function(require,module,exports){
+},{"geolib":14}],21:[function(require,module,exports){
 const geolib = require('geolib');
 
 // Calculate challenger passage time at each ref point
@@ -2836,7 +2846,9 @@ const compareTracks = (refPoints, challPoints, options) => {
 
 module.exports = compareTracks;
 
-},{"geolib":14}],21:[function(require,module,exports){
+},{"geolib":14}],22:[function(require,module,exports){
+const msToHHMM = require('../helper/msToHHMM');
+
 const generateTrk = (segments, options) => {
   const {
     name,
@@ -2898,7 +2910,7 @@ const generateFullGpxStr = (results) => {
   });
 
   gpxStr += generateTrk(worst, {
-    name: `Pire période de ${results.kpi.rollingDuration} h: ${Math.round(results.kpi.meanSpeed * 1000) / 1000} km/h soit une distance de ${results.kpi.distance / 1000} km (période commencée après ${new Date(results.kpi.slowestSegmentStart.elapsedTime).toISOString().substring(11, 16).replace(':', 'h')} au km ${results.kpi.slowestSegmentStart.distance / 1000} de la trace de référence)`,
+    name: `Pire période de ${results.kpi.rollingDuration} h: ${Math.round(results.kpi.meanSpeed * 1000) / 1000} km/h soit une distance de ${results.kpi.distance / 1000} km (période commencée après ${msToHHMM(results.kpi.slowestSegmentStart.elapsedTime)} au km ${results.kpi.slowestSegmentStart.distance / 1000} de la trace de référence)`,
     color: 'White',
   });
 
@@ -2908,7 +2920,7 @@ const generateFullGpxStr = (results) => {
 
 module.exports = generateFullGpxStr;
 
-},{}],22:[function(require,module,exports){
+},{"../helper/msToHHMM":17}],23:[function(require,module,exports){
 const { XMLParser } = require('fast-xml-parser');
 
 // Sort files chronologically
@@ -2971,4 +2983,4 @@ const parseGpx = (strs) => {
 
 module.exports = parseGpx;
 
-},{"fast-xml-parser":2}]},{},[17]);
+},{"fast-xml-parser":2}]},{},[18]);

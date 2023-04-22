@@ -5,6 +5,7 @@ const parseGpx = require('./services/parseGpx');
 const generateFullGpxStr = require('./services/generateFullGpxStr');
 const compareTracks = require('./services/compareTracks');
 const displayTrack = require('./mapHelpers/displayTrack');
+const msToHHMM = require('./helper/msToHHMM');
 const { updateBounds, fitBounds } = require('./mapHelpers/updateBounds');
 
 // ------ GLOBAL VARIABLES ------//
@@ -40,7 +41,7 @@ const updateDom = (results) => {
   missedDistanceEl.innerHTML = `${Math.round(results.accuracy.missedDistance)} m`;
   missedPercentEl.innerHTML = `${Math.round(results.accuracy.offTrackRatio * 1000) / 10} %`;
   perfKmEl.innerHTML = `Vitesse moyenne pendant les pires ${results.kpi.rollingDuration} h : ${Math.round(results.kpi.meanSpeed * 1000) / 1000} km/h (soit une distance de ${results.kpi.distance / 1000} km)`;
-  perfWhenEl.innerHTML = `Période commencée après ${new Date(results.kpi.slowestSegmentStart.elapsedTime).toISOString().substring(11, 16).replace(':', 'h')} au km ${results.kpi.slowestSegmentStart.distance / 1000} de la trace de référence`;
+  perfWhenEl.innerHTML = `Période commencée après ${msToHHMM(results.kpi.slowestSegmentStart.elapsedTime)} au km ${results.kpi.slowestSegmentStart.distance / 1000} de la trace de référence`;
 };
 
 // ------ EVENT LISTENERS ------//
