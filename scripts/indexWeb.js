@@ -2,7 +2,7 @@ const mapboxgl = require('mapbox-gl/dist/mapbox-gl');
 const FileSaver = require('file-saver');
 
 const parseGpx = require('./services/parseGpx');
-const generateGpxStr = require('./services/generateGpxStr');
+const generateFullGpxStr = require('./services/generateFullGpxStr');
 const compareTracks = require('./services/compareTracks');
 const displayTrack = require('./mapHelpers/displayTrack');
 const { updateBounds, fitBounds } = require('./mapHelpers/updateBounds');
@@ -24,12 +24,9 @@ const perfWhenEl = document.querySelector('#perfWhen');
 const perfKmEl = document.querySelector('#perfKm');
 const downloadGpxEl = document.querySelector('#downloadGpx');
 
-let gpxStrRef = '';
-let gpxStrChall = '';
-let gpxStrMissed = '';
-let gpxStrWorst = '';
-const geolibBounds = {};
 let refPoints;
+let gpxStrFull = '';
+const geolibBounds = {};
 
 // ------ HELPERS ------//
 const updateDom = (results) => {
@@ -94,41 +91,17 @@ const launchComparison = async (event) => {
   displayTrack(map, 'slowest', results.tracks.worst, paintSlowest);
 
   // Generate the downloadable files
-  const promises = [
-    generateGpxStr(results.tracks.ref),
-    generateGpxStr(results.tracks.chall),
-    generateGpxStr(results.tracks.missedSegments),
-    generateGpxStr(results.tracks.worst),
-  ];
-  [gpxStrRef, gpxStrChall, gpxStrMissed, gpxStrWorst] = await Promise.all(promises);
+  gpxStrFull = generateFullGpxStr(results);
   downloadGpxEl.classList.remove('disabled');
 };
 
 const downloadFile = () => {
-  const blobRef = new Blob(
-    [gpxStrRef],
+  const blob = new Blob(
+    [gpxStrFull],
     { type: 'text/plain;charset=utf-8' },
   );
 
-  const blobChall = new Blob(
-    [gpxStrChall],
-    { type: 'text/plain;charset=utf-8' },
-  );
-
-  const blobMissed = new Blob(
-    [gpxStrMissed],
-    { type: 'text/plain;charset=utf-8' },
-  );
-
-  const blobWorst = new Blob(
-    [gpxStrWorst],
-    { type: 'text/plain;charset=utf-8' },
-  );
-
-  FileSaver.saveAs(blobRef, 'référence.gpx');
-  FileSaver.saveAs(blobChall, 'réalisé.gpx');
-  FileSaver.saveAs(blobMissed, 'écarts.gpx');
-  FileSaver.saveAs(blobWorst, 'pire-période.gpx');
+  FileSaver.saveAs(blob, 'analysis.gpx');
 };
 
 // load files

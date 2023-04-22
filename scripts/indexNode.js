@@ -4,7 +4,7 @@ const parseGpx = require('./services/parseGpx');
 const compareTracks = require('./services/compareTracks');
 const getGpxStrs = require('./services/getGpxStrs');
 const logComparisonResults = require('./services/logComparisonResults');
-const writeMissedSegmentsToGpxFile = require('./services/writeMissedSegmentsToGpxFile');
+const writeAllToGpxFile = require('./services/writeAllToGpxFile');
 
 // Launches console script
 const main = async (refPaths, challPaths, options) => {
@@ -33,15 +33,13 @@ const main = async (refPaths, challPaths, options) => {
     return;
   }
 
-  const inputParams = {
+  await writeAllToGpxFile(results);
+
+  logComparisonResults({
     refPaths,
     challPaths,
     options,
-  };
-
-  await writeMissedSegmentsToGpxFile(inputParams, results);
-
-  logComparisonResults(inputParams, results);
+  }, results);
 };
 
 // ------ USER DATA ------//
@@ -51,15 +49,15 @@ const main = async (refPaths, challPaths, options) => {
 // const refFiles = ['Bordeaux_Paris_2022_trace'];
 // const challFiles = ['Bordeaux_Paris_2022_real'];
 
-// const refFiles = ['orleans-loop-trace'];
+const refFiles = ['orleans-loop-trace'];
 // const challFiles = [
 //   'orleans-loop-real-seg-1',
 //   'orleans-loop-real-seg-3',
 //   'orleans-loop-real-seg-2'];
-// const challFiles = ['orleans-loop-real-3-trkseg'];
+const challFiles = ['orleans-loop-real-3-trkseg'];
 
-const refFiles = ['tourmagne-ref'];
-const challFiles = ['tourmagne-francois'];
+// const refFiles = ['tourmagne-ref'];
+// const challFiles = ['tourmagne-francois'];
 
 // Params
 const options = {
