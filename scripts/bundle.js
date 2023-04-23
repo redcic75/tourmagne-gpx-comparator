@@ -2219,9 +2219,8 @@ const triggerParamEl = document.querySelector('#triggerParam');
 const toleranceParamEl = document.querySelector('#toleranceParam');
 const detourMaxParamEl = document.querySelector('#detourMaxParam');
 const missedDistanceEl = document.querySelector('#missedDistance');
-const missedPercentEl = document.querySelector('#missedPercent');
-const perfWhenEl = document.querySelector('#perfWhen');
-const perfKmEl = document.querySelector('#perfKm');
+const perfEl = document.querySelector('#perf');
+const perfTitleEl = document.querySelector('#perfTitle');
 const downloadGpxEl = document.querySelector('#downloadGpx');
 
 let refPoints;
@@ -2237,10 +2236,9 @@ const updateDom = (results) => {
   triggerParamEl.innerHTML = `${formEl.trigger.value} m`;
   toleranceParamEl.innerHTML = `${formEl.tolerance.value} m`;
   detourMaxParamEl.innerHTML = `${formEl.trigger.value} km`;
-  missedDistanceEl.innerHTML = `${Math.round(results.accuracy.missedDistance)} m`;
-  missedPercentEl.innerHTML = `${Math.round(results.accuracy.offTrackRatio * 1000) / 10} %`;
-  perfKmEl.innerHTML = `Vitesse moyenne pendant les pires ${results.kpi.rollingDuration} h : ${Math.round(results.kpi.meanSpeed * 1000) / 1000} km/h (soit une distance de ${results.kpi.distance / 1000} km)`;
-  perfWhenEl.innerHTML = `Période commencée après ${msToHHMM(results.kpi.slowestSegmentStart.elapsedTime)} au km ${results.kpi.slowestSegmentStart.distance / 1000} de la trace de référence`;
+  missedDistanceEl.innerHTML = `${Math.round(results.accuracy.missedDistance / 100) / 10} km (soit ${Math.round(results.accuracy.offTrackRatio * 10000) / 100} %)`;
+  perfTitleEl.innerHTML = `Distance de la trace parcourue pendant les ${results.kpi.rollingDuration} h les moins favorables`;
+  perfEl.innerHTML = `${results.kpi.distance / 1000} km (à partir du km ${results.kpi.slowestSegmentStart.distance / 1000} de la trace de référence, soit après  ${msToHHMM(results.kpi.slowestSegmentStart.elapsedTime)} à ${Math.round(results.kpi.meanSpeed * 1000) / 1000} km/h de moyenne)`;
 };
 
 // ------ EVENT LISTENERS ------//
@@ -2301,7 +2299,7 @@ const downloadFile = () => {
     { type: 'text/plain;charset=utf-8' },
   );
 
-  FileSaver.saveAs(blob, 'tourmagne-analysis.gpx');
+  FileSaver.saveAs(blob, 'gpsvisualizerSynthesis.gpx');
 };
 
 // load files
@@ -2847,8 +2845,6 @@ const compareTracks = (refPoints, challPoints, options) => {
 module.exports = compareTracks;
 
 },{"geolib":14}],22:[function(require,module,exports){
-const msToHHMM = require('../helper/msToHHMM');
-
 const generateTrk = (segments, options) => {
   const {
     name,
@@ -2910,7 +2906,7 @@ const generateFullGpxStr = (results) => {
   });
 
   gpxStr += generateTrk(worst, {
-    name: `Pire période de ${results.kpi.rollingDuration} h: ${Math.round(results.kpi.meanSpeed * 1000) / 1000} km/h soit une distance de ${results.kpi.distance / 1000} km (période commencée après ${msToHHMM(results.kpi.slowestSegmentStart.elapsedTime)} au km ${results.kpi.slowestSegmentStart.distance / 1000} de la trace de référence)`,
+    name: `Distance de la trace parcourue pendant les ${results.kpi.rollingDuration} h les moins favorables : ${results.kpi.distance / 1000} km (à partir du km ${results.kpi.slowestSegmentStart.distance / 1000} de la trace de référence)`,
     color: 'White',
   });
 
@@ -2920,7 +2916,7 @@ const generateFullGpxStr = (results) => {
 
 module.exports = generateFullGpxStr;
 
-},{"../helper/msToHHMM":17}],23:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 const { XMLParser } = require('fast-xml-parser');
 
 // Sort files chronologically

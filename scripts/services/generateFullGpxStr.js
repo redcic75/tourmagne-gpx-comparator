@@ -1,5 +1,3 @@
-const msToHHMM = require('../helper/msToHHMM');
-
 const generateTrk = (segments, options) => {
   const {
     name,
@@ -61,7 +59,7 @@ const generateFullGpxStr = (results) => {
   });
 
   gpxStr += generateTrk(worst, {
-    name: `Pire période de ${results.kpi.rollingDuration} h: ${Math.round(results.kpi.meanSpeed * 1000) / 1000} km/h soit une distance de ${results.kpi.distance / 1000} km (période commencée après ${msToHHMM(results.kpi.slowestSegmentStart.elapsedTime)} au km ${results.kpi.slowestSegmentStart.distance / 1000} de la trace de référence)`,
+    name: `Distance de la trace parcourue pendant les ${results.kpi.rollingDuration} h les moins favorables : ${results.kpi.distance / 1000} km (à partir du km ${results.kpi.slowestSegmentStart.distance / 1000} de la trace de référence)`,
     color: 'White',
   });
 

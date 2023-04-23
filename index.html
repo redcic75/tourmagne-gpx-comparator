@@ -59,7 +59,7 @@
         <li>Fichier GPX de la trace de référence :
           <span id="refParam"></span>
         </li>
-        <li>Fichier(s) GPX de la trace parcourue :
+        <li>Fichier(s) GPX de la trace réalisée :
           <span id="challParam"></span>
         </li>
         <li>Durée prise en compte pour le calcul de la performance :
@@ -77,23 +77,11 @@
       </ul>
       <h3>Résultats</h3>
       <ul>
-        <li>Nombre de km de la trace de référence non parcourus (<span class="red">en rouge sur la carte</span>):
+        <li>Distance de la trace de référence non parcourue (<span class="red">en rouge sur la carte</span>) :
           <span id="missedDistance">calcul non lancé ou en cours</span>
         </li>
-        <li>Pourcentage de la trace de référence non parcouru :
-          <span id="missedPercent">calcul non lancé ou en cours</span>
-        </li>
-        <li>Période la plus lente (<span class="">en trait évidé sur la carte</span>):
-          <ul>
-            <li>-
-              <span id="perfKm">calcul non lancé ou en cours</span>
-            </li>
-            <li>-
-              <span id="perfWhen">calcul non lancé ou en cours</span>
-            </li>
-
-          </ul>
-
+        <li><span id="perfTitle">Distance de la trace de référence parcourue pendant la période la moins favorable</span> (<span class="">en trait évidé sur la carte</span>) :
+          <span id="perf">calcul non lancé ou en cours</span>
         </li>
       </ul>
       <button id="downloadGpx" class="btn btn-primary disabled">Télécharger le fichier GPX complet (avec référénce, réalisé, écarts et pire période)</button>
