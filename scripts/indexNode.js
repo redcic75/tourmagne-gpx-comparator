@@ -61,9 +61,9 @@ const challFiles = ['orleans-loop-real-3-trkseg'];
 
 // Params
 const options = {
-  rollingDuration: 1, // in hours
-  trigger: 20, // in meters - trigger must be less than tolerance
-  tolerance: 100, // in meters
+  rollingDuration: 24, // in hours
+  trigger: 8, // in meters - trigger must be less than tolerance
+  tolerance: 80, // in meters
   maxDetour: 20000, // in meters
   maxSegLength: 200, // in meters
 };

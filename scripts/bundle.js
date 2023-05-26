@@ -2235,7 +2235,7 @@ const updateDom = (results) => {
   durationParamEl.innerHTML = `${formEl.rollingDuration.value} h`;
   triggerParamEl.innerHTML = `${formEl.trigger.value} m`;
   toleranceParamEl.innerHTML = `${formEl.tolerance.value} m`;
-  detourMaxParamEl.innerHTML = `${formEl.trigger.value} km`;
+  detourMaxParamEl.innerHTML = `${formEl.maxDetour.value} km`;
   missedDistanceEl.innerHTML = `${Math.round(results.accuracy.missedDistance / 100) / 10} km (soit ${Math.round(results.accuracy.offTrackRatio * 10000) / 100} %)`;
   perfTitleEl.innerHTML = `Distance de la trace parcourue pendant les ${results.kpi.rollingDuration} h les moins favorables`;
   perfEl.innerHTML = `${results.kpi.distance / 1000} km (à partir du km ${results.kpi.slowestSegmentStart.distance / 1000} de la trace de référence, soit après  ${msToHHMM(results.kpi.slowestSegmentStart.elapsedTime)} à ${Math.round(results.kpi.meanSpeed * 1000) / 1000} km/h de moyenne)`;
