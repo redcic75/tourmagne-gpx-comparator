@@ -15,6 +15,7 @@
 You can create test GPX files and view generated GPX files with https://gpx.studio/l/fr/.
 
 # To do
+- Change button color when calculus is launched to notify the user 
 - Check timestamps presence before calculating kpis
 - Create personalized Error classes
 - Separate frontend & backend

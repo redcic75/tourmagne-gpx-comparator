@@ -23,6 +23,7 @@ const missedDistanceEl = document.querySelector('#missedDistance');
 const perfEl = document.querySelector('#perf');
 const perfTitleEl = document.querySelector('#perfTitle');
 const downloadGpxEl = document.querySelector('#downloadGpx');
+// const launchComparisonEl = document.querySelector('#launchComparisonBtn');
 
 let refPoints;
 let gpxStrFull = '';
@@ -43,8 +44,12 @@ const updateDom = (results) => {
 };
 
 // ------ EVENT LISTENERS ------//
-const launchComparison = async (event) => {
+const launchComparison = (event) => {
   event.preventDefault();
+
+  // TODO: not working because every method afterwards is synchronous
+  // launchComparisonEl.classList.remove('btn-primary');
+  // launchComparisonEl.classList.add('btn-danger');
 
   const {
     map,
