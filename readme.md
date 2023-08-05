@@ -1,7 +1,6 @@
 # How to use
 ## With node
-- Add source gpx files in `data/gpx` folder
-- Fill in user data in `scripts/indexNode.js`
+- Add source gpx files in `data/gpx/evaluate-challenger/reference` and `data/gpx/evaluate-challenger/challenger` folder
 - Run `node scripts/indexNode.js`
 - Synthesis is logged in the console.
 - A GPX file containing all missed points of reference track is added in `generated_files` folder
@@ -15,7 +14,7 @@
 You can create test GPX files and view generated GPX files with https://gpx.studio/l/fr/.
 
 # To do
-- Change button color when calculus is launched to notify the user 
+- Change button color when calculus is launched to notify the user
 - Check timestamps presence before calculating kpis
 - Create personalized Error classes
 - Separate frontend & backend
