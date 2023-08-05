@@ -1,10 +1,21 @@
 const path = require('path');
+const fs = require('fs');
 
 const parseGpx = require('./services/parseGpx');
 const compareTracks = require('./services/compareTracks');
 const getGpxStrs = require('./services/getGpxStrs');
 const logComparisonResults = require('./services/logComparisonResults');
 const writeAllToGpxFile = require('./services/writeAllToGpxFile');
+
+function getAllGpxFiles(directoryPath) {
+  const files = fs.readdirSync(directoryPath); // ?
+
+  const gpxFiles = files
+    .filter((file) => path.extname(file).toLowerCase() === '.gpx')
+    .map((file) => path.basename(file, '.gpx'));
+
+  return gpxFiles;
+}
 
 // Launches console script
 const main = async (refPaths, challPaths, options) => {
@@ -46,33 +57,17 @@ const main = async (refPaths, challPaths, options) => {
 };
 
 // ------ USER DATA ------//
-// Path to GPX files to read
+const refFiles = getAllGpxFiles('data/gpx/evaluate-challenger/reference');
+const challFiles = getAllGpxFiles('data/gpx/evaluate-challenger/challenger');
 
 // const refFiles = ['Bordeaux_Paris_2022_real'];
 // const refFiles = ['Bordeaux_Paris_2022_trace'];
-// const challFiles = ['Bordeaux_Paris_2022_real'];
 
-// const refFiles = ['orleans-loop-trace'];
-const refFiles = ['challenger_data/traces/monotracev20230630'];
 // const challFiles = [
 //   'orleans-loop-real-seg-1',
 //   'orleans-loop-real-seg-3',
 //   'orleans-loop-real-seg-2'];
 // const challFiles = ['orleans-loop-real-3-trkseg'];
-const challFiles = [
-  'challenger_data/challengers/Brabant/Morning_Ride 2',
-  'challenger_data/challengers/Brabant/Morning_Ride 3',
-  'challenger_data/challengers/Brabant/Morning_Ride 4',
-  'challenger_data/challengers/Brabant/Morning_Ride 5',
-  'challenger_data/challengers/Brabant/Morning_Ride 6',
-  'challenger_data/challengers/Brabant/Morning_Ride 7',
-  'challenger_data/challengers/Brabant/Morning_Ride 8',
-  'challenger_data/challengers/Brabant/Morning_Ride',
-  'challenger_data/challengers/Brabant/Night_Ride',
-];
-
-// const refFiles = ['tourmagne-ref'];
-// const challFiles = ['tourmagne-francois'];
 
 // Params
 const options = {
