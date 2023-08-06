@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 const geolib = require('geolib');
 
 // Calculate challenger passage time at each ref point
@@ -39,7 +40,8 @@ const calculateClosest = (refPoints, challPoints, options) => {
   let challIndex = 0;
   let is1stPointFound = false;
 
-  return refPoints.map((refPoint) => {
+  return refPoints.map((refPoint, index) => {
+    console.log(`    - Progress: ${Math.round((index / refPoints.length) * 10_000) / 100} %`);
     // challLocalIndex: running index on challenge track used to find closest point
     let challLocalIndex = challIndex;
     let detour = 0;
@@ -316,14 +318,18 @@ const compareTracks = (refPoints, challPoints, options) => {
   validateOptions(options);
 
   // Extend refPoints with missed segments
+  console.log('  - Calculating closest challenger points to each reference points...');
   const refPointsPassBy = calculateClosest(refPoints, challPoints, options);
+  console.log('  - Calculating closest missed reference points...');
   const refPointsMissed = calculateMissed(refPointsPassBy, options);
 
   // Generate missed segments & accuracy
+  console.log('  - Generating missed segments GPX file and challenger accuracy...');
   const missedSegments = generateMissedSegments(refPointsMissed);
   const accuracy = calculateAccuracy(refPoints, missedSegments);
 
   // Tourmagne Kpis
+  console.log('  - Calculating Kpis...');
   const kpi = calculateKpis(refPointsMissed, options);
   const worstPoints = refPoints.slice(
     kpi.slowestSegmentStart.index,

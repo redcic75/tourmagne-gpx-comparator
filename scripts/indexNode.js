@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 const path = require('path');
 const fs = require('fs');
 
@@ -8,7 +9,7 @@ const logComparisonResults = require('./services/logComparisonResults');
 const writeAllToGpxFile = require('./services/writeAllToGpxFile');
 
 function getAllGpxFiles(directoryPath) {
-  const files = fs.readdirSync(directoryPath); // ?
+  const files = fs.readdirSync(directoryPath);
 
   const gpxFiles = files
     .filter((file) => path.extname(file).toLowerCase() === '.gpx')
@@ -28,7 +29,10 @@ const main = async (refPaths, challPaths, options) => {
   let refPoints;
   let challPoints;
   try {
+    console.log('Parsing reference GPX file...');
     refPoints = parseGpx(refGpxStrs).flat();
+
+    console.log('Parsing challenger GPX files...');
     challPoints = parseGpx(challGpxStrs).flat();
   } catch (err) {
     console.log(`ERREUR: ${err.message}`);
@@ -36,6 +40,7 @@ const main = async (refPaths, challPaths, options) => {
 
   let results;
   try {
+    console.log('Comparing reference and challenger tracks...');
     results = compareTracks(
       refPoints,
       challPoints,
