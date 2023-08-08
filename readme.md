@@ -1,4 +1,5 @@
 # How to use
+
 ## With node
 - Add source gpx files in `data/gpx/evaluate-challenger/reference` and `data/gpx/evaluate-challenger/challenger` folder
 - Run `node scripts/indexNode.js`
