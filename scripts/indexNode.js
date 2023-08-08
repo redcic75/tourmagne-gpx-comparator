@@ -83,9 +83,9 @@ const options = {
   maxSegLength: 200, // in meters
 };
 
-const prefix = path.resolve(__dirname, '../data/gpx/');
-const refPaths = refFiles.map((refFile) => `${prefix}/${refFile}.gpx`);
-const challPaths = challFiles.map((challFile) => `${prefix}/${challFile}.gpx`);
+const prefix = path.resolve(__dirname, '../data/gpx/evaluate-challenger/');
+const refPaths = refFiles.map((refFile) => `${prefix}/reference/${refFile}.gpx`);
+const challPaths = challFiles.map((challFile) => `${prefix}/challenger/${challFile}.gpx`);
 
 // Launches main
 main(refPaths, challPaths, options);
