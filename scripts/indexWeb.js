@@ -21,6 +21,7 @@ const perfEl = document.querySelector('#perf');
 const perfTitleEl = document.querySelector('#perfTitle');
 const downloadGpxEl = document.querySelector('#downloadGpx');
 const launchComparisonEl = document.querySelector('#launchComparisonBtn');
+const messageEl = document.querySelector('#message');
 
 // ------ GLOBAL VARIABLES ------////
 const tracks = {
@@ -58,22 +59,26 @@ const updateDom = (results) => {
   perfEl.innerHTML = `${results.kpi.distance / 1000} km (à partir du km ${results.kpi.slowestSegmentStart.distance / 1000} de la trace de référence, soit après  ${msToHHMM(results.kpi.slowestSegmentStart.elapsedTime)} à ${Math.round(results.kpi.meanSpeed * 1000) / 1000} km/h de moyenne)`;
 };
 
-const disableAllButtons = () => {
+const workerInProgress = (message) => {
   launchComparisonEl.disabled = true;
   refFileInputEl.disabled = true;
   challFileInputEl.disabled = true;
   downloadGpxEl.disabled = true;
+  messageEl.innerText = message;
+  messageEl.classList.toggle('d-none');
 };
 
-const enableAllButtons = () => {
+const workerDone = () => {
   launchComparisonEl.disabled = false;
   refFileInputEl.disabled = false;
   challFileInputEl.disabled = false;
+  messageEl.innerText = '';
+  messageEl.classList.toggle('d-none');
 };
 
 const launchComparison = (event) => {
   event.preventDefault();
-  disableAllButtons();
+  workerInProgress('Calculs en cours...');
 
   // Get options from form inputs
   const options = {
@@ -117,7 +122,7 @@ compareTracksWorker.onmessage = (event) => {
   // Generate the downloadable files
   fullGpxStr = generateFullGpxStr(results);
 
-  enableAllButtons();
+  workerDone();
   downloadGpxEl.disabled = false;
 };
 
@@ -142,7 +147,7 @@ const loadFiles = async (event, id) => {
     const strs = await Promise.all(promises);
 
     try {
-      disableAllButtons();
+      workerInProgress('Chargement des fichiers en cours...');
       parseGpxWorker.postMessage({ id, strs });
     } catch (err) {
       alert(err.message);
@@ -191,7 +196,7 @@ parseGpxWorker.onmessage = (event) => {
   geolibBounds[id] = updateBounds(map, geolibBounds, tracks[id].points);
   fitBounds(map, geolibBounds);
 
-  enableAllButtons();
+  workerDone();
 };
 
 // ------ MAIN ------//
