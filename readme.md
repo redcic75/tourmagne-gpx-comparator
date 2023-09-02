@@ -7,7 +7,7 @@
 - A GPX file containing all missed points of reference track is added in `generated_files` folder
 
 ## In browser
-- Run `browserify scripts/indexWeb.js -o scripts/bundle.js` to bundle javascript files
+- Run `webpack` or `npm run webpack` to bundle javascript files
 - Launch you local server
 - Open `http://localhost:5500` in your web browser
 
