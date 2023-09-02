@@ -4,8 +4,8 @@ const { expect } = chai;
 
 const path = require('path');
 
-const parseGpx = require('../scripts/services/parseGpx');
-const compareTracks = require('../scripts/services/compareTracks');
+const parseGpx = require('../scripts/workers/parseGpx');
+const compareTracks = require('../scripts/workers/compareTracks');
 const getGpxStrs = require('../scripts/services/getGpxStrs');
 
 const fileToPoints = async (refFiles, challFiles) => {

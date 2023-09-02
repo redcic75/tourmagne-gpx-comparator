@@ -1,7 +1,6 @@
 /* eslint-disable no-alert */
 const mapboxgl = require('mapbox-gl/dist/mapbox-gl');
 const FileSaver = require('file-saver');
-const parseGpx = require('./services/parseGpx');
 const generateFullGpxStr = require('./services/generateFullGpxStr');
 const displayTrack = require('./mapHelpers/displayTrack');
 const msToHHMM = require('./helper/msToHHMM');
@@ -34,13 +33,14 @@ mapboxgl.accessToken = 'pk.eyJ1IjoicmVkY2ljIiwiYSI6ImNsbTFuZjZ6cTNqMXUzZHB2dGFod
 const map = new mapboxgl.Map({
   container: 'map',
   style: 'mapbox://styles/mapbox/streets-v12',
-  center: [3.11, 46.42], // Display Melun - Nîme zone
+  center: [3.11, 46.42], // Display Melun - Nîmes zone
   zoom: 6,
 });
 map.addControl(new mapboxgl.NavigationControl());
 
 // ------ WORKERS ------////
-const compareTracksWorker = new Worker(new URL('./services/compareTracks', import.meta.url));
+const compareTracksWorker = new Worker(new URL('./workers/compareTracks', import.meta.url));
+const parseGpxWorker = new Worker(new URL('./workers/parseGpx', import.meta.url));
 
 // ------ METHODS ------//
 const updateDom = (results) => {
@@ -56,11 +56,21 @@ const updateDom = (results) => {
   perfEl.innerHTML = `${results.kpi.distance / 1000} km (à partir du km ${results.kpi.slowestSegmentStart.distance / 1000} de la trace de référence, soit après  ${msToHHMM(results.kpi.slowestSegmentStart.elapsedTime)} à ${Math.round(results.kpi.meanSpeed * 1000) / 1000} km/h de moyenne)`;
 };
 
+const disableAllButtons = () => {
+  launchComparisonEl.disabled = true;
+  refFileInputEl.disabled = true;
+  challFileInputEl.disabled = true;
+};
+
+const enableAllButtons = () => {
+  launchComparisonEl.disabled = false;
+  refFileInputEl.disabled = false;
+  challFileInputEl.disabled = false;
+};
+
 const launchComparison = (event) => {
   event.preventDefault();
-
-  launchComparisonEl.classList.remove('btn-primary');
-  launchComparisonEl.classList.add('btn-danger');
+  disableAllButtons();
 
   // Get options from form inputs
   const options = {
@@ -105,8 +115,7 @@ compareTracksWorker.onmessage = (event) => {
   gpxStrFull = generateFullGpxStr(results);
   downloadGpxEl.classList.remove('disabled');
 
-  launchComparisonEl.classList.remove('btn-danger');
-  launchComparisonEl.classList.add('btn-primary');
+  enableAllButtons();
 };
 
 const downloadFile = () => {
@@ -118,33 +127,36 @@ const downloadFile = () => {
   FileSaver.saveAs(blob, 'gpsvisualizerSynthesis.gpx');
 };
 
-const loadFiles = async (event, data) => {
+const loadFiles = async (event, trackData) => {
   const {
     currentTarget,
     currentTarget: { files },
   } = event;
 
+  const { id } = trackData;
+
   if (files.length > 0) {
-    data.files = files;
+    trackData.files = files;
     const promises = Array.from(files).map((file) => file.text());
     const strs = await Promise.all(promises);
 
     try {
-      data.points = parseGpx(strs);
+      disableAllButtons();
+      parseGpxWorker.postMessage({ trackData, strs });
     } catch (err) {
       alert(err.message);
       currentTarget.value = '';
       return;
     }
   } else {
-    data.points = [];
+    trackData.points = [];
 
     // Erase track
-    if (map.getLayer(data.id)) {
-      map.removeLayer(data.id);
+    if (map.getLayer(id)) {
+      map.removeLayer(id);
     }
-    if (map.getSource(data.id)) {
-      map.removeSource(data.id);
+    if (map.getSource(id)) {
+      map.removeSource(id);
     }
   }
 
@@ -157,20 +169,37 @@ const loadFiles = async (event, data) => {
       map.removeSource(trackId);
     }
   });
+};
+
+parseGpxWorker.onmessage = (event) => {
+  const {
+    data: {
+      trackData,
+      trackData: {
+        id,
+        color,
+      },
+    },
+  } = event;
+
+  trackData.points = event.data.result;
+
+  if (id === 'ref') {
+    refData.points = trackData.points;
+  } else if (id === 'chall') {
+    challData.points = trackData.points;
+  }
 
   // Display track and update bounds
-  const paint = {
-    'line-color': data.color,
+  displayTrack(map, id, trackData.points, {
+    'line-color': color,
     'line-width': 4,
     'line-opacity': 0.7,
-  };
-  displayTrack(map, data.id, data.points, paint);
-  geolibBounds[data.id] = updateBounds(map, geolibBounds, data.points);
+  });
+  geolibBounds[id] = updateBounds(map, geolibBounds, trackData.points);
   fitBounds(map, geolibBounds);
 
-  if (data.id === 'ref') {
-    refData.points = [...data.points.flat()];
-  }
+  enableAllButtons();
 };
 
 // ------ MAIN ------//

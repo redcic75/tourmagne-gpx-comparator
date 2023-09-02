@@ -58,4 +58,9 @@ const parseGpx = (strs) => {
   return trkptsLines.map((line) => line.map((trkpt) => keepLatLonTime(trkpt)));
 };
 
+onmessage = (event) => {
+  const result = parseGpx(event.data.strs);
+  postMessage({ trackData: event.data.trackData, result });
+};
+
 module.exports = parseGpx;

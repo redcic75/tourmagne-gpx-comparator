@@ -2,8 +2,8 @@
 const path = require('path');
 const fs = require('fs');
 
-const parseGpx = require('./services/parseGpx');
-const compareTracks = require('./services/compareTracks');
+const parseGpx = require('./workers/parseGpx');
+const compareTracks = require('./workers/compareTracks');
 const getGpxStrs = require('./services/getGpxStrs');
 const logComparisonResults = require('./services/logComparisonResults');
 const writeAllToGpxFile = require('./services/writeAllToGpxFile');

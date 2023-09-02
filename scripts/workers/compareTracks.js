@@ -352,3 +352,5 @@ onmessage = (event) => {
   const result = compareTracks(event.data.refPoints, event.data.challPoints, event.data.options);
   postMessage(result);
 };
+
+module.exports = compareTracks;

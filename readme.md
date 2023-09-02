@@ -8,6 +8,7 @@
 
 ## In browser
 - Run `webpack` or `npm run webpack` to bundle javascript files
+- Use `webpack --mode=development` to avoid minification only in dev mode
 - Launch you local server
 - Open `http://localhost:5500` in your web browser
 
@@ -15,13 +16,12 @@
 You can create test GPX files and view generated GPX files with https://gpx.studio/l/fr/.
 
 # To do
-- Use modules (import & export) and stop using browserify -> Other Node.JS method used ?
-- Use workers
-- Fix passing argument to event listener (see https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener#getting_data_into_and_out_of_an_event_listener)
+- Add an alert when calculus is in progress
+- Add a progress bar
 - Add a button to terminate the worker
 - Add a mapbox key field (+ include it in the cookies)
-- Regorganize gpx folder
-- Change button color when calculus is launched to notify the user
+- Gather webpack output in one folder (dist)
+- Regorganize gpx folder (do not forget gpx files needed for tests)
 - Check timestamps presence before calculating kpis
 - Create personalized Error classes
 - Separate frontend & backend
