@@ -7,7 +7,7 @@
 - A GPX file containing all missed points of reference track is added in `generated_files` folder
 
 ## In browser
-- Run `browserify scripts/indexWeb.js -o scripts/bundle.js` to bundle javascript files
+- Run `npm run browserify` to bundle javascript files
 - Launch you local server
 - Open `http://localhost:5500` in your web browser
 
@@ -15,6 +15,11 @@
 You can create test GPX files and view generated GPX files with https://gpx.studio/l/fr/.
 
 # To do
+- Use modules (import & export) and stop using browserify -> Other Node.JS method used ?
+- Use workers
+- Add a button to terminate the worker
+- Add a mapbox key field (+ include it in the cookies)
+- Regorganize gpx folder
 - Change button color when calculus is launched to notify the user
 - Check timestamps presence before calculating kpis
 - Create personalized Error classes

@@ -2222,11 +2222,14 @@ const missedDistanceEl = document.querySelector('#missedDistance');
 const perfEl = document.querySelector('#perf');
 const perfTitleEl = document.querySelector('#perfTitle');
 const downloadGpxEl = document.querySelector('#downloadGpx');
-// const launchComparisonEl = document.querySelector('#launchComparisonBtn');
+const launchComparisonEl = document.querySelector('#launchComparisonBtn');
 
 let refPoints;
 let gpxStrFull = '';
 const geolibBounds = {};
+
+// Workers
+const compareTracksWorker = new Worker('./services/compareTracks');
 
 // ------ HELPERS ------//
 const updateDom = (results) => {
@@ -2246,13 +2249,8 @@ const updateDom = (results) => {
 const launchComparison = (event) => {
   event.preventDefault();
 
-  // TODO: not working because every method afterwards is synchronous
-  // launchComparisonEl.classList.remove('btn-primary');
-  // launchComparisonEl.classList.add('btn-danger');
-
-  const {
-    map,
-  } = event.currentTarget;
+  launchComparisonEl.classList.remove('btn-primary');
+  launchComparisonEl.classList.add('btn-danger');
 
   // Get options from form inputs
   const options = {
@@ -2263,17 +2261,23 @@ const launchComparison = (event) => {
     maxSegLength: parseInt(formEl.maxSegLength.value, 10), // in meters
   };
 
-  let results;
   try {
-    results = compareTracks(
-      refFileInputEl.points.flat(),
-      challFileInputEl.points.flat(),
+    compareTracksWorker.postMessage({
+      refPoints: refFileInputEl.points.flat(),
+      challPoint: challFileInputEl.points.flat(),
       options,
-    );
+    });
   } catch (err) {
     alert(err.message);
-    return;
   }
+};
+
+compareTracksWorker.onmessage = (event) => {
+  const { map } = event.currentTarget;
+  const results = event.data;
+
+  launchComparisonEl.classList.remove('btn-danger');
+  launchComparisonEl.classList.add('btn-primary');
 
   // Update DOM
   updateDom(results);
@@ -2369,7 +2373,8 @@ const loadFiles = async (event) => {
 
 // ------ MAIN ------//
 // Display empty map
-mapboxgl.accessToken = 'pk.eyJ1IjoicmVkY2ljIiwiYSI6ImNsZG41YzZzMjAweGYzbnEwMjYzOWxpMTYifQ.kEkg6g7sPVWFAf0vvAVzkA';
+// mapboxgl.accessToken = 'pk.eyJ1IjoicmVkY2ljIiwiYSI6ImNsZG41YzZzMjAweGYzbnEwMjYzOWxpMTYifQ.kEkg6g7sPVWFAf0vvAVzkA';
+mapboxgl.accessToken = 'pk.eyJ1IjoicmVkY2ljIiwiYSI6ImNsZ21oZmY4bTA2MTAza3FtYjgwNDgzNjMifQ.Gbc70BEgJFbzh7dUtdSxug'; // TODO: DELETE THIS PERSONAL TOKEN
 
 const map = new mapboxgl.Map({
   container: 'map',
@@ -2853,7 +2858,14 @@ const compareTracks = (refPoints, challPoints, options) => {
   };
 };
 
-module.exports = compareTracks;
+// module.exports = compareTracks;
+
+onmessage = (event) => {
+  console.log('TOTO')
+  console.log(event.data)
+  const result = compareTracks(event.data.refPoints, event.data.challPoints, event.data.options);
+  postMessage(result);
+};
 
 },{"geolib":14}],22:[function(require,module,exports){
 const generateTrk = (segments, options) => {
