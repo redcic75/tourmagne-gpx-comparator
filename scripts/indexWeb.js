@@ -69,7 +69,6 @@ const enableAllButtons = () => {
   launchComparisonEl.disabled = false;
   refFileInputEl.disabled = false;
   challFileInputEl.disabled = false;
-  downloadGpxEl.disabled = false;
 };
 
 const launchComparison = (event) => {
@@ -117,9 +116,9 @@ compareTracksWorker.onmessage = (event) => {
 
   // Generate the downloadable files
   fullGpxStr = generateFullGpxStr(results);
-  downloadGpxEl.classList.remove('disabled');
 
   enableAllButtons();
+  downloadGpxEl.disabled = false;
 };
 
 const downloadFile = () => {
