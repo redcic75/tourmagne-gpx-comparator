@@ -3,7 +3,6 @@ const FileSaver = require('file-saver');
 
 const parseGpx = require('./services/parseGpx');
 const generateFullGpxStr = require('./services/generateFullGpxStr');
-const compareTracks = require('./services/compareTracks');
 const displayTrack = require('./mapHelpers/displayTrack');
 const msToHHMM = require('./helper/msToHHMM');
 const { updateBounds, fitBounds } = require('./mapHelpers/updateBounds');
@@ -23,11 +22,14 @@ const missedDistanceEl = document.querySelector('#missedDistance');
 const perfEl = document.querySelector('#perf');
 const perfTitleEl = document.querySelector('#perfTitle');
 const downloadGpxEl = document.querySelector('#downloadGpx');
-// const launchComparisonEl = document.querySelector('#launchComparisonBtn');
+const launchComparisonEl = document.querySelector('#launchComparisonBtn');
 
 let refPoints;
 let gpxStrFull = '';
 const geolibBounds = {};
+
+// Workers
+const compareTracksWorker = new Worker(new URL('./services/compareTracks', import.meta.url));
 
 // ------ HELPERS ------//
 const updateDom = (results) => {
@@ -47,13 +49,8 @@ const updateDom = (results) => {
 const launchComparison = (event) => {
   event.preventDefault();
 
-  // TODO: not working because every method afterwards is synchronous
-  // launchComparisonEl.classList.remove('btn-primary');
-  // launchComparisonEl.classList.add('btn-danger');
-
-  const {
-    map,
-  } = event.currentTarget;
+  launchComparisonEl.classList.remove('btn-primary');
+  launchComparisonEl.classList.add('btn-danger');
 
   // Get options from form inputs
   const options = {
@@ -64,17 +61,19 @@ const launchComparison = (event) => {
     maxSegLength: parseInt(formEl.maxSegLength.value, 10), // in meters
   };
 
-  let results;
   try {
-    results = compareTracks(
-      refFileInputEl.points.flat(),
-      challFileInputEl.points.flat(),
+    compareTracksWorker.postMessage({
+      refPoints: refFileInputEl.points.flat(),
+      challPoints: challFileInputEl.points.flat(),
       options,
-    );
+    });
   } catch (err) {
     alert(err.message);
-    return;
   }
+};
+
+compareTracksWorker.onmessage = (event) => {
+  const results = event.data;
 
   // Update DOM
   updateDom(results);
@@ -97,6 +96,9 @@ const launchComparison = (event) => {
   // Generate the downloadable files
   gpxStrFull = generateFullGpxStr(results);
   downloadGpxEl.classList.remove('disabled');
+
+  launchComparisonEl.classList.remove('btn-danger');
+  launchComparisonEl.classList.add('btn-primary');
 };
 
 const downloadFile = () => {
@@ -170,7 +172,7 @@ const loadFiles = async (event) => {
 
 // ------ MAIN ------//
 // Display empty map
-mapboxgl.accessToken = 'pk.eyJ1IjoicmVkY2ljIiwiYSI6ImNsZG41YzZzMjAweGYzbnEwMjYzOWxpMTYifQ.kEkg6g7sPVWFAf0vvAVzkA';
+mapboxgl.accessToken = 'pk.eyJ1IjoicmVkY2ljIiwiYSI6ImNsbTFuZjZ6cTNqMXUzZHB2dGFodXIweDgifQ._8eBSkTr0_-wUzUhIYB0zA'; // TODO: change back to URL specific token before merging in master
 
 const map = new mapboxgl.Map({
   container: 'map',

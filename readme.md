@@ -17,6 +17,7 @@ You can create test GPX files and view generated GPX files with https://gpx.stud
 # To do
 - Use modules (import & export) and stop using browserify -> Other Node.JS method used ?
 - Use workers
+- Fix passing argument to event listener (see https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener#getting_data_into_and_out_of_an_event_listener)
 - Add a button to terminate the worker
 - Add a mapbox key field (+ include it in the cookies)
 - Regorganize gpx folder

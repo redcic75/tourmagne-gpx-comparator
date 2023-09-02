@@ -348,10 +348,7 @@ const compareTracks = (refPoints, challPoints, options) => {
   };
 };
 
-// module.exports = compareTracks;
-
 onmessage = (event) => {
-  console.log('In worker');
   const result = compareTracks(event.data.refPoints, event.data.challPoints, event.data.options);
   postMessage(result);
 };
