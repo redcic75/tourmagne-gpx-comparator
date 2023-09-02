@@ -41,7 +41,10 @@ const calculateClosest = (refPoints, challPoints, options) => {
   let is1stPointFound = false;
 
   return refPoints.map((refPoint, index) => {
-    console.log(`    - Progress: ${Math.round((index / refPoints.length) * 10_000) / 100} %`);
+    const progress = (Math.round((index / refPoints.length) * 10_000) / 100).toFixed(2);
+    postMessage({ name: 'progress', progress });
+    console.log(`    - Progress: ${progress} %`);
+
     // challLocalIndex: running index on challenge track used to find closest point
     let challLocalIndex = challIndex;
     let detour = 0;
@@ -349,8 +352,8 @@ const compareTracks = (refPoints, challPoints, options) => {
 };
 
 onmessage = (event) => {
-  const result = compareTracks(event.data.refPoints, event.data.challPoints, event.data.options);
-  postMessage(result);
+  const results = compareTracks(event.data.refPoints, event.data.challPoints, event.data.options);
+  postMessage({ name: 'results', results });
 };
 
 module.exports = compareTracks;

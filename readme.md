@@ -26,7 +26,6 @@ You can create test GPX files and view generated GPX files with https://gpx.stud
   - => Comes from external libs fast-xml-parser & calculateClosest (while loop executed 1_000_000 times)
 
 ## To do
-- Add a progress bar
 - Add a button to stop the workers
 - Add a mapbox accessToken field
 - Include the mapbox accessToken in the cookies

@@ -22,6 +22,7 @@ const perfTitleEl = document.querySelector('#perfTitle');
 const downloadGpxEl = document.querySelector('#downloadGpx');
 const launchComparisonEl = document.querySelector('#launchComparisonBtn');
 const messageEl = document.querySelector('#message');
+let progressEl;
 
 // ------ GLOBAL VARIABLES ------////
 const tracks = {
@@ -64,8 +65,11 @@ const workerInProgress = (message) => {
   refFileInputEl.disabled = true;
   challFileInputEl.disabled = true;
   downloadGpxEl.disabled = true;
-  messageEl.innerText = message;
+  messageEl.innerHTML = message;
   messageEl.classList.toggle('d-none');
+
+  // Only used during compareTracks execution for displaying progress
+  progressEl = document.querySelector('#progress');
 };
 
 const workerDone = () => {
@@ -78,7 +82,7 @@ const workerDone = () => {
 
 const launchComparison = (event) => {
   event.preventDefault();
-  workerInProgress('Calculs en cours...');
+  workerInProgress('Calcul en cours: <span id="progress">0.00</span> %');
 
   // Get options from form inputs
   const options = {
@@ -101,29 +105,39 @@ const launchComparison = (event) => {
 };
 
 compareTracksWorker.onmessage = (event) => {
-  const results = event.data;
+  const {
+    data: {
+      name,
+      results,
+      progress,
+    },
+  } = event;
 
-  // Update DOM
-  updateDom(results);
+  if (name === 'progress') {
+    progressEl.innerText = progress;
+  } else if (name === 'results') {
+    // Update DOM
+    updateDom(results);
 
-  // Update map
-  displayTrack(map, 'missed', results.tracks.missedSegments, {
-    'line-color': '#ff0000',
-    'line-width': 6,
-    'line-opacity': 0.7,
-  });
+    // Update map
+    displayTrack(map, 'missed', results.tracks.missedSegments, {
+      'line-color': '#ff0000',
+      'line-width': 6,
+      'line-opacity': 0.7,
+    });
 
-  displayTrack(map, 'slowest', results.tracks.worst, {
-    'line-color': '#ffffff',
-    'line-width': 2,
-    'line-opacity': 1,
-  });
+    displayTrack(map, 'slowest', results.tracks.worst, {
+      'line-color': '#ffffff',
+      'line-width': 2,
+      'line-opacity': 1,
+    });
 
-  // Generate the downloadable files
-  fullGpxStr = generateFullGpxStr(results);
+    // Generate the downloadable files
+    fullGpxStr = generateFullGpxStr(results);
 
-  workerDone();
-  downloadGpxEl.disabled = false;
+    workerDone();
+    downloadGpxEl.disabled = false;
+  }
 };
 
 const downloadFile = () => {
