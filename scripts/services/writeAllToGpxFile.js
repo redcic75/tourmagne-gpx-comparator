@@ -8,7 +8,7 @@ const writeAllToGpxFile = async (results) => {
   const gpxStr = generateFullGpxStr(results);
 
   // Write GPX file on disk
-  const outputFilePath = path.resolve(__dirname, '../../data/generated_files/gpsvisualizerSynthesis.gpx');
+  const outputFilePath = path.resolve(__dirname, '../../data/output/gpsvisualizerSynthesis.gpx');
   await fs.writeFile(outputFilePath, gpxStr);
 };
 

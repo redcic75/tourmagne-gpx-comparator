@@ -62,19 +62,6 @@ const main = async (refPaths, challPaths, options) => {
 };
 
 // ------ USER DATA ------//
-const refFiles = getAllGpxFiles('data/gpx/evaluate-challenger/reference');
-const challFiles = getAllGpxFiles('data/gpx/evaluate-challenger/challenger');
-
-// const refFiles = ['Bordeaux_Paris_2022_real'];
-// const refFiles = ['Bordeaux_Paris_2022_trace'];
-
-// const challFiles = [
-//   'orleans-loop-real-seg-1',
-//   'orleans-loop-real-seg-3',
-//   'orleans-loop-real-seg-2'];
-// const challFiles = ['orleans-loop-real-3-trkseg'];
-
-// Params
 const options = {
   rollingDuration: 24, // in hours
   trigger: 8, // in meters - trigger must be less than tolerance
@@ -83,9 +70,12 @@ const options = {
   maxSegLength: 200, // in meters
 };
 
-const prefix = path.resolve(__dirname, '../data/gpx/evaluate-challenger/');
-const refPaths = refFiles.map((refFile) => `${prefix}/reference/${refFile}.gpx`);
-const challPaths = challFiles.map((challFile) => `${prefix}/challenger/${challFile}.gpx`);
+const refFiles = getAllGpxFiles('data/inputs/reference_track');
+const challFiles = getAllGpxFiles('data/inputs/challenger_tracks');
+
+const prefix = path.resolve(__dirname, '../data/inputs');
+const refPaths = refFiles.map((refFile) => `${prefix}/reference_track/${refFile}.gpx`);
+const challPaths = challFiles.map((challFile) => `${prefix}/challenger_tracks/${challFile}.gpx`);
 
 // Launches main
 main(refPaths, challPaths, options);

@@ -2,9 +2,9 @@
 const mapboxgl = require('mapbox-gl/dist/mapbox-gl');
 const FileSaver = require('file-saver');
 const generateFullGpxStr = require('./services/generateFullGpxStr');
-const displayTrack = require('./mapHelpers/displayTrack');
+const displayTrack = require('./map_helpers/displayTrack');
 const msToHHMM = require('./helper/msToHHMM');
-const { updateBounds, fitBounds } = require('./mapHelpers/updateBounds');
+const { updateBounds, fitBounds } = require('./map_helpers/updateBounds');
 
 // ------ DOM ------//
 const refFileInputEl = document.querySelector('#ref');

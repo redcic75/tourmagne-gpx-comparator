@@ -1,3 +1,5 @@
-node_modules
-generated_files
-data/gpx/challenger_data/
+/node_modules
+/gpx_store
+/data/inputs/challenger_tracks/*
+/data/output/*
+/data/inputs/reference_track/*

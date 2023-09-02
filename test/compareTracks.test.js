@@ -9,7 +9,7 @@ const compareTracks = require('../scripts/workers/compareTracks');
 const getGpxStrs = require('../scripts/services/getGpxStrs');
 
 const fileToPoints = async (refFiles, challFiles) => {
-  const prefix = path.resolve(__dirname, '../data/gpx/');
+  const prefix = path.resolve(__dirname, './fixtures');
 
   const refPaths = refFiles.map((refFile) => `${prefix}/${refFile}.gpx`);
   const challPaths = challFiles.map((challFile) => `${prefix}/${challFile}.gpx`);
