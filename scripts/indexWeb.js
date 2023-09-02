@@ -23,10 +23,12 @@ const downloadGpxEl = document.querySelector('#downloadGpx');
 const launchComparisonEl = document.querySelector('#launchComparisonBtn');
 
 // ------ GLOBAL VARIABLES ------////
-const refData = { id: 'ref', color: '#0000ff' };
-const challData = { id: 'chall', color: '#009100' };
+const tracks = {
+  ref: { id: 'ref', color: '#0000ff' },
+  chall: { id: 'chall', color: '#009100' },
+};
 const geolibBounds = {};
-let gpxStrFull = '';
+let fullGpxStr = '';
 
 mapboxgl.accessToken = 'pk.eyJ1IjoicmVkY2ljIiwiYSI6ImNsbTFuZjZ6cTNqMXUzZHB2dGFodXIweDgifQ._8eBSkTr0_-wUzUhIYB0zA'; // TODO: change back to URL specific token before merging in master
 
@@ -44,8 +46,8 @@ const parseGpxWorker = new Worker(new URL('./workers/parseGpx', import.meta.url)
 
 // ------ METHODS ------//
 const updateDom = (results) => {
-  refParamEl.innerHTML = refData.files[0].name;
-  challParamEl.innerHTML = Array.from(challData.files).reduce((acc, file) => `${acc}${file.name}, `, '').slice(0, -2);
+  refParamEl.innerHTML = tracks.ref.files[0].name;
+  challParamEl.innerHTML = Array.from(tracks.chall.files).reduce((acc, file) => `${acc}${file.name}, `, '').slice(0, -2);
 
   durationParamEl.innerHTML = `${formEl.rollingDuration.value} h`;
   triggerParamEl.innerHTML = `${formEl.trigger.value} m`;
@@ -60,12 +62,14 @@ const disableAllButtons = () => {
   launchComparisonEl.disabled = true;
   refFileInputEl.disabled = true;
   challFileInputEl.disabled = true;
+  downloadGpxEl.disabled = true;
 };
 
 const enableAllButtons = () => {
   launchComparisonEl.disabled = false;
   refFileInputEl.disabled = false;
   challFileInputEl.disabled = false;
+  downloadGpxEl.disabled = false;
 };
 
 const launchComparison = (event) => {
@@ -83,8 +87,8 @@ const launchComparison = (event) => {
 
   try {
     compareTracksWorker.postMessage({
-      refPoints: refData.points.flat(),
-      challPoints: challData.points.flat(),
+      refPoints: tracks.ref.points.flat(),
+      challPoints: tracks.chall.points.flat(),
       options,
     });
   } catch (err) {
@@ -112,7 +116,7 @@ compareTracksWorker.onmessage = (event) => {
   });
 
   // Generate the downloadable files
-  gpxStrFull = generateFullGpxStr(results);
+  fullGpxStr = generateFullGpxStr(results);
   downloadGpxEl.classList.remove('disabled');
 
   enableAllButtons();
@@ -120,36 +124,34 @@ compareTracksWorker.onmessage = (event) => {
 
 const downloadFile = () => {
   const blob = new Blob(
-    [gpxStrFull],
+    [fullGpxStr],
     { type: 'text/plain;charset=utf-8' },
   );
 
   FileSaver.saveAs(blob, 'gpsvisualizerSynthesis.gpx');
 };
 
-const loadFiles = async (event, trackData) => {
+const loadFiles = async (event, id) => {
   const {
     currentTarget,
     currentTarget: { files },
   } = event;
 
-  const { id } = trackData;
-
   if (files.length > 0) {
-    trackData.files = files;
+    tracks[id].files = files;
     const promises = Array.from(files).map((file) => file.text());
     const strs = await Promise.all(promises);
 
     try {
       disableAllButtons();
-      parseGpxWorker.postMessage({ trackData, strs });
+      parseGpxWorker.postMessage({ id, strs });
     } catch (err) {
       alert(err.message);
       currentTarget.value = '';
       return;
     }
   } else {
-    trackData.points = [];
+    tracks[id].points = [];
 
     // Erase track
     if (map.getLayer(id)) {
@@ -174,29 +176,20 @@ const loadFiles = async (event, trackData) => {
 parseGpxWorker.onmessage = (event) => {
   const {
     data: {
-      trackData,
-      trackData: {
-        id,
-        color,
-      },
+      id,
+      result,
     },
   } = event;
 
-  trackData.points = event.data.result;
-
-  if (id === 'ref') {
-    refData.points = trackData.points;
-  } else if (id === 'chall') {
-    challData.points = trackData.points;
-  }
+  tracks[id].points = result;
 
   // Display track and update bounds
-  displayTrack(map, id, trackData.points, {
-    'line-color': color,
+  displayTrack(map, id, tracks[id].points, {
+    'line-color': tracks[id].color,
     'line-width': 4,
     'line-opacity': 0.7,
   });
-  geolibBounds[id] = updateBounds(map, geolibBounds, trackData.points);
+  geolibBounds[id] = updateBounds(map, geolibBounds, tracks[id].points);
   fitBounds(map, geolibBounds);
 
   enableAllButtons();
@@ -204,8 +197,8 @@ parseGpxWorker.onmessage = (event) => {
 
 // ------ MAIN ------//
 map.on('load', () => {
-  refFileInputEl.addEventListener('change', (event) => loadFiles(event, refData));
-  challFileInputEl.addEventListener('change', (event) => loadFiles(event, challData));
+  refFileInputEl.addEventListener('change', (event) => loadFiles(event, 'ref'));
+  challFileInputEl.addEventListener('change', (event) => loadFiles(event, 'chall'));
   formEl.addEventListener('submit', launchComparison);
   downloadGpxEl.addEventListener('click', downloadFile);
 });

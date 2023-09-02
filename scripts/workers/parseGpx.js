@@ -60,7 +60,10 @@ const parseGpx = (strs) => {
 
 onmessage = (event) => {
   const result = parseGpx(event.data.strs);
-  postMessage({ trackData: event.data.trackData, result });
+  postMessage({
+    id: event.data.id,
+    result,
+  });
 };
 
 module.exports = parseGpx;
