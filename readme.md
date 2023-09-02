@@ -16,12 +16,12 @@
 You can create test GPX files and view generated GPX files with https://gpx.studio/l/fr/.
 
 # To do
+- Gather webpack output in one folder (dist)
+- Reorganize gpx folder (do not forget gpx files needed for tests)
 - Add an alert when calculus is in progress
 - Add a progress bar
 - Add a button to terminate the worker
 - Add a mapbox key field (+ include it in the cookies)
-- Gather webpack output in one folder (dist)
-- Regorganize gpx folder (do not forget gpx files needed for tests)
 - Check timestamps presence before calculating kpis
 - Create personalized Error classes
 - Separate frontend & backend
