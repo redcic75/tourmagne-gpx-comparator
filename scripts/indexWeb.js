@@ -1,14 +1,13 @@
+/* eslint-disable no-alert */
 const mapboxgl = require('mapbox-gl/dist/mapbox-gl');
 const FileSaver = require('file-saver');
-
 const parseGpx = require('./services/parseGpx');
 const generateFullGpxStr = require('./services/generateFullGpxStr');
 const displayTrack = require('./mapHelpers/displayTrack');
 const msToHHMM = require('./helper/msToHHMM');
 const { updateBounds, fitBounds } = require('./mapHelpers/updateBounds');
 
-// ------ GLOBAL VARIABLES ------//
-// Links with HTML file
+// ------ DOM ------//
 const refFileInputEl = document.querySelector('#ref');
 const challFileInputEl = document.querySelector('#chall');
 const formEl = document.querySelector('#form');
@@ -24,17 +23,29 @@ const perfTitleEl = document.querySelector('#perfTitle');
 const downloadGpxEl = document.querySelector('#downloadGpx');
 const launchComparisonEl = document.querySelector('#launchComparisonBtn');
 
-let refPoints;
-let gpxStrFull = '';
+// ------ GLOBAL VARIABLES ------////
+const refData = { id: 'ref', color: '#0000ff' };
+const challData = { id: 'chall', color: '#009100' };
 const geolibBounds = {};
+let gpxStrFull = '';
 
-// Workers
+mapboxgl.accessToken = 'pk.eyJ1IjoicmVkY2ljIiwiYSI6ImNsbTFuZjZ6cTNqMXUzZHB2dGFodXIweDgifQ._8eBSkTr0_-wUzUhIYB0zA'; // TODO: change back to URL specific token before merging in master
+
+const map = new mapboxgl.Map({
+  container: 'map',
+  style: 'mapbox://styles/mapbox/streets-v12',
+  center: [3.11, 46.42], // Display Melun - Nîme zone
+  zoom: 6,
+});
+map.addControl(new mapboxgl.NavigationControl());
+
+// ------ WORKERS ------////
 const compareTracksWorker = new Worker(new URL('./services/compareTracks', import.meta.url));
 
-// ------ HELPERS ------//
+// ------ METHODS ------//
 const updateDom = (results) => {
-  refParamEl.innerHTML = refFileInputEl.files[0].name;
-  challParamEl.innerHTML = Array.from(challFileInputEl.files).reduce((acc, file) => `${acc}${file.name}, `, '').slice(0, -2);
+  refParamEl.innerHTML = refData.files[0].name;
+  challParamEl.innerHTML = Array.from(challData.files).reduce((acc, file) => `${acc}${file.name}, `, '').slice(0, -2);
 
   durationParamEl.innerHTML = `${formEl.rollingDuration.value} h`;
   triggerParamEl.innerHTML = `${formEl.trigger.value} m`;
@@ -45,7 +56,6 @@ const updateDom = (results) => {
   perfEl.innerHTML = `${results.kpi.distance / 1000} km (à partir du km ${results.kpi.slowestSegmentStart.distance / 1000} de la trace de référence, soit après  ${msToHHMM(results.kpi.slowestSegmentStart.elapsedTime)} à ${Math.round(results.kpi.meanSpeed * 1000) / 1000} km/h de moyenne)`;
 };
 
-// ------ EVENT LISTENERS ------//
 const launchComparison = (event) => {
   event.preventDefault();
 
@@ -63,8 +73,8 @@ const launchComparison = (event) => {
 
   try {
     compareTracksWorker.postMessage({
-      refPoints: refFileInputEl.points.flat(),
-      challPoints: challFileInputEl.points.flat(),
+      refPoints: refData.points.flat(),
+      challPoints: challData.points.flat(),
       options,
     });
   } catch (err) {
@@ -79,19 +89,17 @@ compareTracksWorker.onmessage = (event) => {
   updateDom(results);
 
   // Update map
-  const paintMissed = {
+  displayTrack(map, 'missed', results.tracks.missedSegments, {
     'line-color': '#ff0000',
     'line-width': 6,
     'line-opacity': 0.7,
-  };
-  displayTrack(map, 'missed', results.tracks.missedSegments, paintMissed);
+  });
 
-  const paintSlowest = {
+  displayTrack(map, 'slowest', results.tracks.worst, {
     'line-color': '#ffffff',
     'line-width': 2,
     'line-opacity': 1,
-  };
-  displayTrack(map, 'slowest', results.tracks.worst, paintSlowest);
+  });
 
   // Generate the downloadable files
   gpxStrFull = generateFullGpxStr(results);
@@ -110,38 +118,33 @@ const downloadFile = () => {
   FileSaver.saveAs(blob, 'gpsvisualizerSynthesis.gpx');
 };
 
-// load files
-const loadFiles = async (event) => {
+const loadFiles = async (event, data) => {
   const {
     currentTarget,
-    currentTarget: {
-      files,
-      id,
-      color,
-      map,
-    },
+    currentTarget: { files },
   } = event;
 
   if (files.length > 0) {
+    data.files = files;
     const promises = Array.from(files).map((file) => file.text());
     const strs = await Promise.all(promises);
 
     try {
-      currentTarget.points = parseGpx(strs);
+      data.points = parseGpx(strs);
     } catch (err) {
       alert(err.message);
       currentTarget.value = '';
       return;
     }
   } else {
-    currentTarget.points = [];
+    data.points = [];
 
     // Erase track
-    if (map.getLayer(id)) {
-      map.removeLayer(id);
+    if (map.getLayer(data.id)) {
+      map.removeLayer(data.id);
     }
-    if (map.getSource(id)) {
-      map.removeSource(id);
+    if (map.getSource(data.id)) {
+      map.removeSource(data.id);
     }
   }
 
@@ -157,50 +160,23 @@ const loadFiles = async (event) => {
 
   // Display track and update bounds
   const paint = {
-    'line-color': color,
+    'line-color': data.color,
     'line-width': 4,
     'line-opacity': 0.7,
   };
-  displayTrack(map, id, currentTarget.points, paint);
-  geolibBounds[id] = updateBounds(map, geolibBounds, currentTarget.points);
+  displayTrack(map, data.id, data.points, paint);
+  geolibBounds[data.id] = updateBounds(map, geolibBounds, data.points);
   fitBounds(map, geolibBounds);
 
-  if (id === 'ref') {
-    refPoints = [...currentTarget.points.flat()];
+  if (data.id === 'ref') {
+    refData.points = [...data.points.flat()];
   }
 };
 
 // ------ MAIN ------//
-// Display empty map
-mapboxgl.accessToken = 'pk.eyJ1IjoicmVkY2ljIiwiYSI6ImNsbTFuZjZ6cTNqMXUzZHB2dGFodXIweDgifQ._8eBSkTr0_-wUzUhIYB0zA'; // TODO: change back to URL specific token before merging in master
-
-const map = new mapboxgl.Map({
-  container: 'map',
-  style: 'mapbox://styles/mapbox/streets-v12',
-  center: [3.11, 46.42], // Display Melun - Nîme zone
-  zoom: 6,
-});
-map.addControl(new mapboxgl.NavigationControl());
-
 map.on('load', () => {
-  // Event listeners for file loads
-  refFileInputEl.id = 'ref';
-  refFileInputEl.color = '#0000ff';
-  refFileInputEl.map = map;
-  refFileInputEl.geolibBounds = geolibBounds;
-
-  challFileInputEl.id = 'chall';
-  challFileInputEl.color = '#009100';
-  challFileInputEl.map = map;
-  challFileInputEl.geolibBounds = geolibBounds;
-
-  refFileInputEl.addEventListener('change', loadFiles);
-  challFileInputEl.addEventListener('change', loadFiles);
-
-  // Event listener for comparison launch
-  formEl.map = map;
+  refFileInputEl.addEventListener('change', (event) => loadFiles(event, refData));
+  challFileInputEl.addEventListener('change', (event) => loadFiles(event, challData));
   formEl.addEventListener('submit', launchComparison);
-
-  // Event listener for downloading gpx file of the gaps
   downloadGpxEl.addEventListener('click', downloadFile);
 });
