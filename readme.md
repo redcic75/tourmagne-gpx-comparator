@@ -16,7 +16,6 @@
 You can create test GPX files and view generated GPX files with https://gpx.studio/l/fr/.
 
 # To do
-- Gather webpack output in one folder (dist)
 - Reorganize gpx folder (do not forget gpx files needed for tests)
 - Add an alert when calculus is in progress
 - Add a progress bar
