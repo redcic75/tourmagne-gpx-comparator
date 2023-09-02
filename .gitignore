@@ -3,3 +3,7 @@
 /data/inputs/challenger_tracks/*
 /data/output/*
 /data/inputs/reference_track/*
+
+!/data/inputs/challenger_tracks/.gitkeep
+!/data/output/.gitkeep
+!/data/inputs/reference_track/.gitkeep
