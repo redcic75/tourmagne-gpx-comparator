@@ -2,11 +2,11 @@
   "name": "tourmagne-gpx-comparator",
   "version": "1.0.0",
   "description": "",
-  "main": "main.js",
+  "private": true,
   "scripts": {
-    "browserify": "browserify scripts/indexWeb.js -o scripts/bundle.js",
+    "test": "mocha 'test/**/*.js'",
     "node": "node scripts/indexNode.js",
-    "test": "mocha 'test/**/*.js'"
+    "webpack": "webpack --config webpack.config.js"
   },
   "author": "",
   "license": "ISC",
@@ -21,6 +21,8 @@
     "eslint": "8.33.0",
     "eslint-config-airbnb-base": "15.0.0",
     "eslint-plugin-import": "2.27.5",
-    "mocha": "10.2.0"
+    "mocha": "10.2.0",
+    "webpack": "5.88.2",
+    "webpack-cli": "5.1.4"
   }
 }
