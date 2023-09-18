@@ -31,5 +31,4 @@ You can create test GPX files and view generated GPX files with https://gpx.stud
 - Include the mapbox accessToken in the cookies
 - Check timestamps presence before calculating kpis
 - Create personalized Error classes
-- Separate frontend & backend
 - Get rid of global variables in indexWeb.js ?

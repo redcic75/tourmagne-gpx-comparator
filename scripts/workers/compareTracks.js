@@ -42,7 +42,9 @@ const calculateClosest = (refPoints, challPoints, options) => {
 
   return refPoints.map((refPoint, index) => {
     const progress = (Math.round((index / refPoints.length) * 10_000) / 100).toFixed(2);
-    postMessage({ name: 'progress', progress });
+    if (typeof window === 'object') { // if in browser
+      postMessage({ name: 'progress', progress });
+    }
     console.log(`    - Progress: ${progress} %`);
 
     // challLocalIndex: running index on challenge track used to find closest point
