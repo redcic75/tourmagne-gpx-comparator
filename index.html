@@ -4,9 +4,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="styles/style.css" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.css" />
+  <link rel="stylesheet" href="styles/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js"
+    integrity="sha384-cVKIPhGWiC2Al4u+LWgxfKTRIcfu0JTxR+EQDz/bgldoEyl4H0zUF0QKbrJ0EcQF"
+    crossorigin="anonymous"></script>
   <link rel="shortcut icon" type="image/png" href="./images/favicon.png" />
   <title>Comparateur de traces GPS</title>
 </head>
@@ -18,38 +22,59 @@
     <section>
       <h2>Données à saisir</h2>
       <form id="form">
-        <div class="form-group">
-          <!-- Multiple files not authorized because can't be ordered since they are not timestamped -->
-          <label for="ref">Trace GPS de référence au format GPX - 1 fichier GPX (<span class="blue">en bleu sur la carte</span>)</label>
-          <input type="file" id="ref" class="form-control" accept=".gpx" required/>
+        <div class="row">
+          <div class="form-group">
+            <!-- Multiple files not authorized because can't be ordered since they are not timestamped -->
+            <label for="ref">Trace GPS de référence au format GPX - 1 fichier GPX (<span class="blue">en bleu sur la
+                carte</span>)</label>
+            <input type="file" id="ref" class="form-control" accept=".gpx" required />
+          </div>
         </div>
-        <div class="form-group">
-          <label for="chall">Trace GPS réalisée au format GPX - 1 ou plusieurs fichiers GPX (<span class="green">en vert sur la carte</span>)</label>
-          <input type="file" id="chall" class="form-control" accept=".gpx" multiple="true" required/>
+        <div class="row">
+          <div class="form-group">
+            <label for="chall">Trace GPS réalisée au format GPX - 1 ou plusieurs fichiers GPX (<span class="green">en
+                vert sur la carte</span>)</label>
+            <input type="file" id="chall" class="form-control" accept=".gpx" multiple="true" required />
+          </div>
         </div>
-        <div class="form-group">
-          <label for="perf">Durée à prendre en compte pour le calcul de la performance en h</label>
-          <input type="number" id="rollingDuration" class="form-control" value="24" required/>
+        <div class="row">
+          <div class="form-group">
+            <label for="perf">Durée à prendre en compte pour le calcul de la performance en h</label>
+            <input type="number" id="rollingDuration" class="form-control" value="24" required />
+          </div>
         </div>
-        <div class="form-group">
-          <label for="trigger">Distance de déclenchement en m</label>
-          <input type="number" id="trigger" class="form-control" value="8" required/>
+        <div class="row">
+          <div class="form-group">
+            <button type="button" class="btn btn-secondary" data-bs-toggle="collapse"
+              data-bs-target=".collapsingParameters" aria-expanded="false" aria-controls="collapsingParameters">
+              Afficher / Masquer les paramètres avancés
+            </button>
+          </div>
         </div>
-
-        <div class="form-group">
-          <label for="tolerance">Tolérance d'écart en m</label>
-          <input type="number" id="tolerance" class="form-control" value="80" required/>
+        <div class="row collapse collapsingParameters">
+          <div class="form-group col-md-6">
+            <label for="maxDetour">Détour maximal en km</label>
+            <input type="number" id="maxDetour" class="form-control" value="20" required />
+          </div>
+          <div class="form-group col-md-6">
+            <label for="maxSegLength">Distance max entre 2 points de la trace du challenger en m</label>
+            <input type="number" id="maxSegLength" class="form-control" value="200" required />
+          </div>
         </div>
-        <div class="form-group">
-          <label for="maxDetour">Détour maximal en km</label>
-          <input type="number" id="maxDetour" class="form-control" value="20" required/>
+        <div class="row collapse collapsingParameters">
+          <div class="form-group col-md-6">
+            <label for="trigger">Distance de déclenchement en m</label>
+            <input type="number" id="trigger" class="form-control" value="8" required />
+          </div>
+          <div class="form-group col-md-6">
+            <label for="tolerance">Tolérance d'écart en m</label>
+            <input type="number" id="tolerance" class="form-control" value="80" required />
+          </div>
         </div>
-        <div class="form-group">
-          <label for="maxSegLength">Distance maximale entre 2 points consécutifs de la trace du challenger en m</label>
-          <input type="number" id="maxSegLength" class="form-control" value="200" required/>
-        </div>
-        <div class="form-group">
-          <button type="submit" class="btn btn-primary" id="launchComparisonBtn">Lancer la comparaison</button>
+        <div class="row">
+          <div class="form-group">
+            <button type="submit" class="btn btn-primary" id="launchComparisonBtn">Lancer la comparaison</button>
+          </div>
         </div>
       </form>
     </section>
@@ -81,11 +106,13 @@
         <li>Distance de la trace de référence non parcourue (<span class="red">en rouge sur la carte</span>) :
           <span id="missedDistance">calcul non lancé ou en cours</span>
         </li>
-        <li><span id="perfTitle">Distance de la trace de référence parcourue pendant la période la moins favorable</span> (<span class="">en trait évidé sur la carte</span>) :
+        <li><span id="perfTitle">Distance de la trace de référence parcourue pendant la période la moins
+            favorable</span> (<span class="">en trait évidé sur la carte</span>) :
           <span id="perf">calcul non lancé ou en cours</span>
         </li>
       </ul>
-      <button id="downloadGpx" class="btn btn-primary" disabled>Télécharger le fichier GPX généré (avec référénce, réalisé, écarts et pire période)</button>
+      <button id="downloadGpx" class="btn btn-primary my-2" disabled>Télécharger le fichier GPX généré (avec référénce,
+        réalisé, écarts et pire période)</button>
     </section>
     <section>
       <h2>Carte</h2>

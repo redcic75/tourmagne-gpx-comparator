@@ -25,7 +25,7 @@ p {
 }
 
 section {
-  padding: 1rem;
+  padding: .1rem .5rem;
   margin: 1rem 0;
   background-color: var(--lightblue);
   border-radius: 6px;
@@ -41,12 +41,8 @@ li {
 }
 
 /* || Classes and Ids*/
-.form-group {
-  padding: .5rem 0;
-}
-
-.form-group label {
-  margin-bottom: .3rem;;
+.row {
+  margin-bottom: .8rem
 }
 
 .blue {
@@ -65,5 +61,5 @@ li {
 }
 
 #map {
-  height: 90vh;
+  height: 80vh;
 }
