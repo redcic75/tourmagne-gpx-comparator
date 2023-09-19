@@ -32,8 +32,6 @@ const tracks = {
 const geolibBounds = {};
 let fullGpxStr = '';
 
-mapboxgl.accessToken = 'pk.eyJ1IjoicmVkY2ljIiwiYSI6ImNsbTFuZjZ6cTNqMXUzZHB2dGFodXIweDgifQ._8eBSkTr0_-wUzUhIYB0zA'; // TODO: change back to URL specific token before merging in master
-
 const map = new mapboxgl.Map({
   container: 'map',
   style: 'mapbox://styles/mapbox/streets-v12',
@@ -82,6 +80,12 @@ const workerDone = () => {
 
 const launchComparison = (event) => {
   event.preventDefault();
+
+  const accessToken = formEl.token.value;
+  console.log(accessToken);
+  mapboxgl.accessToken = accessToken;
+  document.cookie = `accessToken=${accessToken}`;
+
   workerInProgress('Calcul en cours: <span id="progress">0.00</span> %');
 
   // Get options from form inputs

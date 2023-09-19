@@ -1,8 +1,8 @@
-/node_modules
-/gpx_store
 /data/inputs/challenger_tracks/*
 /data/output/*
 /data/inputs/reference_track/*
+/gpx_store
+/node_modules
 
 !/data/inputs/challenger_tracks/.gitkeep
 !/data/output/.gitkeep
