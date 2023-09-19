@@ -42,7 +42,7 @@ const calculateClosest = (refPoints, challPoints, options) => {
 
   return refPoints.map((refPoint, index) => {
     const progress = (Math.round((index / refPoints.length) * 10_000) / 100).toFixed(2);
-    if (typeof window === 'object') { // if in browser
+    if (typeof process !== 'object') { // if in browser
       postMessage({ name: 'progress', progress });
     }
     console.log(`    - Progress: ${progress} %`);

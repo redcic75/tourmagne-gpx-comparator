@@ -1,5 +1,5 @@
 /* eslint-disable no-alert */
-const mapboxgl = require('mapbox-gl/dist/mapbox-gl');
+const maplibregl = require('maplibre-gl');
 const FileSaver = require('file-saver');
 const generateFullGpxStr = require('./services/generateFullGpxStr');
 const displayTrack = require('./map_helpers/displayTrack');
@@ -32,15 +32,34 @@ const tracks = {
 const geolibBounds = {};
 let fullGpxStr = '';
 
-mapboxgl.accessToken = 'pk.eyJ1IjoicmVkY2ljIiwiYSI6ImNsbTFuZjZ6cTNqMXUzZHB2dGFodXIweDgifQ._8eBSkTr0_-wUzUhIYB0zA'; // TODO: change back to URL specific token before merging in master
+const style = {
+  version: 8,
+  sources: {
+    osm: {
+      type: 'raster',
+      tiles: ['https://a.tile.openstreetmap.org/{z}/{x}/{y}.png'],
+      tileSize: 256,
+      attribution: '&copy; OpenStreetMap Contributors',
+      maxzoom: 19,
+    },
+  },
+  layers: [
+    {
+      id: 'osm',
+      type: 'raster',
+      source: 'osm', // This must match the source key above
+    },
+  ],
+};
 
-const map = new mapboxgl.Map({
+const map = new maplibregl.Map({
   container: 'map',
-  style: 'mapbox://styles/mapbox/streets-v12',
+  style,
   center: [3.11, 46.42], // Display Melun - Nîmes zone
   zoom: 6,
 });
-map.addControl(new mapboxgl.NavigationControl());
+
+map.addControl(new maplibregl.NavigationControl());
 
 // ------ WORKERS ------////
 const compareTracksWorker = new Worker(new URL('./workers/compareTracks', import.meta.url));
