@@ -4,7 +4,8 @@
   --dark: #313231;
   --red: #e3022c;
   --blue: #233677;
-  --lightblue: #e6e8f2;
+  --verylightblue: #CFE2FF; /* #eff1f9; */
+  --grey: #6C757D;
 }
 
 *,
@@ -15,9 +16,17 @@
 
 /* || HTML elements */
 h1, h2 {
-  margin:.5rem 0;
+  margin:.3rem 0;
   padding: 0;
-  color: var(--dark) !important;
+}
+
+h1 {
+  font-size: 1.8rem;
+}
+
+h2 {
+  font-size: 1.3rem;
+  color: var(--light) !important;
 }
 
 p {
@@ -25,9 +34,9 @@ p {
 }
 
 section {
-  padding: .1rem .5rem;
-  margin: 1rem 0;
-  background-color: var(--lightblue);
+  padding: .5rem;
+  margin: .5rem 0;
+  background-color: var(--grey);
   border-radius: 6px;
 }
 
@@ -41,8 +50,15 @@ li {
 }
 
 /* || Classes and Ids*/
+.accordion {
+  margin-bottom: .8rem;
+}
+.accordion-item {
+  background-color: var(--verylightblue);
+}
+
 .row {
-  margin-bottom: .8rem
+  margin-bottom: .8rem;
 }
 
 .blue {

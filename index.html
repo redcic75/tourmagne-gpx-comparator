@@ -17,17 +17,16 @@
 
 <body>
   <main class="container">
-    <h1>Comparateur de traces GPS</h1>
+    <h1 class="text-center">Comparateur de traces GPS</h1>
     <div id="message" class="fixed-top bg-danger rounded text-white text-center p-2 fs-2 m-4 d-none"></div>
     <section>
-      <h2>Données à saisir</h2>
+      <h2 class="text-center">Données à saisir</h2>
       <form id="form">
         <div class="accordion">
-          <div class="accordion-item my-3">
+          <div class="accordion-item">
             <h3 class="accordion-header" id="panelsStayOpen-headingTracks">
               <button class="accordion-button" type="button" data-bs-toggle="collapse"
-                data-bs-target="#panelsStayOpen-tracks" aria-expanded="true"
-                aria-controls="panelsStayOpen-tracks">
+                data-bs-target="#panelsStayOpen-tracks" aria-expanded="true" aria-controls="panelsStayOpen-tracks">
                 Traces
               </button>
             </h3>
@@ -61,11 +60,10 @@
               </div>
             </div>
           </div>
-          <div class="accordion-item my-3">
+          <div class="accordion-item">
             <h3 class="accordion-header" id="panelsStayOpen-headingAdvanced">
               <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                data-bs-target="#panelsStayOpen-advanced" aria-expanded="false"
-                aria-controls="panelsStayOpen-advanced">
+                data-bs-target="#panelsStayOpen-advanced" aria-expanded="false" aria-controls="panelsStayOpen-advanced">
                 Paramètres avancées
               </button>
             </h3>
@@ -95,22 +93,17 @@
               </div>
             </div>
           </div>
-          <div class="row">
-            <div class="form-group">
-              <button type="submit" class="btn btn-primary" id="launchComparisonBtn">Lancer la comparaison</button>
-            </div>
-          </div>
         </div>
+        <button type="submit" class="btn btn-primary" id="launchComparisonBtn">Lancer la comparaison</button>
       </form>
     </section>
     <section>
-      <h2>Résultats de la comparaison lancée</h2>
+      <h2 class="text-center">Résultats de la comparaison lancée</h2>
       <div class="accordion">
-        <div class="accordion-item my-3">
+        <div class="accordion-item">
           <h3 class="accordion-header" id="panelsStayOpen-headingParams">
-            <button class="accordion-button" type="button" data-bs-toggle="collapse"
-              data-bs-target="#panelsStayOpen-params" aria-expanded="true"
-              aria-controls="panelsStayOpen-params">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+              data-bs-target="#panelsStayOpen-params" aria-expanded="true" aria-controls="panelsStayOpen-params">
               Rappel des paramètres utilisés
             </button>
           </h3>
@@ -140,11 +133,10 @@
             </div>
           </div>
         </div>
-        <div class="accordion-item my-3">
+        <div class="accordion-item">
           <h3 class="accordion-header" id="panelsStayOpen-headingResults">
-            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-              data-bs-target="#panelsStayOpen-results" aria-expanded="false"
-              aria-controls="panelsStayOpen-results">
+            <button class="accordion-button" type="button" data-bs-toggle="collapse"
+              data-bs-target="#panelsStayOpen-results" aria-expanded="false" aria-controls="panelsStayOpen-results">
               Résultats
             </button>
           </h3>
@@ -168,7 +160,6 @@
         réalisé, écarts et pire période)</button>
     </section>
     <section>
-      <h2>Carte</h2>
       <div id="map"></div>
     </section>
   </main>

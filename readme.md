@@ -26,7 +26,6 @@ You can create test GPX files and view generated GPX files with https://gpx.stud
   - => Comes from external libs fast-xml-parser & calculateClosest (while loop executed 1_000_000 times)
 
 ## To do
-- Make the form smaller / separate configuration parameters (add possibility to hide them ?) from other parameters
 - gitignore dist folder and use CI to build
 - Add a button to stop the workers
 - Check timestamps presence before calculating kpis
