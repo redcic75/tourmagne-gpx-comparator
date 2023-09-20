@@ -53,7 +53,13 @@ li {
 .accordion {
   margin-bottom: .8rem;
 }
+
 .accordion-item {
+  border: #313231 2px solid;
+}
+
+accordion-button {
+  font-weight: 700;
   background-color: var(--verylightblue);
 }
 
