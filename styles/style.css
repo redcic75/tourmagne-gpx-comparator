@@ -58,7 +58,7 @@ li {
   border: #313231 2px solid;
 }
 
-accordion-button {
+.accordion-button {
   font-weight: 700;
   background-color: var(--verylightblue);
 }
