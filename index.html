@@ -1,168 +1,171 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang='en'>
 
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet"
-    integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
-  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.css" />
-  <link rel="stylesheet" href="styles/style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
-    integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
-    crossorigin="anonymous"></script>
-  <link rel="shortcut icon" type="image/png" href="./images/favicon.png" />
+  <meta charset='UTF-8' />
+  <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+  <link href='https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css' rel='stylesheet'
+    integrity='sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD' crossorigin='anonymous'>
+  <link rel='stylesheet' href='https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.css' />
+  <link rel='stylesheet' href='styles/style.css' />
+  <script src='https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js'
+    integrity='sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM'
+    crossorigin='anonymous'></script>
+  <link rel='shortcut icon' type='image/png' href='./images/favicon.png' />
   <title>Comparateur de traces GPS</title>
 </head>
 
 <body>
-  <main class="container">
-    <h1 class="text-center">Comparateur de traces GPS</h1>
-    <div id="message" class="fixed-top bg-danger rounded text-white text-center p-2 fs-2 m-4 d-none"></div>
+  <main class='container'>
+    <h1 class='text-center'>Comparateur de traces GPS</h1>
+    <div id='workerAlert' class='fixed-top bg-danger rounded text-white text-center p-2 fs-2 m-4 d-none'>
+      <p id='message' class='ms-auto'>Calcul en cours</p>
+      <button id='stopBtn' type='button' class='btn btn-dark ms-auto'>Stop</button>
+    </div>
     <section>
-      <h2 class="text-center">Données à saisir</h2>
-      <form id="form">
-        <div class="accordion">
-          <div class="accordion-item">
-            <h3 class="accordion-header" id="panelsStayOpen-headingTracks">
-              <button class="accordion-button" type="button" data-bs-toggle="collapse"
-                data-bs-target="#panelsStayOpen-tracks" aria-expanded="true" aria-controls="panelsStayOpen-tracks">
+      <h2 class='text-center'>Données à saisir</h2>
+      <form id='form'>
+        <div class='accordion'>
+          <div class='accordion-item'>
+            <h3 class='accordion-header' id='panelsStayOpen-headingTracks'>
+              <button class='accordion-button' type='button' data-bs-toggle='collapse'
+                data-bs-target='#panelsStayOpen-tracks' aria-expanded='true' aria-controls='panelsStayOpen-tracks'>
                 Traces
               </button>
             </h3>
-            <div id="panelsStayOpen-tracks" class="accordion-collapse collapse show"
-              aria-labelledby="panelsStayOpen-headingTracks">
-              <div class="accordion-body">
-                <div class="row">
-                  <div class="form-group">
+            <div id='panelsStayOpen-tracks' class='accordion-collapse collapse show'
+              aria-labelledby='panelsStayOpen-headingTracks'>
+              <div class='accordion-body'>
+                <div class='row'>
+                  <div class='form-group'>
                     <!-- Multiple files not authorized because can't be ordered since they are not timestamped -->
-                    <label for="ref">Trace GPS de référence au format GPX - 1 fichier GPX (<span class="blue">en bleu
+                    <label for='ref'>Trace GPS de référence au format GPX - 1 fichier GPX (<span class='blue'>en bleu
                         sur
                         la
                         carte</span>)</label>
-                    <input type="file" id="ref" class="form-control" accept=".gpx" required />
+                    <input type='file' id='ref' class='form-control' accept='.gpx' required />
                   </div>
                 </div>
-                <div class="row">
-                  <div class="form-group">
-                    <label for="chall">Trace GPS réalisée au format GPX - 1 ou plusieurs fichiers GPX (<span
-                        class="green">en
+                <div class='row'>
+                  <div class='form-group'>
+                    <label for='chall'>Trace GPS réalisée au format GPX - 1 ou plusieurs fichiers GPX (<span
+                        class='green'>en
                         vert sur la carte</span>)</label>
-                    <input type="file" id="chall" class="form-control" accept=".gpx" multiple="true" required />
+                    <input type='file' id='chall' class='form-control' accept='.gpx' multiple='true' required />
                   </div>
                 </div>
-                <div class="row">
-                  <div class="form-group">
-                    <label for="perf">Durée à prendre en compte pour le calcul de la performance en h</label>
-                    <input type="number" id="rollingDuration" class="form-control" value="24" required />
+                <div class='row'>
+                  <div class='form-group'>
+                    <label for='perf'>Durée à prendre en compte pour le calcul de la performance en h</label>
+                    <input type='number' id='rollingDuration' class='form-control' value='24' required />
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          <div class="accordion-item">
-            <h3 class="accordion-header" id="panelsStayOpen-headingAdvanced">
-              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                data-bs-target="#panelsStayOpen-advanced" aria-expanded="false" aria-controls="panelsStayOpen-advanced">
+          <div class='accordion-item'>
+            <h3 class='accordion-header' id='panelsStayOpen-headingAdvanced'>
+              <button class='accordion-button collapsed' type='button' data-bs-toggle='collapse'
+                data-bs-target='#panelsStayOpen-advanced' aria-expanded='false' aria-controls='panelsStayOpen-advanced'>
                 Paramètres avancées
               </button>
             </h3>
-            <div id="panelsStayOpen-advanced" class="accordion-collapse collapse"
-              aria-labelledby="panelsStayOpen-headingAdvanced">
-              <div class="accordion-body">
-                <div class="row">
-                  <div class="form-group col-md-6">
-                    <label for="maxDetour">Détour maximal en km</label>
-                    <input type="number" id="maxDetour" class="form-control" value="20" required />
+            <div id='panelsStayOpen-advanced' class='accordion-collapse collapse'
+              aria-labelledby='panelsStayOpen-headingAdvanced'>
+              <div class='accordion-body'>
+                <div class='row'>
+                  <div class='form-group col-md-6'>
+                    <label for='maxDetour'>Détour maximal en km</label>
+                    <input type='number' id='maxDetour' class='form-control' value='20' required />
                   </div>
-                  <div class="form-group col-md-6">
-                    <label for="maxSegLength">Distance max entre 2 points de la trace du challenger en m</label>
-                    <input type="number" id="maxSegLength" class="form-control" value="200" required />
+                  <div class='form-group col-md-6'>
+                    <label for='maxSegLength'>Distance max entre 2 points de la trace du challenger en m</label>
+                    <input type='number' id='maxSegLength' class='form-control' value='200' required />
                   </div>
                 </div>
-                <div class="row">
-                  <div class="form-group col-md-6">
-                    <label for="trigger">Distance de déclenchement en m</label>
-                    <input type="number" id="trigger" class="form-control" value="8" required />
+                <div class='row'>
+                  <div class='form-group col-md-6'>
+                    <label for='trigger'>Distance de déclenchement en m</label>
+                    <input type='number' id='trigger' class='form-control' value='8' required />
                   </div>
-                  <div class="form-group col-md-6">
-                    <label for="tolerance">Tolérance d'écart en m</label>
-                    <input type="number" id="tolerance" class="form-control" value="80" required />
+                  <div class='form-group col-md-6'>
+                    <label for='tolerance'>Tolérance d'écart en m</label>
+                    <input type='number' id='tolerance' class='form-control' value='80' required />
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        <button type="submit" class="btn btn-primary" id="launchComparisonBtn">Lancer la comparaison</button>
+        <button type='submit' class='btn btn-primary' id='launchComparisonBtn'>Lancer la comparaison</button>
       </form>
     </section>
     <section>
-      <h2 class="text-center">Résultats de la comparaison lancée</h2>
-      <div class="accordion">
-        <div class="accordion-item">
-          <h3 class="accordion-header" id="panelsStayOpen-headingParams">
-            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-              data-bs-target="#panelsStayOpen-params" aria-expanded="true" aria-controls="panelsStayOpen-params">
+      <h2 class='text-center'>Résultats de la comparaison lancée</h2>
+      <div class='accordion'>
+        <div class='accordion-item'>
+          <h3 class='accordion-header' id='panelsStayOpen-headingParams'>
+            <button class='accordion-button collapsed' type='button' data-bs-toggle='collapse'
+              data-bs-target='#panelsStayOpen-params' aria-expanded='true' aria-controls='panelsStayOpen-params'>
               Rappel des paramètres utilisés
             </button>
           </h3>
-          <div id="panelsStayOpen-params" class="accordion-collapse collapse"
-            aria-labelledby="panelsStayOpen-headingParams">
-            <div class="accordion-body">
+          <div id='panelsStayOpen-params' class='accordion-collapse collapse'
+            aria-labelledby='panelsStayOpen-headingParams'>
+            <div class='accordion-body'>
               <ul>
                 <li>Fichier GPX de la trace de référence :
-                  <strong id="refParam"></strong>
+                  <strong id='refParam'></strong>
                 </li>
                 <li>Fichier(s) GPX de la trace réalisée :
-                  <strong id="challParam"></strong>
+                  <strong id='challParam'></strong>
                 </li>
                 <li>Durée prise en compte pour le calcul de la performance :
-                  <strong id="durationParam"></strong>
+                  <strong id='durationParam'></strong>
                 </li>
                 <li>Distance de déclenchement :
-                  <strong id="triggerParam"></strong>
+                  <strong id='triggerParam'></strong>
                 </li>
                 <li>Tolérance d'écart :
-                  <strong id="toleranceParam"></strong>
+                  <strong id='toleranceParam'></strong>
                 </li>
                 <li>Détour maximal :
-                  <strong id="detourMaxParam"></strong>
+                  <strong id='detourMaxParam'></strong>
                 </li>
               </ul>
             </div>
           </div>
         </div>
-        <div class="accordion-item">
-          <h3 class="accordion-header" id="panelsStayOpen-headingResults">
-            <button class="accordion-button" type="button" data-bs-toggle="collapse"
-              data-bs-target="#panelsStayOpen-results" aria-expanded="false" aria-controls="panelsStayOpen-results">
+        <div class='accordion-item'>
+          <h3 class='accordion-header' id='panelsStayOpen-headingResults'>
+            <button class='accordion-button' type='button' data-bs-toggle='collapse'
+              data-bs-target='#panelsStayOpen-results' aria-expanded='false' aria-controls='panelsStayOpen-results'>
               Résultats
             </button>
           </h3>
-          <div id="panelsStayOpen-results" class="accordion-collapse collapse show"
-            aria-labelledby="panelsStayOpen-headingResults">
-            <div class="accordion-body">
+          <div id='panelsStayOpen-results' class='accordion-collapse collapse show'
+            aria-labelledby='panelsStayOpen-headingResults'>
+            <div class='accordion-body'>
               <ul>
-                <li>Distance de la trace de référence non parcourue (<span class="red">en rouge sur la carte</span>) :
-                  <strong id="missedDistance">calcul non lancé ou en cours</strong>
+                <li>Distance de la trace de référence non parcourue (<span class='red'>en rouge sur la carte</span>) :
+                  <strong id='missedDistance'>calcul non lancé ou en cours</strong>
                 </li>
-                <li><span id="perfTitle">Distance de la trace de référence parcourue pendant la période la moins
-                    favorable</span> (<span class="">en trait évidé sur la carte</span>) :
-                  <strong id="perf">calcul non lancé ou en cours</strong>
+                <li><span id='perfTitle'>Distance de la trace de référence parcourue pendant la période la moins
+                    favorable</span> (<span class=''>en trait évidé sur la carte</span>) :
+                  <strong id='perf'>calcul non lancé ou en cours</strong>
                 </li>
               </ul>
             </div>
           </div>
         </div>
       </div>
-      <button id="downloadGpx" class="btn btn-primary" disabled>Télécharger le fichier GPX généré (avec référénce,
+      <button id='downloadGpx' class='btn btn-primary' disabled>Télécharger le fichier GPX généré (avec référénce,
         réalisé, écarts et pire période)</button>
     </section>
     <section>
-      <div id="map"></div>
+      <div id='map'></div>
     </section>
   </main>
-  <script src="dist/main.js"></script>
+  <script src='dist/main.js'></script>
 </body>
 </html>

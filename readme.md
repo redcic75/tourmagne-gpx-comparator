@@ -27,7 +27,6 @@ You can create test GPX files and view generated GPX files with https://gpx.stud
 
 ## To do
 - gitignore dist folder and use CI to build
-- Add a button to stop the workers
 - Check timestamps presence before calculating kpis
 - Create personalized Error classes
 - Get rid of global variables in indexWeb.js ?

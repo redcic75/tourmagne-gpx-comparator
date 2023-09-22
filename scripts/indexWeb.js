@@ -1,4 +1,5 @@
 /* eslint-disable no-alert */
+/* eslint-disable no-use-before-define */
 const maplibregl = require('maplibre-gl');
 const FileSaver = require('file-saver');
 const generateFullGpxStr = require('./services/generateFullGpxStr');
@@ -21,6 +22,8 @@ const perfEl = document.querySelector('#perf');
 const perfTitleEl = document.querySelector('#perfTitle');
 const downloadGpxEl = document.querySelector('#downloadGpx');
 const launchComparisonEl = document.querySelector('#launchComparisonBtn');
+const stopEl = document.querySelector('#stopBtn');
+const workerAlertEl = document.querySelector('#workerAlert');
 const messageEl = document.querySelector('#message');
 let progressEl;
 
@@ -62,7 +65,46 @@ const map = new maplibregl.Map({
 map.addControl(new maplibregl.NavigationControl());
 
 // ------ WORKERS ------////
-const compareTracksWorker = new Worker(new URL('./workers/compareTracks', import.meta.url));
+const attachCompareTracksWorkerReceiver = () => {
+  compareTracksWorker.onmessage = (event) => {
+    const {
+      data: {
+        name,
+        results,
+        progress,
+      },
+    } = event;
+
+    if (name === 'progress') {
+      progressEl.innerText = progress;
+    } else if (name === 'results') {
+      // Update DOM
+      updateDom(results);
+
+      // Update map
+      displayTrack(map, 'missed', results.tracks.missedSegments, {
+        'line-color': '#ff0000',
+        'line-width': 6,
+        'line-opacity': 0.7,
+      });
+
+      displayTrack(map, 'slowest', results.tracks.worst, {
+        'line-color': '#ffffff',
+        'line-width': 2,
+        'line-opacity': 1,
+      });
+
+      // Generate the downloadable files
+      fullGpxStr = generateFullGpxStr(results);
+
+      workerDone();
+      downloadGpxEl.disabled = false;
+    }
+  };
+};
+
+let compareTracksWorker = new Worker(new URL('./workers/compareTracks', import.meta.url));
+attachCompareTracksWorkerReceiver();
 const parseGpxWorker = new Worker(new URL('./workers/parseGpx', import.meta.url));
 
 // ------ METHODS ------//
@@ -85,7 +127,7 @@ const workerInProgress = (message) => {
   challFileInputEl.disabled = true;
   downloadGpxEl.disabled = true;
   messageEl.innerHTML = message;
-  messageEl.classList.toggle('d-none');
+  workerAlertEl.classList.toggle('d-none');
 
   // Only used during compareTracks execution for displaying progress
   progressEl = document.querySelector('#progress');
@@ -96,7 +138,14 @@ const workerDone = () => {
   refFileInputEl.disabled = false;
   challFileInputEl.disabled = false;
   messageEl.innerText = '';
-  messageEl.classList.toggle('d-none');
+  workerAlertEl.classList.toggle('d-none');
+};
+
+const stopComparison = () => {
+  compareTracksWorker.terminate();
+  compareTracksWorker = new Worker(new URL('./workers/compareTracks', import.meta.url));
+  attachCompareTracksWorkerReceiver();
+  workerDone();
 };
 
 const launchComparison = (event) => {
@@ -120,42 +169,6 @@ const launchComparison = (event) => {
     });
   } catch (err) {
     alert(err.message);
-  }
-};
-
-compareTracksWorker.onmessage = (event) => {
-  const {
-    data: {
-      name,
-      results,
-      progress,
-    },
-  } = event;
-
-  if (name === 'progress') {
-    progressEl.innerText = progress;
-  } else if (name === 'results') {
-    // Update DOM
-    updateDom(results);
-
-    // Update map
-    displayTrack(map, 'missed', results.tracks.missedSegments, {
-      'line-color': '#ff0000',
-      'line-width': 6,
-      'line-opacity': 0.7,
-    });
-
-    displayTrack(map, 'slowest', results.tracks.worst, {
-      'line-color': '#ffffff',
-      'line-width': 2,
-      'line-opacity': 1,
-    });
-
-    // Generate the downloadable files
-    fullGpxStr = generateFullGpxStr(results);
-
-    workerDone();
-    downloadGpxEl.disabled = false;
   }
 };
 
@@ -238,4 +251,5 @@ map.on('load', () => {
   challFileInputEl.addEventListener('change', (event) => loadFiles(event, 'chall'));
   formEl.addEventListener('submit', launchComparison);
   downloadGpxEl.addEventListener('click', downloadFile);
+  stopEl.addEventListener('click', stopComparison);
 });
