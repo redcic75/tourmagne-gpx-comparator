@@ -26,6 +26,7 @@ You can create test GPX files and view generated GPX files with https://gpx.stud
   - => Comes from external libs fast-xml-parser & calculateClosest (while loop executed 1_000_000 times)
 
 ## To do
+- Display error message on frontend
 - gitignore dist folder and use CI to build
 - Add a button to stop the workers
 - Check timestamps presence before calculating kpis

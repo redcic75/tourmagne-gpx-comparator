@@ -33,7 +33,14 @@ const parseGpx = (strs) => {
   // 3rd level represent <trkpt>
   const trkptsArr = strs.map((str) => {
     const gpx = parser.parse(str);
-    const trksegs = gpx?.gpx?.trk?.trkseg;
+    const trks = gpx?.gpx?.trk;
+
+    let trksegs;
+    if (Array.isArray(trks)) {
+      trksegs = trks.map((trk) => trk.trkseg);
+    } else {
+      trksegs = trks?.trkseg;
+    }
 
     // Deal with case with multiple <trkseg> in stringified gpx file
     if (Array.isArray(trksegs)) {
