@@ -159,6 +159,13 @@ compareTracksWorker.onmessage = (event) => {
   }
 };
 
+compareTracksWorker.onerror = (event) => {
+  // eslint-disable-next-line no-console
+  console.log(event);
+  alert(`Erreur lors de la comparaison des traces\n${event.message}`);
+  workerDone();
+};
+
 const downloadFile = () => {
   const blob = new Blob(
     [fullGpxStr],
@@ -229,6 +236,13 @@ parseGpxWorker.onmessage = (event) => {
   geolibBounds[id] = updateBounds(map, geolibBounds, tracks[id].points);
   fitBounds(map, geolibBounds);
 
+  workerDone();
+};
+
+parseGpxWorker.onerror = (event) => {
+  // eslint-disable-next-line no-console
+  console.log(event);
+  alert(`Erreur lors du chargement de la trace\n${event.message}`);
   workerDone();
 };
 
