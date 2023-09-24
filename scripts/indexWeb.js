@@ -101,7 +101,7 @@ const workerDone = () => {
 
 const launchComparison = (event) => {
   event.preventDefault();
-  workerInProgress('Calcul en cours: <span id="progress">0.00</span> %');
+  workerInProgress('Calcul en cours : <span id="progress">0.00</span> %');
 
   // Get options from form inputs
   const options = {
