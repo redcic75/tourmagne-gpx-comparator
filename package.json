@@ -6,8 +6,8 @@
   "scripts": {
     "test": "mocha 'test/**/*.js'",
     "node": "node scripts/indexNode.js",
-    "webpack": "webpack --config webpack.config.js",
-    "webpack:watch": "webpack watch --config webpack.config.js"
+    "build": "webpack --config webpack.config.js",
+    "build:watch": "webpack watch --config webpack.config.js"
   },
   "author": "",
   "license": "ISC",

@@ -7,7 +7,7 @@
 - The gpx file containing all missed points of reference track is added in `data/output` folder
 
 ## In browser
-- Run `npm run webpack` or `npm run webpack:watch` to bundle javascript files
+- Run `npm run build` or `npm run build:watch` to bundle javascript files
 - Launch you local server
 - Open `http://localhost:5500` in your web browser
 
