@@ -1,9 +1,14 @@
 /* eslint-disable no-console */
 
-const msToHHMM = require('../helper/msToHHMM');
+const datePlusDuration = require('../helper/datePlusDuration');
 
 // Logs comparator analysis
 const logComparisonResults = (inputParams, results) => {
+  const {
+    dateStr,
+    timeStr,
+  } = datePlusDuration(new Date(results.tracks.chall[0][0].time), results.kpi.slowestSegmentStart.elapsedTime, 'en-EN');
+
   const displayString = `
 
   Analysis summary:
@@ -19,7 +24,7 @@ const logComparisonResults = (inputParams, results) => {
   Missed distance of the reference path: ${results.accuracy.missedDistance} meters
   Missed distance of the reference path: ${Math.round(results.accuracy.offTrackRatio * 10000) / 100} %
   Worst ${results.kpi.rollingDuration} hours:
-   - Started after ${msToHHMM(results.kpi.slowestSegmentStart.elapsedTime)} at km ${results.kpi.slowestSegmentStart.distance / 1000} on reference track
+   - Started on ${dateStr}, at ${timeStr} at km ${results.kpi.slowestSegmentStart.distance / 1000} on reference track
    - Distance: ${results.kpi.distance / 1000} km
    - Mean speed during this period: ${results.kpi.meanSpeed} km/h
   `;

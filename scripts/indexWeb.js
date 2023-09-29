@@ -3,8 +3,8 @@ const maplibregl = require('maplibre-gl');
 const FileSaver = require('file-saver');
 const generateFullGpxStr = require('./services/generateFullGpxStr');
 const displayTrack = require('./map_helpers/displayTrack');
-const msToHHMM = require('./helper/msToHHMM');
 const { updateBounds, fitBounds } = require('./map_helpers/updateBounds');
+const datePlusDuration = require('./helper/datePlusDuration');
 
 // ------ DOM ------//
 const refFileInputEl = document.querySelector('#ref');
@@ -76,7 +76,17 @@ const updateDom = (results) => {
   detourMaxParamEl.innerHTML = `${formEl.maxDetour.value} km`;
   missedDistanceEl.innerHTML = `${Math.round(results.accuracy.missedDistance / 100) / 10} km (soit ${Math.round(results.accuracy.offTrackRatio * 10000) / 100} %)`;
   perfTitleEl.innerHTML = `Distance de la trace parcourue pendant les ${results.kpi.rollingDuration} h les moins favorables`;
-  perfEl.innerHTML = `${results.kpi.distance / 1000} km (à partir du km ${results.kpi.slowestSegmentStart.distance / 1000} de la trace de référence, soit après  ${msToHHMM(results.kpi.slowestSegmentStart.elapsedTime)} à ${Math.round(results.kpi.meanSpeed * 1000) / 1000} km/h de moyenne)`;
+
+  const {
+    dateStr,
+    timeStr,
+  } = datePlusDuration(
+    new Date(results.tracks.chall[0][0].time),
+    results.kpi.slowestSegmentStart.elapsedTime,
+    'fr-FR',
+  );
+
+  perfEl.innerHTML = `${results.kpi.distance / 1000} km (à partir du ${dateStr} à ${timeStr}, au km ${results.kpi.slowestSegmentStart.distance / 1000} de la trace de référence à ${Math.round(results.kpi.meanSpeed * 1000) / 1000} km/h de moyenne)`;
 };
 
 const workerInProgress = (message) => {
