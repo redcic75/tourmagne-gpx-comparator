@@ -4,7 +4,7 @@ const FileSaver = require('file-saver');
 const generateFullGpxStr = require('./services/generateFullGpxStr');
 const displayTrack = require('./map_helpers/displayTrack');
 const { updateBounds, fitBounds } = require('./map_helpers/updateBounds');
-const datePlusDuration = require('./helper/datePlusDuration');
+const datePlusDurationToStr = require('./helper/datePlusDurationToStr');
 
 // ------ DOM ------//
 const refFileInputEl = document.querySelector('#ref');
@@ -80,7 +80,7 @@ const updateDom = (results) => {
   const {
     dateStr,
     timeStr,
-  } = datePlusDuration(
+  } = datePlusDurationToStr(
     new Date(results.tracks.chall[0][0].time),
     results.kpi.slowestSegmentStart.elapsedTime,
     'fr-FR',

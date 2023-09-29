@@ -1,4 +1,4 @@
-const datePlusDuration = (date, duration, locale) => {
+const datePlusDurationToStr = (date, duration, locale) => {
   const sumDate = new Date(date.getTime() + duration);
   const dateStr = sumDate.toLocaleDateString(
     locale,
@@ -14,4 +14,4 @@ const datePlusDuration = (date, duration, locale) => {
   };
 };
 
-module.exports = datePlusDuration;
+module.exports = datePlusDurationToStr;
