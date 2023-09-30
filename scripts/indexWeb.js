@@ -75,7 +75,7 @@ const updateDom = (results) => {
   toleranceParamEl.innerHTML = `${formEl.tolerance.value} m`;
   detourMaxParamEl.innerHTML = `${formEl.maxDetour.value} km`;
   missedDistanceEl.innerHTML = `${Math.round(results.accuracy.missedDistance / 100) / 10} km (soit ${Math.round(results.accuracy.offTrackRatio * 10000) / 100} %)`;
-  perfTitleEl.innerHTML = `Distance de la trace parcourue pendant les ${results.kpi.rollingDuration} h les moins favorables`;
+  perfTitleEl.innerHTML = `Distance de la trace parcourue pendant les ${results.kpi.rollingDuration} heures les moins favorables`;
 
   const {
     dateStr,

@@ -20,7 +20,12 @@ jobs:
         run: npm run build  # Replace with your actual build script if it's different
 
       - name: copy html
-        run: mkdir _site && cp index.html _site/index.html && cp -R dist _site/dist && cp -R images _site/images && cp -R styles _site/styles
+        run: |
+          mkdir _site
+          cp index.html _site/index.html
+          cp -R dist _site/dist
+          cp -R images _site/images
+          cp -R styles _site/styles
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v2
