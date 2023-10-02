@@ -15,6 +15,9 @@
 You can create test GPX files and view generated GPX files with https://gpx.studio/l/fr/.
 
 # For devs only
+## Deployed on github pages using Github Actions (and not the basic Deploy From Branch)
+- Details in `.github/workflows/deploy.yml`
+
 ## Dev mode
 - Use `webpack --mode=development` to avoid minification only in dev mode
 - Launch all tests with `npm run test`
@@ -26,6 +29,7 @@ You can create test GPX files and view generated GPX files with https://gpx.stud
   - => Comes from external libs fast-xml-parser & calculateClosest (while loop executed 1_000_000 times)
 
 ## To do
+- Optimize performance by using the hypothesis that points are really close together in `calculateClosest` method
 - Check timestamps presence before calculating kpis
 - Create personalized Error classes
 - Get rid of global variables in indexWeb.js ?
