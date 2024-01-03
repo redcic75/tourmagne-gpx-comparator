@@ -6,5 +6,6 @@
 /dist
 
 !/data/inputs/challenger_tracks/.gitkeep
-!/data/output/.gitkeep
 !/data/inputs/reference_track/.gitkeep
+!/data/inputs/long-term-storage/.gitkeep
+!/data/output/.gitkeep
