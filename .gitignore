@@ -3,9 +3,10 @@
 /data/inputs/challenger_tracks/*
 /data/output/*
 /data/inputs/reference_track/*
+/data/long-term-storage/*
 /dist
 
 !/data/inputs/challenger_tracks/.gitkeep
 !/data/inputs/reference_track/.gitkeep
-!/data/inputs/long-term-storage/.gitkeep
+!/data/long-term-storage/.gitkeep
 !/data/output/.gitkeep
