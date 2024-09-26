@@ -66,7 +66,7 @@ const generateFullGpxStr = (results) => {
   } = datePlusDurationToStr(new Date(results.tracks.chall[0][0].time), results.kpi.slowestSegmentStart.elapsedTime, 'fr-FR');
 
   gpxStr += generateTrk(worst, {
-    name: `Distance de la trace parcourue pendant les ${results.kpi.rollingDuration} h les moins favorables : ${results.kpi.distance / 1000} km (à partir du ${dateStr} à ${timeStr}, au km ${results.kpi.slowestSegmentStart.distance / 1000} de la trace de référence à ${Math.round(results.kpi.meanSpeed * 1000) / 1000} km/h de moyenne)`,
+    name: `Distance de la trace parcourue pendant les ${results.kpi.rollingDuration} h les moins favorables : ${results.kpi.distance / 1000} km (à partir du ${dateStr} à ${timeStr}, au km ${results.kpi.slowestSegmentStart.distance / 1000} de la trace de référence)`,
     color: 'White',
   });
 
