@@ -1,5 +1,4 @@
 # How to use
-
 ## With node
 - Add source gpx files in `data/inputs/reference_track` and `data/inputs/challenger_tracks` folders
 - Run `npm run node`
